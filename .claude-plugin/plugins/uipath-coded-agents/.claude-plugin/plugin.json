@@ -1,0 +1,12 @@
+{
+  "name": "uipath-coded-agents",
+  "version": "0.0.1",
+  "description": "Create, run, and evaluate UiPath coded agents with AI-powered assistance",
+  "author": {
+    "name": "UiPath"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/UiPath/uipath-claude-plugins",
+  "repository": "https://github.com/UiPath/uipath-claude-plugins",
+  "keywords": ["uipath", "automation", "rpa", "agent", "evaluation"]
+}
