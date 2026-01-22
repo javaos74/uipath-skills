@@ -36,7 +36,7 @@ claude plugin install <plugin-name>@uipath-marketplace
 
 Example:
 ```bash
-claude plugin install uipath-coded-agent@my-marketplace
+claude plugin install uipath-coded-agents@my-marketplace
 ```
 
 ### Uninstalling a Plugin

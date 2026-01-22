@@ -7,23 +7,12 @@ allowed-tools: Bash, Read, Write, Glob, AskUserQuestion
 
 I'll guide you through creating a new UiPath agent with AI-powered business logic implementation.
 
-## Step 0: Prerequisites Check
+## Step 0: Initial Setup
 
-Before creating an agent, I need to verify that `.claude/cpr.sh` exists. This resolver script allows the command to access plugin templates.
-
-If `.claude/cpr.sh` doesn't exist, please run the plugin setup skill first:
-
-```
-/uipath-coded-agents:setup
-```
-
-This will create the necessary resolver script. After that, you can proceed with creating your agent.
-
-Once the resolver is in place, I will:
+I will:
 
 1. **Setup pyproject.toml**: Check if `pyproject.toml` exists; if not, I'll:
-   - Copy the template to current working directory: `cp $(./.claude/cpr.sh uipath-coded-agents)/templates/pyproject.toml ./pyproject.toml`
-     - Note that if the resolver fails, setup the plugin and try again.
+   - Copy the [template](assets/templates/pyproject.toml) from the assets/templates directory to the current working directory
    - Replace `{AGENT_NAME}` with the actual agent name
    - Replace `{AGENT_DESCRIPTION}` with the agent description you provide
 
@@ -74,7 +63,6 @@ The created agent will follow this structure:
 
 ```python
 from pydantic import BaseModel, Field
-from uipath.platform import UiPath
 from uipath.tracing import traced
 
 class Input(BaseModel):
