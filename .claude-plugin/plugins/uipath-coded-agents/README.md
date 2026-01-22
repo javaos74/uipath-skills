@@ -64,8 +64,6 @@ Claude will:
 | `/uipath-coded-agents:run` | Run an existing agent           |
 | `/uipath-coded-agents:eval` | Create and run evaluations      |
 | `/uipath-coded-agents:auth` | Authenticate with UiPath        |
-| `/uipath-coded-agents:setup` | Initialize plugin environment   |
-
 ## Workflow
 
 ### 1. Create an Agent
