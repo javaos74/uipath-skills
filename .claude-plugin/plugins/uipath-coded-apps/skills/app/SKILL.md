@@ -1,5 +1,5 @@
 ---
-description: Use when the user asks to create a new UiPath web app, build a React dashboard with UiPath data, add UiPath SDK services (@uipath/uipath-typescript) to an existing React project, or deploy a coded app to UiPath Cloud. Covers project scaffolding, OAuth authentication, SDK service integration (Entities, Tasks, Processes, Assets, Queues, Buckets, Maestro), pagination, polling, BPMN rendering, and deployment via UiPath CLI.
+description: Use when the user asks to create a new UiPath web app, build a React dashboard with UiPath data, add UiPath SDK services (@uipath/uipath-typescript) to an existing React project, or deploy a coded app to UiPath Cloud. Covers project scaffolding, OAuth authentication, SDK service integration (Entities, Tasks, Processes, Assets, Queues, Buckets, Maestro), pagination, polling, BPMN rendering etc.
 ---
 
 # Creating UiPath Coded Apps from scratch
@@ -89,6 +89,16 @@ Run this in the background. Wait a few seconds for Vite to start, then check the
 **IMPORTANT — verify the port matches the redirect URI:** Vite may start on a different port than 5173 if that port is busy (e.g., 5174, 5175). Check the actual port in Vite's output. If it differs from `UIPATH_REDIRECT_URI` in `.env`, update `.env` to match (e.g., `UIPATH_REDIRECT_URI=http://localhost:5174`). OAuth will fail silently if the redirect URI doesn't match the running port.
 
 If there are TypeScript or build errors, fix the issues and re-run `npm run dev` until the app starts cleanly. Do not mark the task as complete until the dev server starts successfully.
+
+### Build verification
+
+After you are done with all your changes in the app, always run the build to verify:
+
+```bash
+cd <app-name> && npm run build
+```
+
+This catches errors that `npm run dev` may miss. If there are build errors, fix them and re-run `npm run build` until it completes cleanly. Do not consider the task done until **both** `npm run dev` and `npm run build` succeed without errors.
 
 ## 2. UiPath Services Overview
 
@@ -321,8 +331,6 @@ try {
 
 **When determining OAuth scopes:** MANDATORY — read [oauth-scopes.md](references/oauth-scopes.md) first. Do NOT guess scopes.
 
-**Do NOT load** `deployment.md` unless the user asks about deploying. Do NOT load reference files for services the app doesn't use.
-
 | Reference | Services | When to load |
 |-----------|----------|--------------|
 | [data-fabric.md](references/data-fabric.md) | Entities, ChoiceSets | App reads/writes Data Service entities |
@@ -330,5 +338,4 @@ try {
 | [orchestrator.md](references/orchestrator.md) | Assets, Queues, Buckets, Processes | App uses Orchestrator resources or starts processes |
 | [action-center.md](references/action-center.md) | Tasks | App creates, assigns, or completes Action Center tasks |
 | [patterns.md](references/patterns.md) | usePolling hook, BPMN viewer, embedded action tasks | App needs auto-refreshing data, process diagram rendering, or embedded HITL tasks |
-| [deployment.md](references/deployment.md) | UiPath CLI | User asks to deploy the app to UiPath Cloud |
 | [oauth-scopes.md](references/oauth-scopes.md) | All | **Always** — read before setting scopes in setup |
