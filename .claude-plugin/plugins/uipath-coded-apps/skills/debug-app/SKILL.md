@@ -428,7 +428,7 @@ Based on the decoded error, follow the appropriate diagnosis path:
 - `ErrorDescription` contains "Invalid redirect_uri" or "invalid_redirect_uri"
 - `Error` is "invalid_request"
 
-**Root Cause:** The `redirect_uri` sent in the OAuth authorization request does NOT exactly match the redirect URI registered in the UiPath External Application.
+**Root Cause:** The `redirect_uri` sent in the OAuth authorization request does NOT exactly match any redirect URI registered in the UiPath External Application. The app's redirect URI needs to be **added** to the External Application.
 
 **Diagnosis steps:**
 
@@ -436,31 +436,33 @@ Based on the decoded error, follow the appropriate diagnosis path:
 2. Read the app code (e.g., `App.tsx`, `main.tsx`) to see how the redirect URI is actually constructed at runtime. Note: Some apps use `window.location.origin` which may differ from the `.env` value
 3. Identify the ACTUAL redirect URI that gets sent in the OAuth request
 
-**Common mismatches:**
-| App Configuration | External Application | Issue |
+**Common causes (the app's redirect URI is missing from the External Application):**
+| App Sends | External Application Has | Issue |
 |---|---|---|
-| `http://localhost:5173` | `http://localhost:5173/` | Trailing slash mismatch |
-| `http://localhost:5173` | `http://localhost:3000` | Wrong port |
-| `http://localhost:5173` | `https://localhost:5173` | Protocol mismatch (http vs https) |
-| `http://localhost:5173/callback` | `http://localhost:5173` | Path mismatch |
-| `window.location.origin` (resolves to `http://localhost:5173`) | `http://localhost:3000` | Dynamic URL doesn't match registered URI |
+| `http://localhost:5173` | `http://localhost:5173/` | Trailing slash variant missing |
+| `http://localhost:5173` | `http://localhost:3000` | Different port — need to add the correct port |
+| `http://localhost:5173` | `https://localhost:5173` | HTTP variant missing (only HTTPS registered) |
+| `http://localhost:5173/callback` | `http://localhost:5173` | Callback path variant missing |
+| `window.location.origin` (resolves to `http://localhost:5173`) | `http://localhost:3000` | Actual runtime URL missing |
 
-**Fix:**
+**Fix (ADD the missing redirect URL — do NOT remove existing ones):**
 
-1. Determine the correct redirect URI:
+When reporting the problem to the user, frame it as: "The External Application is missing the redirect URL `<url>`. I'll add it." Do NOT say you will "remove" or "replace" any URL. The External Application supports multiple redirect URLs and existing ones must be preserved.
+
+1. Determine which redirect URI the app actually needs:
    - Check what port the dev server is actually running on
    - If the app uses `window.location.origin`, it will be the actual server URL (e.g., `http://localhost:5173`)
    - The redirect URI should point to where the app handles the OAuth callback
 
-2. Update the app's `.env` file:
+2. Update the app's `.env` file if the redirect URI there is wrong:
    ```
    Use Edit to update the REDIRECT_URI value in the .env file
    ```
 
-3. Update the UiPath External Application:
+3. **Add** the required redirect URI to the UiPath External Application. **NEVER remove existing redirect URLs — only add the missing one:**
 
    **Automated Mode (Playwright MCP available):**
-   Follow the **"Automated External Application Update"** procedure in Step 6D below to navigate to UiPath Cloud and update the redirect URI directly in the browser.
+   Follow the **"Automated External Application Update"** procedure in Step 6D below to navigate to UiPath Cloud and **add** the redirect URI. Do NOT click the "x" on any existing URL chips.
 
    **Manual Mode (No Playwright MCP):**
    > **You also need to add the redirect URI in UiPath Cloud:**
@@ -653,27 +655,26 @@ Take a snapshot to confirm you see this layout:
 Use mcp__playwright__browser_snapshot
 ```
 
-#### 6D.4: Update the Redirect URL
+#### 6D.4: Add the Missing Redirect URL
 
-If the diagnosis requires updating the redirect URL:
+**FORBIDDEN ACTION — clicking the "x" button on ANY existing redirect URL chip is STRICTLY PROHIBITED.** You must NEVER remove, delete, or replace any existing redirect URL. External Applications support multiple redirect URLs. The fix is ALWAYS to add the missing URL, never to remove an existing one. Even if an existing URL looks "wrong" or "old" — leave it. Other apps, environments, deployed versions, or team members may depend on it.
 
-**CRITICAL: Do NOT delete any existing redirect URLs.** Other applications or environments may depend on them. If the required redirect URL is missing, simply **add** it alongside the existing ones.
+The ONLY action you may take in the Redirect URL section is typing a new URL into the "Enter URL here" input field.
 
 1. The **Redirect URL** section is near the bottom of the edit form. It shows:
-   - Existing redirect URLs as chips/tags with an "x" to remove them
+   - Existing redirect URLs displayed as chips/tags — **leave all of these untouched**
    - An input field with placeholder "Enter URL here" for adding new URLs
-   - Help text: "Enter one or more URLs where users will be redirected after authentication."
 
 2. **Check if the required redirect URL already exists** among the current URL chips. If it does, no changes are needed — skip to Step 6D.5.
 
-3. **If the required redirect URL is missing, add it** (do NOT remove any existing URLs):
+3. **If the required redirect URL is missing, add it** by typing into the input field only:
    ```
    Use mcp__playwright__browser_click on the "Enter URL here" input field
    Use mcp__playwright__browser_type to enter the correct redirect URL
    Use mcp__playwright__browser_press_key with "Enter" to confirm the URL
    ```
 
-4. Take a snapshot to verify the new URL was added **alongside** the existing ones:
+4. Take a snapshot to verify the new URL was added and **all previous URLs are still present**:
    ```
    Use mcp__playwright__browser_snapshot
    ```
@@ -854,7 +855,7 @@ Even in manual mode, do what you can yourself:
 ## Important Notes
 
 - **Always clear browser state first** - this is the #1 cause of confusing errors during development
-- The redirect URI must match **EXACTLY** between the app `.env` and the UiPath External Application
+- The app's redirect URI must be registered in the UiPath External Application (exact match required — including protocol, port, and path). When adding a redirect URI, **never remove existing ones** — the External Application can have multiple redirect URLs
 - Browser apps MUST use **Non-Confidential** External Applications
 - The `offline_access` scope is automatically appended by the SDK - don't worry about it
 - If using `window.location.origin` as the redirect URI, make sure the External Application has the actual dev server URL registered
