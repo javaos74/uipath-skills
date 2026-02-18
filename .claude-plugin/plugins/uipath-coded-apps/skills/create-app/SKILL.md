@@ -1,5 +1,6 @@
 ---
 description: Use when the user asks to create a new UiPath web app, build a React dashboard with UiPath data, add UiPath SDK services (@uipath/uipath-typescript) to an existing React project, or deploy a coded app to UiPath Cloud. Covers project scaffolding, OAuth authentication, SDK service integration (Entities, Tasks, Processes, Assets, Queues, Buckets, Maestro), pagination, polling, BPMN rendering, and deployment via UiPath CLI.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, AskUserQuestion, Task, mcp__playwright__browser_navigate, mcp__playwright__browser_snapshot, mcp__playwright__browser_evaluate, mcp__playwright__browser_console_messages, mcp__playwright__browser_network_requests, mcp__playwright__browser_click, mcp__playwright__browser_type, mcp__playwright__browser_press_key, mcp__playwright__browser_select_option, mcp__playwright__browser_close, mcp__playwright__browser_tabs
 ---
 
 # Creating UiPath Coded Apps
@@ -45,25 +46,52 @@ Question 4:
   multiSelect: false
 ```
 
+### Step 1.5: Ensure Playwright MCP Availability
+
+**IMPORTANT: This skill uses Playwright MCP (`mcp__playwright__*`) for all browser automation. Do NOT use `mcp__claude-in-chrome__*` tools.**
+
+Before any browser automation step (org name from browser, client ID creation), verify Playwright MCP is available by attempting `mcp__playwright__browser_snapshot`.
+
+**If Playwright MCP tools are NOT available:**
+
+1. **Check for `.mcp.json`** in the project root:
+   ```
+   Use Glob to find: **/.mcp.json
+   ```
+
+2. **If `.mcp.json` does not exist**, create it:
+   ```
+   Use Write to create .mcp.json at the project root with:
+   {
+     "mcpServers": {
+       "playwright": {
+         "command": "npx",
+         "args": ["@playwright/mcp@latest"]
+       }
+     }
+   }
+   ```
+
+3. **If `.mcp.json` already exists but doesn't have the playwright server**, read it and add the playwright entry to the `mcpServers` object.
+
+4. After creating/updating `.mcp.json`, tell the user:
+   > **I've added the Playwright MCP server configuration to your project's `.mcp.json`. Please restart Claude Code for the MCP server to become available, then run this skill again.**
+
+   **IMPORTANT**: MCP servers are loaded when Claude Code starts — a newly created `.mcp.json` won't take effect until the session is restarted. Do NOT proceed with browser automation if you just created the file.
+
+5. **Only skip browser automation** if the `.mcp.json` already had the playwright server configured AND the tools still aren't available. In that case, ask the user to provide the values manually.
+
 ### Step 2: Resolve the org name
 
 **If user typed their org name or selected "Other":** Use the value they provided.
 
-**If user selected "Find from browser":** Use Playwright MCP to check the current browser tab. Navigate to the UiPath cloud host for the chosen environment (e.g., `https://staging.uipath.com`). Take a `browser_snapshot` — if the user is logged in, the URL or page content will contain the org name. Extract it from the URL path (it's the first segment after the domain: `https://staging.uipath.com/{orgName}/...`).
+**If user selected "Find from browser":** Use `mcp__playwright__browser_navigate` to go to the UiPath cloud host for the chosen environment (e.g., `https://staging.uipath.com`). Take a `mcp__playwright__browser_snapshot` — if the user is logged in, the URL or page content will contain the org name. Extract it from the URL path (it's the first segment after the domain: `https://staging.uipath.com/{orgName}/...`).
 
 ### Step 3: Get or create the client ID
 
 **If the user provided a client ID** (selected "Other" and pasted it): Use it directly.
 
-**If the user chose "No, create one for me":** First determine which OAuth scopes are needed based on the services the app will use (read `references/oauth-scopes.md`). Then use Playwright MCP browser automation to create an external application in the UiPath admin portal. Follow the detailed steps in [oauth-client-setup.md](references/oauth-client-setup.md).
-
-The browser automation will:
-1. Navigate to `https://{cloud-host}/{orgName}/portal_/admin/external-apps/oauth`
-2. Click "Add application"
-3. Set app name, select "Non-Confidential application"
-4. Add the required OAuth scopes
-5. Enter the redirect URI (`http://localhost:5173`)
-6. Click "Add" and extract the generated Application ID (client ID)
+**If the user chose "No, create one for me":** First determine which OAuth scopes are needed based on the services the app will use (read `references/oauth-scopes.md`). Then **read [oauth-client-setup.md](references/oauth-client-setup.md) and follow it exactly** to create an External Application via Playwright MCP browser automation. That reference has all the step-by-step browser interaction details.
 
 ### Step 4: Run setup script
 
