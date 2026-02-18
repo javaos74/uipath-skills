@@ -49,9 +49,27 @@ echo ""
 
 # --- Prerequisite checks ---
 
+REQUIRED_VERSION="1.0.0-beta.7"
+
 if ! command -v uipath &> /dev/null; then
   echo "ERROR: 'uipath' CLI not found. Install it with:"
-  echo "  npm install -g @uipath/uipath-ts-cli"
+  echo "  npm install -g @uipath/uipath-ts-cli@${REQUIRED_VERSION}"
+  echo ""
+  echo "  If that fails, ensure ~/.npmrc has:"
+  echo "    //npm.pkg.github.com/:_authToken=<YOUR_GITHUB_TOKEN>"
+  echo "    @uipath:registry=https://npm.pkg.github.com"
+  exit 1
+fi
+
+CURRENT_VERSION=$(uipath -v 2>/dev/null || echo "unknown")
+if [[ "$CURRENT_VERSION" != *"$REQUIRED_VERSION"* ]]; then
+  echo "ERROR: UiPath CLI version mismatch."
+  echo "  Required: $REQUIRED_VERSION"
+  echo "  Found:    $CURRENT_VERSION"
+  echo ""
+  echo "  Fix with:"
+  echo "    npm uninstall -g @uipath/uipath-ts-cli"
+  echo "    npm install -g @uipath/uipath-ts-cli@${REQUIRED_VERSION}"
   exit 1
 fi
 
