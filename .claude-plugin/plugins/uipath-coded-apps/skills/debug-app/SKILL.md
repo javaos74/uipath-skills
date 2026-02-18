@@ -463,12 +463,13 @@ Based on the decoded error, follow the appropriate diagnosis path:
    Follow the **"Automated External Application Update"** procedure in Step 6D below to navigate to UiPath Cloud and update the redirect URI directly in the browser.
 
    **Manual Mode (No Playwright MCP):**
-   > **You also need to update the redirect URI in UiPath Cloud:**
+   > **You also need to add the redirect URI in UiPath Cloud:**
    > 1. Go to https://cloud.uipath.com → **Admin** → **External Applications**
    > 2. Find your application (Client ID: `<show the client ID from .env>`)
    > 3. Click **Edit**
-   > 4. Update the **Redirect URI** to: `<the correct redirect URI>`
-   > 5. Click **Save**
+   > 4. In the **Redirect URL** section, check if `<the correct redirect URI>` is already listed
+   > 5. If it is missing, **add** it in the "Enter URL here" input field — do **NOT** delete any existing redirect URLs, as other apps or environments may depend on them
+   > 6. Click **Save**
    >
    > **IMPORTANT**: The redirect URI must match EXACTLY - including protocol (http/https), port, and path. No trailing slash differences.
 
@@ -656,21 +657,23 @@ Use mcp__playwright__browser_snapshot
 
 If the diagnosis requires updating the redirect URL:
 
+**CRITICAL: Do NOT delete any existing redirect URLs.** Other applications or environments may depend on them. If the required redirect URL is missing, simply **add** it alongside the existing ones.
+
 1. The **Redirect URL** section is near the bottom of the edit form. It shows:
    - Existing redirect URLs as chips/tags with an "x" to remove them
    - An input field with placeholder "Enter URL here" for adding new URLs
    - Help text: "Enter one or more URLs where users will be redirected after authentication."
 
-2. **To remove an incorrect redirect URL:** Click the "x" icon next to the existing URL chip to remove it.
+2. **Check if the required redirect URL already exists** among the current URL chips. If it does, no changes are needed — skip to Step 6D.5.
 
-3. **To add the correct redirect URL:**
+3. **If the required redirect URL is missing, add it** (do NOT remove any existing URLs):
    ```
    Use mcp__playwright__browser_click on the "Enter URL here" input field
    Use mcp__playwright__browser_type to enter the correct redirect URL
    Use mcp__playwright__browser_press_key with "Enter" to confirm the URL
    ```
 
-4. Take a snapshot to verify:
+4. Take a snapshot to verify the new URL was added **alongside** the existing ones:
    ```
    Use mcp__playwright__browser_snapshot
    ```
