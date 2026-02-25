@@ -36,7 +36,7 @@ claude plugin install <plugin-name>@uipath-marketplace
 
 Example:
 ```bash
-claude plugin install uipath-coded-agents@my-marketplace
+claude plugin install uipath-coded-agents@uipath-marketplace
 ```
 
 ### Uninstalling a Plugin
@@ -56,7 +56,7 @@ claude plugin uninstall uipath-coded-agent
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [**uipath-coded-agents**](./.claude-plugin/plugins/uipath-coded-agents/README.md) | Create, run, and evaluate UiPath coded agents with AI-powered assistance | 0.0.1 |
+| [**uipath-coded-agents**](./plugins/uipath-coded-agents/README.md) | Create, run, and evaluate UiPath coded agents with AI-powered assistance | 0.0.1 |
 
 ## Project Structure
 
@@ -85,4 +85,4 @@ claude plugin --help
 claude plugin marketplace --help
 ```
 
-For plugin-specific documentation, see the README files in individual plugin directories under `.claude-plugin/plugins/`
+For plugin-specific documentation, see the README files in individual plugin directories under `plugins/`

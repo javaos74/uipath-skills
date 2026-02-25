@@ -1,11 +1,6 @@
----
-description: Learn about and configure tracing for UiPath agents
-allowed-tools: Bash, Read, Write, Glob, AskUserQuestion
----
-
 # UiPath Tracing Guide
 
-Welcome to the UiPath Tracing skill! This guide helps you understand and implement tracing in your agents for monitoring, debugging, and auditing.
+Understand and implement tracing in your agents for monitoring, debugging, and auditing.
 
 ## What is Tracing?
 
@@ -62,7 +57,7 @@ async def main(input: Input) -> dict:
 Organize traces by giving them meaningful names:
 
 ```python
-@traced(span_name="validate_user_input")
+@traced(name="validate_user_input")
 def validate_input(user_id: int, action: str) -> bool:
     """Custom span name for better trace organization."""
     return user_id > 0 and action in ["create", "update", "delete"]
@@ -116,7 +111,7 @@ Create comprehensive tracing for complex operations:
 
 ```python
 @traced(
-    span_name="payment_processing",
+    name="payment_processing",
     run_type="financial_transaction",
     input_processor=lambda x: {
         "amount": x["amount"],
@@ -133,46 +128,30 @@ async def process_payment(customer_id: str, amount: float, currency: str) -> dic
 
 ## Integration Patterns
 
-### With Plain Python Agents
-
-If using plain Python without LangChain, call `wait_for_tracers()` to ensure traces are flushed:
-
-```python
-from uipath.tracing import traced, wait_for_tracers
-import asyncio
-
-@traced()
-async def main(input: Input) -> Output:
-    result = await process(input)
-    await wait_for_tracers()  # Flush all pending traces
-    return result
-
-if __name__ == "__main__":
-    asyncio.run(main(Input()))
-```
-
 ### With LangChain Agents
 
 LangChain agents handle tracing automatically—no additional configuration needed.
 
 ## Common Use Cases
 
-### 1. **Production Monitoring**
+### 1. Production Monitoring
+
 Track function execution in production agents to monitor performance and catch errors.
 
 ```python
-@traced(span_name="user_lookup")
+@traced(name="user_lookup")
 async def get_user_details(user_id: int) -> dict:
     """Monitor user lookup operations."""
     return await database.find_user(user_id)
 ```
 
-### 2. **Data Pipeline Auditing**
+### 2. Data Pipeline Auditing
+
 Record all transformations for compliance and debugging.
 
 ```python
 @traced(
-    span_name="data_transformation",
+    name="data_transformation",
     input_processor=lambda x: {"record_count": len(x), "schema_version": "1.0"}
 )
 def transform_batch(records: list) -> list:
@@ -180,25 +159,27 @@ def transform_batch(records: list) -> list:
     return [transform_record(r) for r in records]
 ```
 
-### 3. **API Integration Debugging**
+### 3. API Integration Debugging
+
 Track external API calls for troubleshooting.
 
 ```python
-@traced(span_name="call_external_api", run_type="integration")
+@traced(name="call_external_api", run_type="integration")
 async def fetch_from_third_party(endpoint: str, params: dict) -> dict:
     """Monitor third-party API interactions."""
     response = await call_api(endpoint, params)
     return response
 ```
 
-### 4. **Security & Compliance**
+### 4. Security & Compliance
+
 Trace actions while protecting sensitive data for audit logs.
 
 ```python
 @traced(
     hide_input=True,
     hide_output=True,
-    span_name="sensitive_operation"
+    name="sensitive_operation"
 )
 def verify_credentials(username: str, password: str) -> bool:
     """Audit sensitive operations without logging credentials."""
@@ -225,7 +206,7 @@ def verify_credentials(username: str, password: str) -> bool:
 ## Best Practices
 
 ✅ **Do:**
-- Use meaningful `span_name` values for organization
+- Use meaningful `name` values for organization
 - Apply `@traced()` to all public functions
 - Use processors for sensitive data instead of `hide_*` flags (you get partial visibility)
 - Test tracing locally before deploying to production
@@ -249,12 +230,10 @@ def verify_credentials(username: str, password: str) -> bool:
 ### Performance Concerns
 
 Tracing has minimal overhead. If performance is critical:
-- Use `span_name` parameter for cleaner traces
+- Use `name` parameter for cleaner traces
 - Apply `@traced()` only to key functions (not every small helper)
 - Use `input_processor` to reduce data volume in traces
 
 ## Documentation
 
 For more details, visit: https://uipath.github.io/uipath-python/core/traced/
-
-Let me know if you'd like help adding tracing to your agents!
