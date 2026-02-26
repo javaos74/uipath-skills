@@ -105,6 +105,35 @@ See [Evaluation Sets](evaluations/evaluation-sets.md) for the file format and [E
 - **Deterministic agents** → `ExactMatchEvaluator`
 - **LLM/Natural language agents** → `LLMJudgeOutputEvaluator` or `ContainsEvaluator`
 
+### Step 6: Run Evaluations
+
+Run the smoke evaluation set to verify the agent works:
+
+```bash
+uv run uipath eval
+```
+
+All test cases should pass before proceeding. If any fail, fix the agent and re-run.
+
+### Step 7: Deploy
+
+When the user requests deployment:
+
+1. **Add author** to `pyproject.toml` if not already present. Ask the user for their name and email:
+   ```toml
+   [project]
+   authors = [{ name = "User Name", email = "user@example.com" }]
+   ```
+
+2. **Bump version** in `pyproject.toml`. Increment the patch version (e.g. `0.0.1` → `0.0.2`), or ask the user what version to set.
+
+3. **Deploy**:
+   ```bash
+   uv run uipath deploy
+   ```
+
+See [Deployment](deployment.md) for details on pack, publish, and invoke workflows.
+
 ## Generated Template Details
 
 The created agent will include:
@@ -120,10 +149,3 @@ The created agent will include:
 - The agent works globally and can call any UiPath SDK services
 - Generated `entry-points.json` enables integration with UiPath Cloud
 - If you require authentication at any point, use `uv run uipath auth` to authenticate with UiPath. See the [Authentication guide](../authentication.md) for details.
-
-## Next Steps
-
-Once your agent is created, you can:
-- **Run it**: Use the [Running Agents](../running-agents.md) guide to execute with interactive inputs
-- **Create Evaluations**: Use the [Creating Evaluations](../evaluations/creating-evaluations.md) guide to build evaluation test cases
-- **Run Evaluations**: Use the [Running Evaluations](../evaluations/running-evaluations.md) guide to validate your agent
