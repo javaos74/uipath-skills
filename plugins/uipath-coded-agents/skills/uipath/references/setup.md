@@ -136,6 +136,24 @@ uv run uipath init
 
 This works for **all agent types**. The CLI auto-detects the agent type by checking for config files (`langgraph.json`, `llama_index.json`, `openai_agents.json`) via registered middleware. If none are found, it falls back to simple function agent detection.
 
+### Simple Function Agents — Entrypoint Registration
+
+For simple function agents (no LangGraph/LlamaIndex/OpenAI Agents), `uipath init` does NOT auto-discover entrypoints. You must register them in `uipath.json` under `"functions"` **before** running `uipath init` (or re-run init after adding them).
+
+After the first `uv run uipath init` creates `uipath.json`, edit it to add your function mapping:
+
+```json
+{
+  "functions": {
+    "main": "main.py:main"
+  }
+}
+```
+
+The format is `"entrypoint_name": "file.py:function_name"`. Then re-run `uv run uipath init` to generate the entry points.
+
+LangGraph, LlamaIndex, and OpenAI Agents integrations auto-discover entrypoints from their respective config files (`langgraph.json`, `llama_index.json`, `openai_agents.json`) — no manual registration needed.
+
 ### What It Generates
 
 | File | Purpose |
