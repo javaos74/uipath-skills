@@ -46,14 +46,14 @@ The UiPath Coded Workflows plugin provides a single comprehensive skill for all 
 - **[GSuite](skills/uipath-coded-workflows/references/gsuite/gsuite.md)** - Google Workspace integration
 
 ### Cloud & Infrastructure Activities
-- **[Azure](skills/uipath-coded-workflows/references/azure/azure.md)** - Azure services automation
-- **[Google Cloud](skills/uipath-coded-workflows/references/google-cloud/google-cloud.md)** - GCP services automation
-- **[Amazon Web Services](skills/uipath-coded-workflows/references/amazon-web-services/amazon-web-services.md)** - AWS services automation
-- **[Exchange Server](skills/uipath-coded-workflows/references/exchange-server/exchange-server.md)** - On-premise Exchange
-- **[Active Directory](skills/uipath-coded-workflows/references/active-directory/active-directory.md)** - AD domain services
-- **[Azure AD](skills/uipath-coded-workflows/references/azure-active-directory/azure-active-directory.md)** - Azure Active Directory
-- **[Citrix](skills/uipath-coded-workflows/references/citrix/citrix.md)** - Citrix virtual desktop automation
-- **[Hyper-V](skills/uipath-coded-workflows/references/hyperv/hyperv.md)** - Hyper-V management
+- **[Azure](skills/uipath-coded-workflows/references/it-automations/azure/azure.md)** - Azure services automation
+- **[Google Cloud](skills/uipath-coded-workflows/references/it-automations/google-cloud/google-cloud.md)** - GCP services automation
+- **[Amazon Web Services](skills/uipath-coded-workflows/references/it-automations/amazon-web-services/amazon-web-services.md)** - AWS services automation
+- **[Exchange Server](skills/uipath-coded-workflows/references/it-automations/exchange-server/exchange-server.md)** - On-premise Exchange
+- **[Active Directory](skills/uipath-coded-workflows/references/it-automations/active-directory/active-directory.md)** - AD domain services
+- **[Azure AD](skills/uipath-coded-workflows/references/it-automations/azure-active-directory/azure-active-directory.md)** - Azure Active Directory
+- **[Citrix](skills/uipath-coded-workflows/references/it-automations/citrix/citrix.md)** - Citrix virtual desktop automation
+- **[Hyper-V](skills/uipath-coded-workflows/references/it-automations/hyperv/hyperv.md)** - Hyper-V management
 
 ### Core Activities
 - **[System](skills/uipath-coded-workflows/references/system/system.md)** - Orchestrator queues, assets, and storage

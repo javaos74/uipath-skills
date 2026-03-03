@@ -112,18 +112,18 @@ Choose your task to find the right reference files:
 | **Write UI automation** | [ui-automation.md](references/ui-automation/ui-automation.md) → [operations-guide.md § Indicate](references/operations-guide.md) |
 | **Use Excel/Word/Mail/etc.** | Service table below → activity reference in `references/<service>/` (e.g. [excel/](references/excel/excel.md), [word/](references/word/word.md), [mail/](references/mail/mail.md), [powerpoint/](references/powerpoint/powerpoint.md)) |
 | **Use Office 365 / Google** | Service table below → [codedworkflow-reference.md § Integration Service](references/codedworkflow-reference.md) |
-| **Use Azure services** | Service table below → [azure/](references/azure/azure.md) |
-| **Use Google Cloud (GCP)** | Service table below → [google-cloud/](references/google-cloud/google-cloud.md) |
-| **Use Exchange Server** | Service table below → [exchange-server/](references/exchange-server/exchange-server.md) |
-| **Use System Center** | Service table below → [system-center/](references/system-center/system-center.md) |
-| **Use Amazon Web Services** | Service table below → [amazon-web-services/](references/amazon-web-services/amazon-web-services.md) |
-| **Use Amazon WorkSpaces** | Service table below → [amazon-workspaces/](references/amazon-workspaces/amazon-workspaces.md) |
-| **Use Azure AD** | Service table below → [azure-active-directory/](references/azure-active-directory/azure-active-directory.md) |
-| **Use Azure WVD** | Service table below → [azure-wvd/](references/azure-wvd/azure-wvd.md) |
-| **Use Active Directory** | Service table below → [active-directory/](references/active-directory/active-directory.md) |
-| **Use Citrix** | Service table below → [citrix/](references/citrix/citrix.md) |
-| **Use Hyper-V** | Service table below → [hyperv/](references/hyperv/hyperv.md) |
-| **Use NetIQ eDirectory** | Service table below → [netiq-edirectory/](references/netiq-edirectory/netiq-edirectory.md) |
+| **Use Azure services** | Service table below → [azure/](references/it-automations/azure/azure.md) |
+| **Use Google Cloud (GCP)** | Service table below → [google-cloud/](references/it-automations/google-cloud/google-cloud.md) |
+| **Use Exchange Server** | Service table below → [exchange-server/](references/it-automations/exchange-server/exchange-server.md) |
+| **Use System Center** | Service table below → [system-center/](references/it-automations/system-center/system-center.md) |
+| **Use Amazon Web Services** | Service table below → [amazon-web-services/](references/it-automations/amazon-web-services/amazon-web-services.md) |
+| **Use Amazon WorkSpaces** | Service table below → [amazon-workspaces/](references/it-automations/amazon-workspaces/amazon-workspaces.md) |
+| **Use Azure AD** | Service table below → [azure-active-directory/](references/it-automations/azure-active-directory/azure-active-directory.md) |
+| **Use Azure WVD** | Service table below → [azure-wvd/](references/it-automations/azure-wvd/azure-wvd.md) |
+| **Use Active Directory** | Service table below → [active-directory/](references/it-automations/active-directory/active-directory.md) |
+| **Use Citrix** | Service table below → [citrix/](references/it-automations/citrix/citrix.md) |
+| **Use Hyper-V** | Service table below → [hyperv/](references/it-automations/hyperv/hyperv.md) |
+| **Use NetIQ eDirectory** | Service table below → [netiq-edirectory/](references/it-automations/netiq-edirectory/netiq-edirectory.md) |
 | **Build/run/validate** | [uipcli-guide.md](references/uipcli-guide.md) |
 | **Add a NuGet package** | [operations-guide.md § Add Dependency](references/operations-guide.md) → [third-party-packages-guide.md](references/third-party-packages-guide.md) |
 | **Troubleshoot errors** | [coding-guidelines.md § Common Issues](references/coding-guidelines.md) |
@@ -167,18 +167,18 @@ These packages provide services for cloud platforms, virtualization, directory s
 
 | Service Property | Required Package in `project.json` | API Reference |
 |-----------------|-------------------------------------|---------------|
-| `azure` | `UiPath.Azure.Activities` | [azure/](references/azure/azure.md) |
-| `gcp` | `UiPath.GoogleCloud.Activities` | [google-cloud/](references/google-cloud/google-cloud.md) |
-| `exchangeserver` | `UiPath.ExchangeServer.Activities` | [exchange-server/](references/exchange-server/exchange-server.md) |
-| `systemCenter` | `UiPath.SystemCenter.Activities` | [system-center/](references/system-center/system-center.md) |
-| `aws` | `UiPath.AmazonWebServices.Activities` | [amazon-web-services/](references/amazon-web-services/amazon-web-services.md) |
-| `awrks` | `UiPath.Amazon.Workspaces.Activities` | [amazon-workspaces/](references/amazon-workspaces/amazon-workspaces.md) |
-| `azureAD` | `UiPath.AzureActiveDirectory.Activities` | [azure-active-directory/](references/azure-active-directory/azure-active-directory.md) |
-| `azureWVD` | `UiPath.AzureWVD.Activities` | [azure-wvd/](references/azure-wvd/azure-wvd.md) |
-| `activeDirectoryDomainServices` | `UiPath.ActiveDirectory.Activities` | [active-directory/](references/active-directory/active-directory.md) |
-| `citrix` | `UiPath.Citrix.Activities` | [citrix/](references/citrix/citrix.md) |
-| `hyperv` | `UiPath.HyperV.Activities` | [hyperv/](references/hyperv/hyperv.md) |
-| `netiq` | `UiPath.NetIQeDirectory.Activities` | [netiq-edirectory/](references/netiq-edirectory/netiq-edirectory.md) |
+| `azure` | `UiPath.Azure.Activities` | [azure/](references/it-automations/azure/azure.md) |
+| `gcp` | `UiPath.GoogleCloud.Activities` | [google-cloud/](references/it-automations/google-cloud/google-cloud.md) |
+| `exchangeserver` | `UiPath.ExchangeServer.Activities` | [exchange-server/](references/it-automations/exchange-server/exchange-server.md) |
+| `systemCenter` | `UiPath.SystemCenter.Activities` | [system-center/](references/it-automations/system-center/system-center.md) |
+| `aws` | `UiPath.AmazonWebServices.Activities` | [amazon-web-services/](references/it-automations/amazon-web-services/amazon-web-services.md) |
+| `awrks` | `UiPath.Amazon.Workspaces.Activities` | [amazon-workspaces/](references/it-automations/amazon-workspaces/amazon-workspaces.md) |
+| `azureAD` | `UiPath.AzureActiveDirectory.Activities` | [azure-active-directory/](references/it-automations/azure-active-directory/azure-active-directory.md) |
+| `azureWVD` | `UiPath.AzureWVD.Activities` | [azure-wvd/](references/it-automations/azure-wvd/azure-wvd.md) |
+| `activeDirectoryDomainServices` | `UiPath.ActiveDirectory.Activities` | [active-directory/](references/it-automations/active-directory/active-directory.md) |
+| `citrix` | `UiPath.Citrix.Activities` | [citrix/](references/it-automations/citrix/citrix.md) |
+| `hyperv` | `UiPath.HyperV.Activities` | [hyperv/](references/it-automations/hyperv/hyperv.md) |
+| `netiq` | `UiPath.NetIQeDirectory.Activities` | [netiq-edirectory/](references/it-automations/netiq-edirectory/netiq-edirectory.md) |
 
 > **Note:** The `office365` and `google` services require **Integration Service connections** configured in UiPath Automation Cloud. They inject both a service property (`office365` / `google`) and a `connections` property for accessing configured connection instances. `office365` provides Mail, Calendar, Excel (cloud), OneDrive, and SharePoint via Microsoft Graph API. `google` provides Gmail, Google Calendar, Google Drive, Google Sheets, and Google Docs via Google Workspace APIs. Both use OAuth tokens managed by Integration Service — see [references/codedworkflow-reference.md § Integration Service Connections](references/codedworkflow-reference.md).
 
@@ -232,10 +232,10 @@ Activity and service references live in `references/<service>/` — each contain
 
 Available reference folders:
 - **Document & productivity:** [excel/](references/excel/excel.md), [word/](references/word/word.md), [powerpoint/](references/powerpoint/powerpoint.md), [mail/](references/mail/mail.md), [office365/](references/office365/office365.md), [gsuite/](references/gsuite/gsuite.md)
-- **Cloud platforms:** [azure/](references/azure/azure.md), [google-cloud/](references/google-cloud/google-cloud.md), [amazon-web-services/](references/amazon-web-services/amazon-web-services.md)
-- **Virtualization & infrastructure:** [amazon-workspaces/](references/amazon-workspaces/amazon-workspaces.md), [azure-wvd/](references/azure-wvd/azure-wvd.md), [citrix/](references/citrix/citrix.md), [hyperv/](references/hyperv/hyperv.md)
-- **Identity & directory:** [azure-active-directory/](references/azure-active-directory/azure-active-directory.md), [active-directory/](references/active-directory/active-directory.md), [netiq-edirectory/](references/netiq-edirectory/netiq-edirectory.md)
-- **IT automation:** [exchange-server/](references/exchange-server/exchange-server.md), [system-center/](references/system-center/system-center.md)
+- **Cloud platforms:** [azure/](references/it-automations/azure/azure.md), [google-cloud/](references/it-automations/google-cloud/google-cloud.md), [amazon-web-services/](references/it-automations/amazon-web-services/amazon-web-services.md)
+- **Virtualization & infrastructure:** [amazon-workspaces/](references/it-automations/amazon-workspaces/amazon-workspaces.md), [azure-wvd/](references/it-automations/azure-wvd/azure-wvd.md), [citrix/](references/it-automations/citrix/citrix.md), [hyperv/](references/it-automations/hyperv/hyperv.md)
+- **Identity & directory:** [azure-active-directory/](references/it-automations/azure-active-directory/azure-active-directory.md), [active-directory/](references/it-automations/active-directory/active-directory.md), [netiq-edirectory/](references/it-automations/netiq-edirectory/netiq-edirectory.md)
+- **IT automation:** [exchange-server/](references/it-automations/exchange-server/exchange-server.md), [system-center/](references/it-automations/system-center/system-center.md)
 - **Core:** [system/](references/system/system.md), [testing/](references/testing/testing.md), [ui-automation/](references/ui-automation/ui-automation.md)
 
 ## Completion Output
