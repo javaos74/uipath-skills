@@ -1,0 +1,149 @@
+name: Skill Interruption Eval
+
+on:
+  pull_request:
+    paths:
+      - "plugins/uipath-coded-agents/**"
+      - "evals/skill-eval/**"
+
+jobs:
+  eval:
+    name: Skill eval — ${{ matrix.skill }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false   # run all skills even if one fails
+      matrix:
+        include:
+          - skill: uipath
+            cases: uipath-no-framework
+          - skill: build
+            cases: build-celsius-conversion,build-fibonacci
+          - skill: authentication
+            cases: authentication-client-credentials
+          - skill: langgraph
+            cases: langgraph-basic-classifier,langgraph-hitl-invoice,langgraph-rag-context-grounding,langgraph-multiagent-supervisor
+          - skill: llamaindex
+            cases: llamaindex-travel-rag
+          - skill: openai-agents
+            cases: openai-agents-support-triage
+          - skill: evaluate
+            cases: evaluate-calculator-agent
+          - skill: execute
+            cases: execute-run-agent
+          - skill: deploy
+            cases: deploy-to-orchestrator
+          - skill: file-sync
+            cases: file-sync-push
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install claude CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install plugin
+        run: claude plugin install ./plugins/uipath-coded-agents --yes
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Run eval
+        id: run_eval
+        working-directory: evals/skill-eval
+        run: |
+          python harness.py \
+            --cases "${{ matrix.cases }}" \
+            --output "results-${{ matrix.skill }}.json"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Upload results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-eval-results-${{ matrix.skill }}
+          path: evals/skill-eval/results-${{ matrix.skill }}.json
+          if-no-files-found: warn
+
+  report:
+    name: Post PR comment
+    runs-on: ubuntu-latest
+    needs: eval
+    if: always() && github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download all result artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: skill-eval-results-*
+          path: evals/skill-eval/artifacts
+          merge-multiple: false
+
+      - name: Merge results into single file
+        working-directory: evals/skill-eval
+        run: |
+          python - <<'EOF'
+          import json, glob, pathlib
+
+          all_results = []
+          for f in sorted(glob.glob("artifacts/*/results-*.json")):
+              all_results.extend(json.loads(pathlib.Path(f).read_text()))
+
+          pathlib.Path("skill-eval-results.json").write_text(
+              json.dumps(all_results, indent=2)
+          )
+          print(f"Merged {len(all_results)} result(s) from {len(glob.glob('artifacts/*/results-*.json'))} file(s)")
+          EOF
+
+      - name: Generate PR comment
+        working-directory: evals/skill-eval
+        run: python report.py skill-eval-results.json > pr-comment.md
+
+      - name: Post comment to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('evals/skill-eval/pr-comment.md', 'utf8');
+
+            // Find existing skill-eval comment and update it, or create new one
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c =>
+              c.user.login === 'github-actions[bot]' &&
+              c.body.startsWith('## Skill Eval Results')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Upload merged results artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-eval-results
+          path: evals/skill-eval/skill-eval-results.json

@@ -1,0 +1,28 @@
+name: Validate Plugin Structure
+
+on:
+  pull_request:
+    paths:
+      - "plugins/uipath-coded-agents/**"
+      - ".claude-plugin/marketplace.json"
+      - "scripts/validate_plugin.py"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/uipath-coded-agents/**"
+      - ".claude-plugin/marketplace.json"
+
+jobs:
+  validate:
+    name: Structural validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run plugin validator
+        run: python scripts/validate_plugin.py
