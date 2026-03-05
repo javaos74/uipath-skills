@@ -468,7 +468,7 @@ The `uipath-langchain` package provides UiPath-specific LangChain tools:
 
 ## Next Steps
 
-- **[Agent Patterns](/uipath-coded-agents:build)** — Architecture patterns with full code examples
+- **[Agent Patterns](../../build/references/agent-patterns.md)** — Architecture patterns with full code examples
 - **[Context Grounding](context-grounding.md)** — Ground LLM responses in organization data with semantic search
 
 ### Pause and Resume Workflows
@@ -484,6 +484,6 @@ These guides use the interrupt/resume pattern to pause agent execution for exter
 
 ### Deployment and Operations
 
-- **[SDK Services](/uipath-coded-agents:build)** — Use UiPath platform services in your graph nodes
-- **[Tracing](/uipath-coded-agents:build)** — Advanced tracing for helper functions outside the graph
-- **[Deployment](/uipath-coded-agents:deploy)** — Package and publish your LangGraph agent
+- **[SDK Services](../../build/references/sdk-services.md)** — Use UiPath platform services in your graph nodes
+- **[Tracing](../../build/references/tracing.md)** — Advanced tracing for helper functions outside the graph
+- **[Deployment](../../deploy/references/deployment.md)** — Package and publish your LangGraph agent

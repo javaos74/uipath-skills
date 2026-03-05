@@ -463,7 +463,7 @@ def main() -> Agent:
 
 ## Next Steps
 
-- **[Agent Patterns](/uipath-coded-agents:build)** — Architecture patterns with full code examples
-- **[SDK Services](/uipath-coded-agents:build)** — Use UiPath platform services in your agent tools
-- **[Tracing](/uipath-coded-agents:build)** — Advanced tracing for helper functions
-- **[Deployment](/uipath-coded-agents:deploy)** — Package and publish your OpenAI Agents agent
+- **[Agent Patterns](../../build/references/agent-patterns.md)** — Architecture patterns with full code examples
+- **[SDK Services](../../build/references/sdk-services.md)** — Use UiPath platform services in your agent tools
+- **[Tracing](../../build/references/tracing.md)** — Advanced tracing for helper functions
+- **[Deployment](../../deploy/references/deployment.md)** — Package and publish your OpenAI Agents agent

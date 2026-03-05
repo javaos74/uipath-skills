@@ -132,7 +132,7 @@ Run `uv run uipath init` to generate `entry-points.json`, `uipath.json`, `bindin
 
 **This step is required.** Every agent must have a basic smoke evaluation set to verify it works. Create `evaluations/eval-sets/smoke-test.json` with 2-3 simple test cases covering the happy path.
 
-See [Evaluating Agents](/uipath-coded-agents:evaluate) for the file format and available evaluators. Choose evaluators based on agent type:
+See [Evaluation Sets](../../evaluate/references/evaluations/evaluation-sets.md) for the file format and [Evaluators Guide](../../evaluate/references/evaluations/evaluators/README.md) for available evaluators. Choose evaluators based on agent type:
 - **Deterministic agents** → `ExactMatchEvaluator`
 - **LLM/Natural language agents** → `LLMJudgeOutputEvaluator` or `ContainsEvaluator`
 
@@ -163,7 +163,7 @@ When the user requests deployment:
    uv run uipath deploy
    ```
 
-See [Deployment](/uipath-coded-agents:deploy) for details on pack, publish, and invoke workflows.
+See [Deployment](../../deploy/references/deployment.md) for details on pack, publish, and invoke workflows.
 
 ## Generated Template Details
 
