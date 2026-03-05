@@ -288,13 +288,11 @@ The evaluator will raise `UiPathEvaluationError` if:
 
 ## Related Evaluators
 
-- [Tool Call Evaluators](tool-calls.md): For strict deterministic sequence validation
 - [LLM Judge Output Evaluator](../output-based/llm-judge-output.md): For evaluating outputs instead of processes
 - [Output-Based Evaluators](../output-based/index.md): For final result validation
 
 ## Next Steps
 
 - [Back to Trajectory Overview](index.md)
-- [Tool Call Evaluators](tool-calls.md)
 - [Running Evaluations](../../running-evaluations.md)
 - [Best Practices](../../best-practices.md)

@@ -227,7 +227,7 @@ Each evaluator has different required fields:
 }
 ```
 
-See [Evaluators Guide](evaluators.md) for detailed field documentation.
+See [Evaluators Guide](evaluators/README.md) for detailed field documentation.
 
 #### mockingStrategy (optional)
 
@@ -513,5 +513,5 @@ Reference it in your eval set as:
 ## Next Steps
 
 - [Running Evaluations](running-evaluations.md) - Execute your evaluation sets
-- [Evaluators Guide](evaluators.md) - Learn more about evaluator types
+- [Evaluators Guide](evaluators/README.md) - Learn more about evaluator types
 - [Creating Evaluations](creating-evaluations.md) - Workflow for creating test cases

@@ -20,7 +20,7 @@ See [Output-Based Overview](output-based/index.md) for comparison and selection 
 Examine execution patterns and decision sequences during agent execution:
 
 - **[LLM Judge Trajectory Evaluator](trajectory-based/trajectory.md)** - Validate execution paths and decision-making
-- **[Tool Call Evaluators](trajectory-based/tool-calls.md)** - Validate tool sequences, counts, arguments, and outputs
+- **[LLM Judge Trajectory Evaluator](trajectory-based/trajectory.md)** - Validate tool sequences, counts, arguments, and outputs using LLM judgment
 
 See [Trajectory-Based Overview](trajectory-based/index.md) for detailed information.
 

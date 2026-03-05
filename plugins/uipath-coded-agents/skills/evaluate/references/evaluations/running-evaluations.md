@@ -427,6 +427,6 @@ Benefits:
 ## Next Steps
 
 - [Creating Evaluations](creating-evaluations.md) - Create more test cases
-- [Evaluators Guide](evaluators.md) - Learn about evaluator types
+- [Evaluators Guide](evaluators/README.md) - Learn about evaluator types
 - [Evaluation Sets](evaluation-sets.md) - Structure evaluation set files
 - [Best Practices](best-practices.md) - Tips for effective testing

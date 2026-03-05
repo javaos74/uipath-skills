@@ -363,7 +363,7 @@ FunctionAgent uses a default input/output schema:
 
 ## Next Steps
 
-- **[Agent Patterns](agent-patterns.md)** — Architecture patterns with full code examples
-- **[SDK Services](sdk-services.md)** — Use UiPath platform services in your workflow steps
-- **[Tracing](tracing.md)** — Advanced tracing for helper functions outside the workflow
-- **[Deployment](deployment.md)** — Package and publish your LlamaIndex agent
+- **[Agent Patterns](/uipath-coded-agents:build)** — Architecture patterns with full code examples
+- **[SDK Services](/uipath-coded-agents:build)** — Use UiPath platform services in your workflow steps
+- **[Tracing](/uipath-coded-agents:build)** — Advanced tracing for helper functions outside the workflow
+- **[Deployment](/uipath-coded-agents:deploy)** — Package and publish your LlamaIndex agent

@@ -2,7 +2,7 @@
 
 A lightweight integration for running OpenAI Agents SDK agents on the UiPath platform. This guide covers project structure, entrypoint detection, LLM models, and common pitfalls.
 
-> **Note:** This is a streamlined integration focused on agent execution and streaming. It does **not** support Human-in-the-Loop (HITL), state persistence/checkpointing, or UiPath process invocation from within agents. For workflows that need those features, use the [LangGraph](langgraph-integration.md) or [LlamaIndex](llamaindex-integration.md) integrations instead.
+> **Note:** This is a streamlined integration focused on agent execution and streaming. It does **not** support Human-in-the-Loop (HITL), state persistence/checkpointing, or UiPath process invocation from within agents. For workflows that need those features, use the [LangGraph](/uipath-coded-agents:langgraph) or [LlamaIndex](/uipath-coded-agents:llamaindex) integrations instead.
 
 ## Scaffolding a New Project
 
@@ -463,7 +463,7 @@ def main() -> Agent:
 
 ## Next Steps
 
-- **[Agent Patterns](agent-patterns.md)** — Architecture patterns with full code examples
-- **[SDK Services](sdk-services.md)** — Use UiPath platform services in your agent tools
-- **[Tracing](tracing.md)** — Advanced tracing for helper functions
-- **[Deployment](deployment.md)** — Package and publish your OpenAI Agents agent
+- **[Agent Patterns](/uipath-coded-agents:build)** — Architecture patterns with full code examples
+- **[SDK Services](/uipath-coded-agents:build)** — Use UiPath platform services in your agent tools
+- **[Tracing](/uipath-coded-agents:build)** — Advanced tracing for helper functions
+- **[Deployment](/uipath-coded-agents:deploy)** — Package and publish your OpenAI Agents agent
