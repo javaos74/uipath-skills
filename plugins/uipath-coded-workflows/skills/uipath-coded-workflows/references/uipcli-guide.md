@@ -30,7 +30,7 @@ Every `rpa-tool` invocation accepts these flags:
 2. Default install: `C:\Program Files\UiPath\Studio` (or `x86` variant) if `UiPathStudio.exe` exists there.
 3. Dev build: Studio source tree build output (e.g. `<repo-root>\Output\bin\Debug`).
 
-> **Error `"Studio X.X.X does not have interop support"`** means the detected Studio is too old. Stop calling `rpa-tool` and inform the user to update Studio.
+> **Error `"Studio X.X.X does not have interop support"` or `"Requires Studio 26.2+"`** means the detected Studio is too old. Stop calling `rpa-tool` and inform the user to update Studio.
 
 ### PROJECT_DIR Resolution
 
