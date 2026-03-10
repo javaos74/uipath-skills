@@ -1,77 +1,44 @@
 #!/bin/bash
-# Ensures @uipath/uipcli is installed globally.
+# Ensures @uipath/uipcli and @uipath/rpa-tool are installed globally.
 # Runs once per session via the SessionStart plugin hook.
 # If npm is missing, attempts to install Node.js first.
 # Supports Windows, macOS, and Linux.
 
-# Already installed — nothing to do
-if command -v uipcli &> /dev/null; then
-  exit 0
-fi
+set -e
 
-# Detect OS
-OS="$(uname -s 2>/dev/null || echo "Windows")"
-case "$OS" in
-  Linux*)  PLATFORM="linux" ;;
-  Darwin*) PLATFORM="mac" ;;
-  MINGW*|MSYS*|CYGWIN*|Windows*) PLATFORM="windows" ;;
-  *)       PLATFORM="unknown" ;;
-esac
+# ── helpers ──────────────────────────────────────────────────────────
+ensure_npm() {
+  command -v npm &> /dev/null && return
 
-# Ensure npm is available, install Node.js if not
-if ! command -v npm &> /dev/null; then
   echo "npm not found, attempting to install Node.js..." >&2
 
-  case "$PLATFORM" in
-    windows)
-      if command -v winget &> /dev/null; then
-        winget install --id OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements 2>&1
-      elif command -v choco &> /dev/null; then
-        choco install nodejs-lts -y 2>&1
-      elif command -v nvm &> /dev/null; then
-        nvm install --lts 2>&1
-        nvm use --lts 2>&1
-      else
-        echo "Cannot install Node.js automatically. No package manager found (winget, choco, or nvm)." >&2
-        echo "Please install Node.js from https://nodejs.org and restart your session." >&2
-        exit 2
-      fi
+  local os
+  os="$(uname -s 2>/dev/null || echo "Windows")"
+
+  case "$os" in
+    MINGW*|MSYS*|CYGWIN*|Windows*)
+      if   command -v winget &> /dev/null; then
+        winget install --id OpenJS.NodeJS.LTS \
+          --accept-source-agreements --accept-package-agreements 2>&1
+      elif command -v choco  &> /dev/null; then choco install nodejs-lts -y 2>&1
+      elif command -v nvm    &> /dev/null; then nvm install --lts 2>&1 && nvm use --lts 2>&1
+      else fail "No package manager found (winget, choco, or nvm)."; fi
       export PATH="$PATH:/c/Program Files/nodejs:/c/ProgramData/nvm"
       ;;
-    mac)
-      if command -v brew &> /dev/null; then
-        brew install node 2>&1
-      elif command -v nvm &> /dev/null; then
-        nvm install --lts 2>&1
-        nvm use --lts 2>&1
-      else
-        echo "Cannot install Node.js automatically. No package manager found (brew or nvm)." >&2
-        echo "Please install Node.js from https://nodejs.org and restart your session." >&2
-        exit 2
-      fi
+    Darwin*)
+      if   command -v brew &> /dev/null; then brew install node 2>&1
+      elif command -v nvm  &> /dev/null; then nvm install --lts 2>&1 && nvm use --lts 2>&1
+      else fail "No package manager found (brew or nvm)."; fi
       ;;
-    linux)
-      if command -v apt-get &> /dev/null; then
-        sudo apt-get update -y && sudo apt-get install -y nodejs npm 2>&1
-      elif command -v dnf &> /dev/null; then
-        sudo dnf install -y nodejs npm 2>&1
-      elif command -v yum &> /dev/null; then
-        sudo yum install -y nodejs npm 2>&1
-      elif command -v pacman &> /dev/null; then
-        sudo pacman -Sy --noconfirm nodejs npm 2>&1
-      elif command -v nvm &> /dev/null; then
-        nvm install --lts 2>&1
-        nvm use --lts 2>&1
-      else
-        echo "Cannot install Node.js automatically. No supported package manager found." >&2
-        echo "Please install Node.js from https://nodejs.org and restart your session." >&2
-        exit 2
-      fi
+    Linux*)
+      if   command -v apt-get &> /dev/null; then sudo apt-get update -y && sudo apt-get install -y nodejs npm 2>&1
+      elif command -v dnf     &> /dev/null; then sudo dnf install -y nodejs npm 2>&1
+      elif command -v yum     &> /dev/null; then sudo yum install -y nodejs npm 2>&1
+      elif command -v pacman  &> /dev/null; then sudo pacman -Sy --noconfirm nodejs npm 2>&1
+      elif command -v nvm     &> /dev/null; then nvm install --lts 2>&1 && nvm use --lts 2>&1
+      else fail "No supported package manager found."; fi
       ;;
-    *)
-      echo "Unsupported platform. Please install Node.js from https://nodejs.org" >&2
-      exit 2
-      ;;
+    *) fail "Unsupported platform." ;;
   esac
 
   hash -r 2>/dev/null
@@ -81,15 +48,40 @@ if ! command -v npm &> /dev/null; then
     echo "Please restart your terminal, then run: npm install -g @uipath/uipcli" >&2
     exit 2
   fi
-fi
+}
 
-# Install uipcli
-echo "Installing @uipath/uipcli globally..." >&2
-npm install -g @uipath/uipcli 2>&1
-
-if [ $? -ne 0 ]; then
-  echo "Failed to install @uipath/uipcli. Please run: npm install -g @uipath/uipcli" >&2
+fail() {
+  echo "$1" >&2
+  echo "Please install Node.js from https://nodejs.org and restart your session." >&2
   exit 2
-fi
+}
 
-exit 0
+ensure_npm_package() {
+  local pkg="$1"
+  echo "Installing or updating $pkg globally..." >&2
+
+  if ! npm install -g "$pkg" 2>&1; then
+    echo "Failed to install $pkg. Please run: npm install -g $pkg" >&2
+    exit 2
+  fi
+}
+
+ensure_uipcli_tool() {
+  local pkg="$1"
+  echo "Installing or updating uipcli tool ($pkg)..." >&2
+
+  local output
+  output="$(uipcli tools install "$pkg" 2>&1)"
+
+  if echo "$output" | grep -qi "error"; then
+    echo "Failed to install uipcli tool $pkg:" >&2
+    echo "$output" >&2
+    echo "Please run manually: uipcli tools install $pkg" >&2
+    exit 2
+  fi
+}
+
+# ── main ─────────────────────────────────────────────────────────────
+ensure_npm
+ensure_npm_package @uipath/uipcli
+ensure_uipcli_tool @uipath/rpa-tool
