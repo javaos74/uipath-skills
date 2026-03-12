@@ -6,25 +6,19 @@ Resources represent the data objects available through a connector (e.g., Salesf
 
 ## List Resources
 
-**Always pass `--connection-id` and `--operation`** to get accurate results including custom objects. Without these, the response may be incomplete and require retries.
+**Always pass `--connection-id` and `--operation`** to get accurate results including custom objects in a single call.
 
-> **Caching:** Results are cached locally. If expected resources are not found, retry with `--refresh` to bypass the cache and fetch the latest from the API.
+- `--connection-id` — Returns custom objects specific to that connection
+- `--operation` — Filters to resources that support the intended action
 
 ```bash
-# Recommended: always include connection-id and operation
 uipcli is resources list "<connector-key>" \
   --connection-id "<id>" \
   --operation <Create|List|Retrieve|Update|Delete|Replace> \
   --format json
-
-# Force refresh (bypass cache)
-uipcli is resources list "<connector-key>" \
-  --connection-id "<id>" \
-  --operation Create \
-  --refresh --format json
 ```
 
-> **Why both flags?** `--connection-id` returns custom objects specific to that connection. `--operation` filters to resources that support the intended action. Together they give you the exact list you need in a single call — no retries.
+> Results are cached locally. If results seem stale or empty, retry **once** with `--refresh`. Run `uipcli is resources list --help` for all available flags.
 
 ### Response Fields
 
@@ -42,24 +36,17 @@ uipcli is resources list "<connector-key>" \
 
 **Always pass `--connection-id` and `--operation`** to get the exact field schema you need.
 
-- **`--connection-id`** — Required to include custom fields specific to that connection. Without it, only standard fields are returned and a warning is shown.
-- **`--operation`** — Returns only the subset of metadata relevant to that operation (e.g., required and optional fields for Create) instead of the entire metadata blob. Without it, you get a summary of available operations and a hint to specify one.
-
-> **Caching:** When `--operation` is provided, results are cached locally. Subsequent calls with the same connector/connection/object/operation return from cache instantly. If expected fields are missing or seem stale, retry with `--refresh` to bypass the cache and fetch the latest from the API.
+- `--connection-id` — Returns custom fields specific to that connection. Without it, only standard fields are returned.
+- `--operation` — Returns only the relevant field subset (required/optional for that operation) instead of full metadata. Without it, you get a summary of available operations.
 
 ```bash
-# Recommended: always include connection-id and operation
 uipcli is resources describe "<connector-key>" "<object-name>" \
   --connection-id "<id>" \
   --operation Create \
   --format json
-
-# Force refresh (bypass cache)
-uipcli is resources describe "<connector-key>" "<object-name>" \
-  --connection-id "<id>" \
-  --operation Create \
-  --refresh --format json
 ```
+
+> Results are cached locally when `--operation` is provided. If fields seem stale, retry **once** with `--refresh`. Run `uipcli is resources describe --help` for all available flags.
 
 ### Describe Response
 

@@ -1,6 +1,6 @@
 ---
 name: uipath-development
-description: UiPath development environment assistant. Covers authentication, Orchestrator management (folders, assets), solution lifecycle (pack, publish, deploy), Integration Service, CLI tools, and general UiPath platform knowledge. Use when the user asks about setting up their environment, managing Orchestrator resources, deploying solutions, or using uipcli commands.
+description: UiPath development environment assistant. Covers authentication, Orchestrator management (folders, assets), solution lifecycle (pack, publish, deploy), CLI tools, and general UiPath platform knowledge. Use when the user asks about setting up their environment, managing Orchestrator resources, deploying solutions, or using uipcli commands.
 allowed-tools: Bash, Read, Write, Glob, Grep
 user-invocable: true
 ---
@@ -15,7 +15,6 @@ Comprehensive guide for setting up and managing UiPath development environments,
 - User wants to **manage Orchestrator folders** (list, create, edit, move, delete)
 - User wants to **manage Orchestrator assets** (list, create, get, delete)
 - User wants to **work with solutions** (create, pack, publish, deploy, activate)
-- User wants to **use Integration Service** (connectors, connections, activities, resources)
 - User asks about **UiPath platform concepts** (tenants, folders, robots, queues, packages)
 - User wants to **install or manage CLI tools** (search, install, upgrade)
 - User wants to set up a **CI/CD pipeline** for UiPath automation projects
@@ -128,7 +127,6 @@ Choose the appropriate operation from the Task Navigation table below.
 | **Understand Orchestrator concepts** | [references/orchestrator-guide.md - Concepts](references/orchestrator-guide.md) |
 | **Create / pack / publish solutions** | [references/solution-guide.md](references/solution-guide.md) |
 | **Deploy / activate solutions** | [references/solution-guide.md - Deploy](references/solution-guide.md) |
-| **Use Integration Service** | [/uipath:uipath-integration-service](/uipath:uipath-integration-service) (dedicated skill with full workflow) |
 | **Manage flow projects** | [references/uipcli-commands.md - Flow](references/uipcli-commands.md) |
 | **Install / manage CLI tools** | [references/uipcli-commands.md - Tools](references/uipcli-commands.md) |
 | **Set up CI/CD pipeline** | [references/solution-guide.md - CI/CD](references/solution-guide.md) |
@@ -294,5 +292,4 @@ The `X-UIPATH-OrganizationUnitId` header is the **folder ID** (get it from `orch
 - **[Complete CLI Command Reference](references/uipcli-commands.md)** — Every uipcli command with parameters
 - **[Orchestrator Guide](references/orchestrator-guide.md)** — Concepts, folders, assets, and planned features
 - **[Solution Guide](references/solution-guide.md)** — Solution lifecycle: create, pack, publish, deploy
-- **[Integration Service](/uipath:uipath-integration-service)** — Dedicated skill with full workflow, connectors, connections, activities, resources
 - **[Coded Workflows](/uipath-coded-workflows:uipath-coded-workflows)** — Building coded automation projects

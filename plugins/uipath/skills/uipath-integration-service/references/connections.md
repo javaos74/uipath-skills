@@ -7,23 +7,14 @@ Connections are authenticated sessions for a specific connector. They store cred
 ## List Connections
 
 ```bash
-# List all connections across all connectors
-uipcli is connections list --format json
-
 # List connections for a specific connector
 uipcli is connections list "<connector-key>" --format json
 
-# Filter by folder
-uipcli is connections list --folder-key "<GUID>" --format json
-
-# Filter by specific connection ID
-uipcli is connections list --connection-id "<ID>" --format json
-
-# Force refresh (bypass cache)
-uipcli is connections list "<connector-key>" --refresh --format json
+# List all connections across all connectors
+uipcli is connections list --format json
 ```
 
-> **Cache behavior:** Results are cached locally. If expected connections are not found, retry with `--refresh` to fetch latest from API.
+> Results are cached locally. If results seem stale or empty, retry **once** with `--refresh`. Run `uipcli is connections list --help` for all available flags (e.g., `--folder-key`, `--connection-id`).
 
 ### Response Fields
 
@@ -57,7 +48,7 @@ uipcli is connections list "<connector-key>" --refresh --format json
 3. If found → use it
 4. If not found → prompt user to choose from existing or create new
 
-> **NEVER guess or hallucinate connection IDs.** Always list and select from real data.
+> **NEVER fabricate connection IDs.** Always list and select from command output.
 
 ---
 

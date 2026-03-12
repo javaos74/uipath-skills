@@ -2,13 +2,17 @@
 
 This is the definitive guide for how a coding agent should execute Integration Service operations. Follow these steps in order every time the user asks to interact with an external service.
 
+## `--refresh` Rule (applies to all `list` commands)
+
+All `is` list commands (`connectors list`, `connections list`, `activities list`, `resources list`, `resources describe`) cache results locally. If results are missing or seem outdated, retry **once** with `--refresh` to bypass the cache. If still empty after refresh, the data genuinely does not exist — stop and inform the user. Never retry more than once.
+
+---
+
 ## Step 1: Find the Connector
 
 ```bash
-# Search for the vendor by name
+# Search for the vendor by name (add --refresh if results seem stale or empty)
 uipcli is connectors list --filter "<vendor>" --format json
-# If no results, retry with --refresh (cache may be stale)
-uipcli is connectors list --filter "<vendor>" --refresh --format json
 ```
 
 | Outcome | Action |
@@ -26,8 +30,6 @@ See [connectors.md](connectors.md) for full connector reference.
 
 ```bash
 uipcli is connections list "<connector-key>" --format json
-# If no results, retry with --refresh
-uipcli is connections list "<connector-key>" --refresh --format json
 ```
 
 **Decision logic:**
@@ -87,8 +89,6 @@ Once the connection is verified, discover available actions.
 
 ```bash
 uipcli is activities list "<connector-key>" --format json
-# If no results, retry with --refresh
-uipcli is activities list "<connector-key>" --refresh --format json
 ```
 
 Activities are pre-built actions (e.g., "Send Message" for Slack, "Create Issue" for Jira). Review the list to find the activity matching the user's intent.
@@ -98,7 +98,7 @@ For resource-based CRUD operations, also explore resources. **Always pass `--con
 - `--connection-id` — Returns custom objects/fields specific to that connection
 - `--operation` — For `list`: filters to resources supporting that action. For `describe`: returns only the relevant field subset (required/optional) instead of the entire metadata.
 
-Both commands cache results locally. If expected results are missing, retry with `--refresh`.
+Both commands cache results locally. See the `--refresh` rule above if results are stale or empty.
 
 ```bash
 uipcli is resources list "<connector-key>" \
@@ -120,9 +120,9 @@ See [activities.md](activities.md) and [resources.md](resources.md) for full ref
 
 | Rule | Rationale |
 |---|---|
-| **Use `--refresh` when results are missing** | Cache may be stale. Always retry with `--refresh` before concluding something doesn't exist. |
+| **Use `--refresh` once if results are stale or empty** | All `list` commands cache locally. Retry once with `--refresh`. If still empty, the data does not exist — do not loop. |
 | **Always ping before any operation** | A connection may report "Enabled" but be expired or revoked. |
-| **Never hallucinate IDs or names** | Always list real data first. Fabricated IDs cause silent failures. |
+| **Never fabricate IDs or names** | Always use values from command output. Fabricated IDs cause silent failures. |
 | **Prompt the user when multiple choices exist** | Don't assume which connection the user wants. Present options. |
 | **Prefer the default connection** | Pick `IsDefault: Yes` first, then first enabled connection. |
 

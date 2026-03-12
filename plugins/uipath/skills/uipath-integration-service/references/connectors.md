@@ -18,20 +18,11 @@ Integration Service (cloud.uipath.com)
 ## List Connectors
 
 ```bash
-uipcli is connectors list --format json
-```
-
-With filter:
-```bash
+# Basic listing with optional filter
 uipcli is connectors list --filter "salesforce" --format json
 ```
 
-Force refresh (bypass cache):
-```bash
-uipcli is connectors list --refresh --format json
-```
-
-> **Cache behavior:** Results are cached locally. If expected connectors are not found, retry with `--refresh` to fetch latest from API.
+> Results are cached locally. If results seem stale or empty, retry **once** with `--refresh`. Run `uipcli is connectors list --help` for all available flags.
 
 ### Response Fields
 
@@ -60,13 +51,12 @@ Returns full details including description, authentication types, categories, an
 When no native connector exists for a vendor, use the HTTP connector (`uipath-uipath-http`) to call REST APIs directly.
 
 ```bash
-# Search for vendor
-uipcli is connectors list --filter "apify" --refresh --format json
+# Search for vendor → not found → fall back to HTTP connector
+uipcli is connectors list --filter "apify" --format json
 # → No connectors found
 
-# Fall back to HTTP connector
-uipcli is connections list "uipath-uipath-http" --refresh --format json
-# → Look for a connection named after the vendor (e.g., "Apify")
+# List HTTP connections and look for one named after the vendor (e.g., "Apify")
+uipcli is connections list "uipath-uipath-http" --format json
 ```
 
 The HTTP connector supports generic HTTP requests (GET, POST, PUT, PATCH, DELETE) to any REST API. The connection stores the authentication configuration (API keys, OAuth tokens, base URL).

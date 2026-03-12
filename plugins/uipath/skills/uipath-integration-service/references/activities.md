@@ -10,12 +10,7 @@ Activities are pre-built actions available for each connector. These are the bui
 uipcli is activities list "<connector-key>" --format json
 ```
 
-Force refresh (bypass cache):
-```bash
-uipcli is activities list "<connector-key>" --refresh --format json
-```
-
-> **Cache behavior:** Results are cached locally. If expected activities are not found, retry with `--refresh` to fetch latest from API.
+> Results are cached locally. If results seem stale or empty, retry **once** with `--refresh`. Run `uipcli is activities list --help` for all available flags.
 
 This lists **non-trigger activities only** (actions the automation can perform, not event listeners).
 
