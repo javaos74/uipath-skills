@@ -2,29 +2,19 @@
 
 Connections are authenticated sessions for a specific connector. They store credentials and tokens, and can be shared across automations within a folder.
 
+> Full command syntax and options: [uipcli-commands.md — Integration Service](../uipcli-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
+
 ---
 
-## List Connections
-
-```bash
-# List connections for a specific connector
-uipcli is connections list "<connector-key>" --format json
-
-# List all connections across all connectors
-uipcli is connections list --format json
-```
-
-> Run `uipcli is connections list --help` for all flags.
-
-### Response Fields
+## Response Fields
 
 | Field | Description |
 |---|---|
-| `Id` | Connection ID (used in `--connection-id` for operations) |
+| **`Id`** | Connection ID (used in `--connection-id` for all operations) |
 | `Name` | Display name (e.g., "Salesforce Prod", "Apify") |
 | `ConnectorKey` | The connector this connection belongs to |
-| `State` | `Enabled` or other status. Only Enabled connections can be used. |
-| `IsDefault` | `Yes` or `No`. Prefer the default connection when multiple exist. |
+| **`State`** | `Enabled` or other status. Only Enabled connections can be used. |
+| **`IsDefault`** | `Yes` or `No`. Prefer the default connection when multiple exist. |
 | `Owner` | Who created the connection |
 | `Folder` | Folder this connection belongs to |
 
@@ -49,21 +39,3 @@ uipcli is connections list --format json
 4. If no match → present all existing HTTP connections and ask the user to choose, or offer to create a new one
 
 > **Note:** Name-based matching is best-effort. If connection names don't follow vendor naming conventions, present all HTTP connections to the user.
-
----
-
-## Create a Connection
-
-```bash
-uipcli is connections create "<connector-key>" --format json
-# Opens OAuth flow in browser. Add --no-browser for headless environments.
-```
-
----
-
-## Verify & Recover
-
-```bash
-uipcli is connections ping "<connection-id>" --format json
-uipcli is connections edit "<connection-id>" --format json   # Re-authenticate if ping fails
-```

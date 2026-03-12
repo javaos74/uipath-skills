@@ -2,65 +2,40 @@
 
 Resources represent the data objects available through a connector (e.g., Salesforce Account, Contact, Opportunity). Each resource supports a set of CRUD operations.
 
+> Full command syntax and options: [uipcli-commands.md — Integration Service](../uipcli-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
+
 ---
 
-## List Resources
+## Listing and Describing Resources
 
-**Always pass `--connection-id` and `--operation`** to get accurate results including custom objects in a single call.
+**Always pass `--connection-id` and `--operation`** to get accurate results:
 
-- `--connection-id` — Returns custom objects specific to that connection
-- `--operation` — Filters to resources that support the intended action
+- `--connection-id` — Returns custom objects/fields specific to that connection. Without it, only standard objects/fields are returned.
+- `--operation` — Filters to resources/fields relevant to the intended action. Without it on describe, you get a summary of available operations instead of field-level details.
 
-```bash
-uipcli is resources list "<connector-key>" \
-  --connection-id "<id>" \
-  --operation <Create|List|Retrieve|Update|Delete|Replace> \
-  --format json
-```
-
-> Run `uipcli is resources list --help` for all flags.
-
-### Response Fields
+## Response Fields
 
 | Field | Description |
 |---|---|
-| `Name` | Resource identifier (used in commands) |
+| **`Name`** | Resource identifier (used in commands) |
 | `DisplayName` | Human-readable name |
 | `Path` | API path for this resource |
 | `Type` | Resource type (standard, custom) |
 | `SubType` | Sub-type (e.g., method, entity) |
 
----
+## Describe Response
 
-## Describe a Resource
+When `--operation` is provided:
 
-**Always pass `--connection-id` and `--operation`** to get the exact field schema you need.
+| Section | Description |
+|---|---|
+| **requiredFields** | Fields that must be provided for this operation |
+| **optionalFields** | Fields that can optionally be provided |
+| **responseFields** | Fields returned in the response |
+| **referenceFields** | Fields that reference other objects (see below) |
+| **metadataFile** | Cached file path with full field details |
 
-- `--connection-id` — Returns custom fields specific to that connection. Without it, only standard fields are returned.
-- `--operation` — Returns only the relevant field subset (required/optional for that operation) instead of full metadata. Without it, you get a summary of available operations.
-
-```bash
-uipcli is resources describe "<connector-key>" "<object-name>" \
-  --connection-id "<id>" \
-  --operation Create \
-  --format json
-```
-
-> Run `uipcli is resources describe --help` for all flags.
-
-### Describe Response
-
-When `--operation` is provided, the describe command returns:
-- **requiredFields** — Fields that must be provided for this operation
-- **optionalFields** — Fields that can optionally be provided
-- **responseFields** — Fields returned in the response
-- **referenceFields** — Fields that reference other objects (see below)
-- **metadataFile** — Cached file path with full field details
-
-When `--operation` is omitted, it returns:
-- **availableOperations** — List of operations the resource supports (e.g., Create, List, Retrieve)
-- **files** — Cached file paths per operation for direct inspection
-- **hint** — Instruction to use `--operation` for field-level details
+When `--operation` is omitted, returns **availableOperations** and a hint to use `--operation` for field-level details.
 
 ---
 
@@ -101,41 +76,18 @@ uipcli is resources execute create "uipath-zoho-desk" "tickets" \
 
 ---
 
-## Resource Operations
-
-| Operation | CLI Verb | HTTP Method | Description |
-|---|---|---|---|
-| **List** | `list` | GET | Retrieve multiple records |
-| **Retrieve** | `get` | GET (by ID) | Get a single record by ID |
-| **Create** | `create` | POST | Create a new record |
-| **Update** | `update` | PATCH | Partial update of a record |
-| **Delete** | `delete` | DELETE | Delete a record |
-| **Replace** | `replace` | PUT | Full replacement of a record |
-
----
-
 ## Execute Operations
 
-All execute commands follow this pattern:
-
-```bash
-uipcli is resources execute <verb> "<connector-key>" "<object-name>" \
-  --connection-id "<CONNECTION_ID>" \
-  [--body '{"field": "value"}'] \
-  [--query "key=value&key=value"] \
-  --format json
-```
-
-| Verb | Requires `--body` | Requires `--query` | Use case |
+| Verb | Description | `--body` | `--query` |
 |---|---|---|---|
-| `create` | Yes | No | Create a new record |
-| `list` | No | Optional (`limit=10&offset=0`) | List multiple records |
-| `get` | No | Yes (`id=<RECORD_ID>`) | Get a single record by ID |
-| `update` | Yes | Yes (`id=<RECORD_ID>`) | Partial update of a record |
-| `replace` | Yes | Yes (`id=<RECORD_ID>`) | Full replacement of a record |
-| `delete` | No | Yes (`id=<RECORD_ID>`) | Delete a record |
+| `create` | Create a new record | Yes | No |
+| `list` | Retrieve multiple records | No | Optional (`limit=10&offset=0`) |
+| `get` | Get a single record by ID | No | Yes (`id=<RECORD_ID>`) |
+| `update` | Partial update (PATCH) | Yes | Yes (`id=<RECORD_ID>`) |
+| `delete` | Delete a record | No | Yes (`id=<RECORD_ID>`) |
+| `replace` | Full replacement (PUT) | Yes | Yes (`id=<RECORD_ID>`) |
 
-Run `uipcli is resources execute --help` for all available options.
+> **Update** (PATCH) = change specific fields. **Replace** (PUT) = overwrite entire record. Default to **Update** unless the user says "replace" or "overwrite".
 
 ---
 
@@ -148,9 +100,3 @@ uipcli is resources execute list "<connector-key>" "<object>" \
   --connection-id "<id>" --query "limit=50&offset=0" --format json
 # → next page: --query "limit=50&offset=50"
 ```
-
----
-
-## HTTP Connector
-
-The HTTP connector (`uipath-uipath-http`) has a single resource: `http-request`. See [connectors.md — HTTP Connector Fallback](connectors.md#http-connector-fallback) for body fields and usage.

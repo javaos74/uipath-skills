@@ -1,6 +1,8 @@
 # Integration Service
 
-Interact with external services through UiPath Integration Service — discover connectors, manage connections, explore activities, and execute operations via the `uipcli` CLI. Use `uipcli is <subcommand> --help` to discover available flags and options for any command.
+Interact with external services through UiPath Integration Service — discover connectors, manage connections, and execute operations via the `uipcli` CLI.
+
+> Full command syntax and options: [uipcli-commands.md — Integration Service](../uipcli-commands.md#integration-service-is). Domain-specific usage patterns are shown inline in each reference file.
 
 ## Prerequisites
 
@@ -20,50 +22,31 @@ Interact with external services through UiPath Integration Service — discover 
 
 All `uipcli is` commands support `--format <format>` (table, json, yaml, plain).
 
-**Always use `--format json`** for commands whose output you need to parse or act on. JSON output is structured and unambiguous.
+**Always use `--format json`** for commands whose output you need to parse or act on.
 
 ---
 
-## Task Navigation
+## Loading Strategy
 
-| I need to... | Read these |
+- **Always load this file first** — it contains the principles and routing.
+- **Load [agent-workflow.md](agent-workflow.md)** when executing a task that interacts with an external service.
+- **Load on demand by workflow step**:
+  - Step 1 (connector not found) → [connectors.md](connectors.md)
+  - Step 2 (connection selection) → [connections.md](connections.md)
+  - Step 4 (discover activities) → [activities.md](activities.md)
+  - Steps 4–6 (resources) → [resources.md](resources.md)
+
+## Reference Files
+
+| I need to... | Read |
 |---|---|
-| **Understand the full agent workflow** | [agent-workflow.md](agent-workflow.md) |
-| **Work with connectors** (find, list, fallback to HTTP) | [connectors.md](connectors.md) |
-| **Work with connections** (list, create, ping, select) | [connections.md](connections.md) |
+| **Execute the full workflow** (step-by-step) | [agent-workflow.md](agent-workflow.md) |
+| **Work with connectors** (find, HTTP fallback) | [connectors.md](connectors.md) |
+| **Work with connections** (select, create, verify) | [connections.md](connections.md) |
 | **Work with activities** (discover actions) | [activities.md](activities.md) |
-| **Work with resources** (CRUD on objects) | [resources.md](resources.md) |
+| **Work with resources** (describe, resolve references, execute CRUD) | [resources.md](resources.md) |
 
-## Workflow
-
-Follow these steps for every task. For decision trees and edge cases, see [agent-workflow.md](agent-workflow.md).
-
-## Happy-Path Example
-
-```bash
-# 1. Find connector
-uipcli is connectors list --filter "salesforce" --format json
-# → Key: "uipath-salesforce-sfdc"
-
-# 2. Find connection
-uipcli is connections list "uipath-salesforce-sfdc" --format json
-# → Id: "abc-123", IsDefault: Yes, State: Enabled
-
-# 3. Ping
-uipcli is connections ping "abc-123" --format json
-# → Status: Enabled
-
-# 4. Describe the target resource
-uipcli is resources describe "uipath-salesforce-sfdc" "Contact" \
-  --connection-id "abc-123" --operation Create --format json
-# → requiredFields: [LastName], optionalFields: [FirstName, Email, ...], referenceFields: []
-
-# 5. No referenceFields → skip resolution, go straight to execute
-
-# 6. Execute
-uipcli is resources execute create "uipath-salesforce-sfdc" "Contact" \
-  --connection-id "abc-123" --body '{"LastName": "Doe", "FirstName": "Jane"}' --format json
-```
+---
 
 ## How to Present Choices
 
@@ -80,4 +63,4 @@ When multiple options exist, present them clearly:
 | List returns empty after `--refresh` | Inform user the data does not exist. Do not retry. Suggest checking permissions or folder context. |
 | Reference field lookup returns empty | Inform user — the referenced object has no records. Ask if they want to create one or use a different value. |
 | Execute fails with validation error | Re-check describe output for required fields. Verify field types and reference IDs are correct. |
-| Connector not found | Fall back to HTTP connector (`uipath-uipath-http`). See [connectors.md](connectors.md). |
+| Connector not found | Fall back to HTTP connector (`uipath-uipath-http`). See [connectors.md](connectors.md#http-connector-fallback). |
