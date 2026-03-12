@@ -1,17 +1,10 @@
----
-name: uipath-integration-service
-description: Interact with external services through UiPath Integration Service. Manages connectors, connections, activities, and resources via the CLI. Use when the user says "connect to Salesforce", "list Jira connections", "create a Slack message", "call an API", "use Integration Service", or wants to interact with any third-party service through UiPath.
-metadata:
-    allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion
----
-
-# Integration Service Assistant
+# Integration Service
 
 Interact with external services through UiPath Integration Service — discover connectors, manage connections, explore activities, and execute operations via the `uipcli` CLI. Use `uipcli is <subcommand> --help` to discover available flags and options for any command.
 
 ## Prerequisites
 
-- `uipcli` must be authenticated (`uipcli config set`)
+- `uipcli` must be authenticated (`uipcli login`)
 - Correct folder context must be set if using folder-scoped connections (`--folder`)
 
 ## Core Principles
@@ -25,7 +18,7 @@ Interact with external services through UiPath Integration Service — discover 
 
 ## CLI Output Format
 
-All `uipcli` commands support `--format <format>` (table, json, yaml, plain).
+All `uipcli is` commands support `--format <format>` (table, json, yaml, plain).
 
 **Always use `--format json`** for commands whose output you need to parse or act on. JSON output is structured and unambiguous.
 
@@ -35,15 +28,15 @@ All `uipcli` commands support `--format <format>` (table, json, yaml, plain).
 
 | I need to... | Read these |
 |---|---|
-| **Understand the full agent workflow** | [references/agent-workflow.md](references/agent-workflow.md) |
-| **Work with connectors** (find, list, fallback to HTTP) | [references/connectors.md](references/connectors.md) |
-| **Work with connections** (list, create, ping, select) | [references/connections.md](references/connections.md) |
-| **Work with activities** (discover actions) | [references/activities.md](references/activities.md) |
-| **Work with resources** (CRUD on objects) | [references/resources.md](references/resources.md) |
+| **Understand the full agent workflow** | [agent-workflow.md](agent-workflow.md) |
+| **Work with connectors** (find, list, fallback to HTTP) | [connectors.md](connectors.md) |
+| **Work with connections** (list, create, ping, select) | [connections.md](connections.md) |
+| **Work with activities** (discover actions) | [activities.md](activities.md) |
+| **Work with resources** (CRUD on objects) | [resources.md](resources.md) |
 
 ## Workflow
 
-Follow these steps for every task. For decision trees and edge cases, see [references/agent-workflow.md](references/agent-workflow.md).
+Follow these steps for every task. For decision trees and edge cases, see [agent-workflow.md](agent-workflow.md).
 
 ## Happy-Path Example
 
@@ -87,4 +80,4 @@ When multiple options exist, present them clearly:
 | List returns empty after `--refresh` | Inform user the data does not exist. Do not retry. Suggest checking permissions or folder context. |
 | Reference field lookup returns empty | Inform user — the referenced object has no records. Ask if they want to create one or use a different value. |
 | Execute fails with validation error | Re-check describe output for required fields. Verify field types and reference IDs are correct. |
-| Connector not found | Fall back to HTTP connector (`uipath-uipath-http`). See [connectors.md](references/connectors.md). |
+| Connector not found | Fall back to HTTP connector (`uipath-uipath-http`). See [connectors.md](connectors.md). |
