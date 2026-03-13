@@ -343,6 +343,8 @@ When results contain multiple competing packages for the same capability (e.g., 
 3. Include a one-line difference for each (e.g., "requires Integration Service connection" vs "protocol-based, works on-premise")
 4. Continue with **only** the chosen package
 
+**Save the preference:** After resolving disambiguation (whether auto-selected or user-chosen), suggest saving the preference to `CLAUDE.md` and `AGENTS.md` in the project folder so future sessions auto-select without re-prompting. For example: _"Want me to save this preference (e.g., 'Always use O365 for email activities') to CLAUDE.md and AGENTS.md so it's remembered for future workflows?"_
+
 ### Step 1.6: Resolve Activity Properties
 
 When you need to insert or edit a specific activity, use `uipcli rpa get-default-activity-xaml` to retrieve the activity's default XAML template, its properties, and the default values. Use it as a starting point for configuring new activities. This default representation is a crucial starting point as it ensures that Studio can properly render and parse the activity.
