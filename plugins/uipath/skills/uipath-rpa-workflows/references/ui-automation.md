@@ -233,7 +233,7 @@ Most UIA projects use **VB.NET expressions** (check for `Microsoft.VisualBasic` 
 | Boolean true | `"True"` | `ActivateBefore="True"` |
 | Enum | `"[EnumType.Value]"` | `OpenMode="[UiPath.UIAutomationNext.Enums.NAppOpenMode.IfNotOpen]"` |
 
-For C# projects (no `Microsoft.VisualBasic` namespace): use `CSharpValue`/`CSharpReference` wrappers as documented in `basics-and-rules.md`.
+For C# projects (no `Microsoft.VisualBasic` namespace): use `CSharpValue`/`CSharpReference` wrappers as documented in `xaml-basics-and-rules.md`.
 
 ---
 

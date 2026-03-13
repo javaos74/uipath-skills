@@ -32,93 +32,9 @@ Use the default (table) only when displaying results directly to the user for re
 
 ## Tool Quick Reference
 
-### Installed Package Activity Documentation (Primary Discovery)
+For the full CLI command reference (all tools, parameters, and error recovery), see **[references/cli-reference.md](./references/cli-reference.md)**.
 
-Located at `{projectRoot}/.local/docs/packages/{PackageId}/`. See [Step 1.2](#step-12-discover-activity-documentation-primary-source) for full details on structure, template, availability, and access patterns.
-
-| Action | How | Key Parameters |
-|--------|-----|----------------|
-| **Read activity doc directly** | `Read` tool on `{projectRoot}/.local/docs/packages/{PackageId}/activities/{ActivityName}.md` | Package ID + activity simple class name. **Preferred when you know both.** |
-| **Read package overview** | `Read` tool on `{projectRoot}/.local/docs/packages/{PackageId}/overview.md` | Package ID (e.g., `UiPath.WebAPI.Activities`) |
-| **List documented packages** | `Bash`: `ls {projectRoot}/.local/docs/packages/` | Project root directory |
-| **List documented activities of package** | `Bash`: `ls {projectRoot}/.local/docs/packages/{PackageId}/activities/` | Package ID |
-| **Search activity docs by keyword** | `Grep` with pattern across `{projectRoot}/.local/docs/packages/` | Search pattern |
-
-### Core RPA Workflow Tools
-
-| Action | How | Key Parameters |
-|--------|-----|----------------|
-| **Explore project files** | `Glob` with `**/*.xaml` pattern, or `Bash`: `ls -la {projectRoot}` | Project root directory |
-| **Find files by pattern** | `Glob` with pattern (e.g., `**/*Mail*.xaml`) | Glob pattern, path |
-| **Search XAML content** | `Grep` with regex pattern across `.xaml` files | Pattern, file/directory path |
-| **Read file contents** | `Read` tool | File path, offset, limit |
-| **Read project definition** | `Read` tool on `{projectRoot}/project.json` | File path |
-| **Explore object repository** | `Glob` `**/*` in `{projectRoot}/.objects/` + `Read` metadata files | `.objects/` path |
-| **Get full project context** | `Read` project.json + `Read` XAML files + `Glob`/`Read` `.objects/` + `Read` `.settings/` | Combine multiple reads |
-| **Search for activities** | `Bash`: `uipcli rpa find-activities --query "..." [--tags "..."] [--limit N] --format json` | `--query` (required), `--tags`, `--limit` (default 10) |
-| **Get default activity XAML (non-dynamic)** | `Bash`: `uipcli rpa get-default-activity-xaml --activity-class-name "..."` | `--activity-class-name` (fully qualified) |
-| **Get default activity XAML (dynamic)** | `Bash`: `uipcli rpa get-default-activity-xaml --activity-type-id "..." [--connection-id "..."]` | `--activity-type-id`, `--connection-id` (optional) |
-| **List workflow examples** | `Bash`: `uipcli rpa list-workflow-examples --tags '["service1","service2"]' [--prefix "..."] [--limit N] --format json` | `--tags` (JSON array, required), `--prefix` (optional), `--limit` (default 10) |
-| **Get workflow example** | `Bash`: `uipcli rpa get-workflow-example --key "path/to/example.xaml"` | `--key` (blob path from list results) |
-| **Create new workflow file** | `Write` tool — create a new `.xaml` file with full XAML content | File path, XAML content |
-| **Edit existing workflow** | `Edit` tool — exact string replacement in `.xaml` files | File path, old_string, new_string |
-| **Get errors** | `Bash`: `uipcli rpa get-errors [--file-path "..."] [--skip-validation] --format json` | `--file-path` (relative to project dir), `--skip-validation` (use cached errors) |
-| **Get JIT type definitions** | `Read` tool on `{projectRoot}/.project/JitCustomTypesSchema.json` | File path |
-| **Install/update packages** | `Bash`: `uipcli rpa install-or-update-packages --packages '[{"id":"..."}]'` | `--packages` (JSON array; `version` optional — omit to auto-resolve latest) |
-| **Run workflow** | `Bash`: `uipcli rpa run-file --file-path "..." [--input-arguments '...'] [--log-level ...]` | `--file-path` (required), `--input-arguments` (JSON), `--log-level` |
-
-### Project Lifecycle Tools
-
-| Action | How | Key Parameters |
-|--------|-----|----------------|
-| **Create new project** | `Bash`: `uipcli rpa new --name "..." [--template-id ...] [--location ...] [--expression-language ...] [--target-framework ...] [--description "..."]` | See [Creating New Projects](#creating-new-projects) |
-| **Open project in Studio** | `Bash`: `uipcli rpa open-project [--project-dir "..."]` | `--project-dir` (optional) |
-| **Close project** | `Bash`: `uipcli rpa close-project [--project-dir "..."]` | `--project-dir` (optional) |
-
-### Studio Management Tools
-
-| Action | How | Key Parameters |
-|--------|-----|----------------|
-| **List Studio instances** | `Bash`: `uipcli rpa list-instances --format json` | (none) |
-| **Start Studio** | `Bash`: `uipcli rpa start-studio` | (none) |
-| **Focus activity in designer** | `Bash`: `uipcli rpa focus-activity [--activity-id "..."]` | `--activity-id` (IdRef; omit to focus all sequentially) |
-
-### UI Automation Indication Tools
-
-Use these when building UI Automation workflows to capture selectors into the Object Repository. See **[ui-automation.md](./references/ui-automation.md)** for the full UIA workflow.
-
-| Action | How | Key Parameters |
-|--------|-----|----------------|
-| **Indicate application/screen** | `Bash`: `uipcli rpa indicate-application [--name "..."] [--parent-id "..." \| --parent-name "..."] [--activity-class-name "..."]` | `--name` (screen name in Object Repository), `--parent-id`/`--parent-name` (application ref) |
-| **Indicate UI element** | `Bash`: `uipcli rpa indicate-element --name "..." --activity-class-name "..." [--parent-id "..." \| --parent-name "..."]` | `--name` (required), `--activity-class-name` (required, e.g. `UiPath.UIAutomation.Activities.TypeInto`), `--parent-id`/`--parent-name` (screen ref) |
-
-**UI Automation indication workflow:**
-1. First indicate the application/screen: `uipcli rpa indicate-application --name "MyApp"` — the user points at the application window
-2. Then indicate individual elements within that screen: `uipcli rpa indicate-element --name "SubmitButton" --activity-class-name "UiPath.UIAutomation.Activities.ClickX" --parent-name "MyApp"` — the user points at the element
-3. The indicated elements are stored in the Object Repository (`.objects/`) and can be referenced in XAML via their `ObjectRepositoryReference`
-4. Read the resulting `.objects/` metadata to get the element IDs for use in workflow XAML
-
-### Test Manager Tools
-
-| Action | How | Key Parameters |
-|--------|-----|----------------|
-| **Get manual test cases** | `Bash`: `uipcli rpa get-manual-test-cases --format json` | (none) |
-| **Get manual test steps** | `Bash`: `uipcli rpa get-manual-test-steps --format json` | (none) |
-
-### Integration Service (IS) Tools
-
-| Action | How | Key Parameters |
-|--------|-----|----------------|
-| **List connectors** | `Bash`: `uipcli is connectors list [--filter "..."] --format json` | `--filter` (by name/key) |
-| **Get connector details** | `Bash`: `uipcli is connectors get <connector-key> --format json` | `connector-key` (required) |
-| **List connections** | `Bash`: `uipcli is connections list [connector-key] [--connection-id "..."] [--folder-key "..."] --format json` | `connector-key` (optional filter), `--connection-id`, `--folder-key` |
-| **Create connection (OAuth)** | `Bash`: `uipcli is connections create <connector-key> [--no-browser]` | `connector-key` (required), opens OAuth flow |
-| **Ping/verify connection** | `Bash`: `uipcli is connections ping <connection-id>` | `connection-id` (required) |
-| **Edit/re-auth connection** | `Bash`: `uipcli is connections edit <connection-id>` | `connection-id` (required), opens OAuth flow |
-| **List connector activities** | `Bash`: `uipcli is activities list <connector-key> --format json` | `connector-key` (required) |
-| **List connector resources** | `Bash`: `uipcli is resources list <connector-key> [--operation ...] --format json` | `connector-key`, `--operation` (List/Retrieve/Create/Update/Delete/Replace) |
-| **Describe resource schema** | `Bash`: `uipcli is resources describe <connector-key> <object-name> [--operation ...] --format json` | `connector-key`, `object-name`, `--operation` |
-| **Execute resource CRUD** | `Bash`: `uipcli is resources execute <op> <connector-key> <object-name>` | Operations: `create`, `list`, `get`, `update`, `replace`, `delete` |
+Key commands at a glance: `find-activities`, `get-default-activity-xaml`, `get-errors`, `install-or-update-packages`, `run-file`, `list-workflow-examples`, `get-workflow-example`. For IS connectors: `is connectors list/get`, `is connections list/create/ping`, `is activities list`, `is resources list/describe/execute`.
 
 ---
 
@@ -129,7 +45,7 @@ Use these when building UI Automation workflows to capture selectors into the Ob
 ### Bundled Reference Files
 
 For XAML structure, control flow, and domain-specific patterns not covered by activity docs, consult these files (read them on-demand):
-- **[basics-and-rules.md](./references/basics-and-rules.md)** — XAML file anatomy, workflow types, safety rules, common editing operations, reference examples, and ConnectorActivity internals. **CRITICAL: read before generating/creating/editing any XAML.**
+- **[xaml-basics-and-rules.md](./references/xaml-basics-and-rules.md)** — XAML file anatomy, workflow types, safety rules, common editing operations, reference examples, and ConnectorActivity internals. **CRITICAL: read before generating/creating/editing any XAML.**
 - **[invoke-code-activities.md](./references/invoke-code-activities.md)** — An escape hatch for when XAML activities can't be reliably generated or edited. Offers the possibility to integrate VB or C# code snippets as activities, when to use them, and best practices for integrating code into RPA workflows. Useful as a pragmatic fallback when dedicated activities have unresolvable issues and writing code would do it.
 - **[control-flow-activities.md](./references/control-flow-activities.md)** — Core control flow activities with syntax and examples (Assign, If/Else, For Each, While, Try Catch, etc.)
 - **[common-pitfalls.md](./references/common-pitfalls.md)** — Common pitfalls, constraints, scope requirements, property conflicts, gotchas, and issues that should be known before working with RPA workflows, along with strategies to avoid them
@@ -163,56 +79,9 @@ If unclear which file to edit, **ask the user** rather than guessing.
 
 ## Phase 0: Environment Readiness
 
-**Goal:** Ensure Studio Desktop is running, connected, and targeting the correct project before any other operations.
+Ensure Studio Desktop is running, connected, and targeting the correct project. See **[references/environment-setup.md](./references/environment-setup.md)** for the full setup procedure (project root detection, Studio verification, authentication).
 
-### Step 0.1: Establish Project Root
-
-The `uipcli rpa` commands use `--project-dir` to target a specific project (defaults to current working directory). **If the current working directory is NOT the UiPath project root, all commands will fail or target the wrong project.**
-
-```bash
-# Check if project.json exists in the CWD
-ls {cwd}/project.json
-```
-
-If the CWD is not the project root:
-- Locate the project root by finding `project.json`: `Glob: pattern="**/project.json"`
-- **Pass `--project-dir` explicitly** to every `uipcli rpa` command, or
-- Ask the user where their project is located
-
-Store the project root path and use it consistently as `{projectRoot}` throughout all subsequent operations.
-
-### Step 0.2: Verify Studio is Running
-
-```bash
-uipcli rpa list-instances --format json
-```
-
-**If no instances are found or Studio is not running:**
-```bash
-uipcli rpa start-studio
-```
-If `start-studio` fails with a registry key error, pass `--studio-dir` explicitly pointing to the Studio installation directory.
-
-**If Studio is running but the project is not open:**
-```bash
-uipcli rpa open-project --project-dir "{projectRoot}"
-```
-
-**If Studio IPC connection fails** (error messages about connection refused, timeout, or pipe not found):
-1. Check if Studio Desktop is actually installed on the machine
-2. Try `uipcli rpa start-studio` to launch a fresh instance
-3. If Studio is running but IPC fails, the user may need to restart Studio
-4. Inform the user and ask them to ensure Studio Desktop is open and responsive
-
-### Step 0.3: Authentication (If Needed)
-
-Some commands (IS connections, workflow examples, cloud features) require authentication:
-
-```bash
-uipcli login
-```
-
-If you encounter auth errors (401, 403, "not authenticated") during any phase, prompt the user to run `uipcli login` to authenticate against their UiPath Cloud tenant.
+**Quick check:** Find `project.json` to establish `{projectRoot}`, run `uipcli rpa list-instances --format json` to verify Studio, and `uipcli rpa open-project` if needed.
 
 ---
 
@@ -327,7 +196,7 @@ uipcli rpa find-activities --query "send mail" --limit 10 --format json
 **How search works:**
 - Works similarly to Studio's activity search bar
 - Returns **global** results — not limited to packages currently installed in the project
-- **If a useful activity is found in an uninstalled package, install it immediately** (see [Step 1.2 Availability](#step-12-discover-activity-documentation-primary-source)) — this unlocks both activity docs and `get-default-activity-xaml`
+- **If a useful activity is found in an uninstalled package, install it immediately** (see [Step 1.2](#step-12-discover-activity-documentation-primary-source)) — this unlocks both activity docs and `get-default-activity-xaml`
 - Tags can be used alongside the query to narrow down results further
 
 **Examples:**
@@ -366,7 +235,7 @@ When results contain multiple competing packages for the same capability (e.g., 
 
 ### Step 1.6: Resolve Activity Properties (Fallback)
 
-Use `uipcli rpa get-default-activity-xaml` to retrieve the activity's default XAML template. **Requires the package to be installed** (see [Step 1.2 Availability](#step-12-discover-activity-documentation-primary-source)). If activity docs exist with XAML examples, prefer those as your starting point -- they're richer than bare defaults.
+Use `uipcli rpa get-default-activity-xaml` to retrieve the activity's default XAML template. **Requires the package to be installed** (see [Step 1.2](#step-12-discover-activity-documentation-primary-source)). If activity docs exist with XAML examples, prefer those as your starting point -- they're richer than bare defaults.
 
 The command handles both non-dynamic and dynamic activities.
 
@@ -407,41 +276,7 @@ For more details, see **[jit-custom-types-schema.md](./references/jit-custom-typ
 
 ### Step 1.7: Search Examples Repository (Last Resort)
 
-Use the examples repository as a **last resort** when activity docs, `find-activities`, and `get-default-activity-xaml` don't give you what you need — or when you need **full workflow composition patterns** showing how multiple activities work together end-to-end. Activity docs describe individual activities well, but the examples repository shows multi-step orchestration.
-
-```bash
-# Search by service tags (AND logic — all tags must match)
-uipcli rpa list-workflow-examples --tags '["web"]' --limit 10 --format json
-
-# Multiple tags narrow down results
-uipcli rpa list-workflow-examples --tags '["jira", "confluence"]' --limit 10 --format json
-
-# Use prefix to filter by category
-uipcli rpa list-workflow-examples --tags '["gmail"]' --prefix "email-communication/" --limit 15 --format json
-
-# Once you identify relevant examples, retrieve XAML content:
-uipcli rpa get-workflow-example --key "email-communication/add-new-gmail-emails-to-keap-as-contacts.xaml"
-```
-
-**Tag Selection Guidelines:**
-- Identify the services/integrations the user wants (e.g., "salesforce", "gmail", "jira", "web")
-- Convert to lowercase tags: `["salesforce"]`, `["gmail"]`, `["jira", "confluence"]`
-- Multiple tags use AND logic — all tags must match
-- Common tags: `confluence`, `jira`, `salesforce`, `outlook`, `gmail`, `slack`, `excel`, `sharepoint`, `teams`, `dropbox`, `hubspot`, `zendesk`, `servicenow`
-
-**When to use the examples repository:**
-- Activity docs, `find-activities`, and `get-default-activity-xaml` didn't provide enough context
-- You need end-to-end workflow patterns showing multiple activities composed together
-- You need to understand service-specific integration patterns (e.g., OAuth flows, trigger setups)
-- You're building a complex multi-activity workflow and want to see how others structured similar automations
-
-**When studying repository examples from `uipcli rpa get-workflow-example`:**
-- The command returns the full XAML content directly
-- Parse the namespace declarations at the top to identify required packages
-- Look for `<Variable>` elements to understand data structures
-- Study `<Argument>` elements for input/output patterns
-- Study `<Configuration>` and `<Connection>` sections for determining dynamic activity properties usage
-- Examine activity configurations for proper property settings
+Use **only** when activity docs, `find-activities`, and `get-default-activity-xaml` don't provide enough context — or when you need **full end-to-end workflow composition patterns**. See **[references/examples-repository.md](./references/examples-repository.md)** for search commands, tag guidelines, and how to study retrieved examples.
 
 ### Step 1.8: Get Current Context (As Needed)
 
@@ -461,34 +296,7 @@ This surfaces variables, arguments, imports, expression language, available conn
 
 ### Step 1.9: Discover Connector Capabilities (For IS/Connector Workflows)
 
-When the workflow involves Integration Service connectors (e.g., Salesforce, Jira, ServiceNow), explore the connector's capabilities before writing XAML:
-
-```bash
-# What activities does this connector offer?
-uipcli is activities list <connector-key> --format json
-
-# What data objects/resources does it expose?
-uipcli is resources list <connector-key> --format json
-
-# What fields does a specific resource have? (essential for configuring dynamic activity properties)
-uipcli is resources describe <connector-key> <object-name> --format json
-```
-
-**Check if a connection exists:**
-```bash
-uipcli is connections list <connector-key> --format json
-```
-
-**If no connection exists**, you have two options:
-1. **Create one** (requires user interaction for OAuth): `uipcli is connections create <connector-key>`
-2. **Use a placeholder** — insert the dynamic activity with an empty `connectionId` and inform the user they need to configure the connection in Studio
-
-**Verify a connection is active:**
-```bash
-uipcli is connections ping <connection-id>
-```
-
-If the ping fails, offer to re-authenticate: `uipcli is connections edit <connection-id>`
+When the workflow involves Integration Service connectors, explore capabilities and manage connections before writing XAML. See **[references/connector-capabilities.md](./references/connector-capabilities.md)** for the full procedure (activity/resource discovery, connection management, schema inspection).
 
 ---
 
@@ -501,7 +309,7 @@ Apply Core Principles: consult activity docs first, read relevant [reference fil
 
 **Strategy:** Generate minimal working version, expect to iterate. Take it one activity at a time. Build incrementally and validate frequently.
 
-Use the `Write` tool to create a new `.xaml` file with proper XAML boilerplate. Refer to [basics-and-rules.md](./references/basics-and-rules.md) for the complete XAML file anatomy template.
+Use the `Write` tool to create a new `.xaml` file with proper XAML boilerplate. Refer to [xaml-basics-and-rules.md](./references/xaml-basics-and-rules.md) for the complete XAML file anatomy template.
 
 ```
 Write: file_path="{projectRoot}/Workflows/DescriptiveName.xaml"
@@ -568,91 +376,9 @@ uipcli rpa get-errors --file-path "Workflows/MyWorkflow.xaml" --skip-validation 
 
 **Fix order:** Package -> Structure -> Type -> Dynamic Activity -> Logic
 
-### Step 3.3: Package Error Resolution
+For detailed procedures on package resolution, JIT custom types, focus-activity debugging, the iteration loop, and smoke testing, see **[references/validation-and-fixing.md](./references/validation-and-fixing.md)**.
 
-```
-Read: file_path="{projectRoot}/project.json"     → check current dependencies
-
-Bash: uipcli rpa install-or-update-packages --packages '[{"id": "UiPath.Excel.Activities"}]'
-```
-
-Omit `version` to automatically resolve the latest compatible version (preferred — gets newest docs and features). Only pin a specific version when you have a reason to (e.g., known compatibility constraint).
-
-**If `install-or-update-packages` fails:**
-- **Package not found**: Verify the exact package ID — check spelling, use `uipcli rpa find-activities` to discover the correct package name from an activity's assembly
-- **Network/feed error**: The user may need to check their NuGet feed configuration in Studio settings
-
-### Step 3.4: Resolving Dynamic Activity Custom Types
-
-Dynamic activities (e.g., Integration Service connectors) retrieved via `uipcli rpa get-default-activity-xaml` (with `--activity-type-id`) may use **JIT-compiled custom types** for their input/output properties. After the activity is added to the workflow, when you need to discover the property names and CLR types of these custom entities (e.g., to populate an `Assign` activity targeting a custom type property, or to create a variable of a custom type), read the JIT custom types schema:
-
-```
-Read: file_path="{projectRoot}/.project/JitCustomTypesSchema.json"
-```
-
-### Step 3.5: Focus Activity for Debugging
-
-When `get-errors` returns an error referencing a specific activity (by IdRef or DisplayName), use `focus-activity` to highlight it in the Studio designer. This helps the user see the problematic activity in context and verify fixes visually:
-
-```bash
-# Focus a specific activity by its IdRef (from the error output):
-uipcli rpa focus-activity --activity-id "Assign_1"
-
-# Focus all activities sequentially (useful for walkthrough):
-uipcli rpa focus-activity
-```
-
-This is especially useful when:
-- An error references an activity and you want the user to confirm the context
-- You've made a fix and want to show the user which activity was modified
-- The error is ambiguous and you need to verify which activity instance is affected
-
-### Step 3.6: Iteration Loop
-
-```
-REPEAT:
-  1. uipcli rpa get-errors --file-path "path/to/workflow.xaml" --format json
-  2. IF 0 errors (or errors cannot be resolved automatically) -> EXIT to Phase 4
-  3. Identify highest-priority error category
-  4. Apply appropriate fix
-  5. (Optional) Focus the fixed activity: uipcli rpa focus-activity --activity-id "..."
-  6. GOTO 1
-
-DO NOT stop until all activities are resolved (recognized).
-DO NOT skip validation steps.
-DO NOT assume edits worked without checking.
-```
-
-Expect multiple iteration cycles for complex workflows.
-
-### Step 3.7: Smoke Test (Optional but Recommended)
-
-**Important:** `get-errors` (Studio validation) and `run-file` (runtime compilation) use different validation paths. Some errors — such as invalid enum values on activity properties — pass Studio validation but fail at runtime. Always treat the smoke test as a critical validation step, not just an optional extra.
-
-After reaching 0 errors, run the workflow to catch runtime errors (wrong credentials, missing files, invalid property values, logic bugs) that static validation cannot detect:
-
-```bash
-# Run with default arguments:
-uipcli rpa run-file --file-path "Workflows/MyWorkflow.xaml" --format json
-
-# Run with input arguments:
-uipcli rpa run-file --file-path "Workflows/MyWorkflow.xaml" --input-arguments '{"recipientEmail": "test@example.com", "subject": "Test"}' --format json
-
-# Run with verbose logging for debugging:
-uipcli rpa run-file --file-path "Workflows/MyWorkflow.xaml" --log-level Verbose --format json
-```
-
-**When to run:**
-- The workflow has no compilation errors but you want to verify runtime behavior
-- The workflow involves file I/O, API calls, or data transformations that could fail at runtime
-- The user specifically asks to test the workflow
-
-**When NOT to run:**
-- The workflow has side effects (sends emails, modifies databases, calls external APIs) — warn the user first
-- The workflow requires interactive input (UI automation, attended triggers)
-- Compilation errors still exist (fix those first)
-
-If `run-file` reveals runtime errors, analyze the output and loop back to Step 3.2 to fix them.
+**Core loop:** `get-errors` → identify highest-priority error category → fix → `get-errors` again → repeat until 0 errors. Optionally `run-file` for runtime validation.
 
 ---
 
@@ -674,33 +400,7 @@ If `run-file` reveals runtime errors, analyze the output and loop back to Step 3
 
 ## Creating New Projects
 
-When the user needs a brand-new UiPath project (not just a new workflow in an existing project):
-
-```bash
-uipcli rpa new \
-  --name "MyAutomation" \
-  --location "/path/to/parent/directory" \
-  --template-id "BlankTemplate" \
-  --expression-language "VisualBasic" \
-  --target-framework "Windows" \
-  --description "Automates invoice processing" \
-  --format json
-```
-
-**Parameters:**
-| Parameter | Options | Default | Notes |
-|-----------|---------|---------|-------|
-| `--name` | Any string | (required) | Project folder name |
-| `--location` | Directory path | (current dir) | Parent directory where project folder is created |
-| `--template-id` | `BlankTemplate`, `LibraryProcessTemplate`, `TestAutomationProjectTemplate` | `BlankTemplate` | Project template |
-| `--expression-language` | `VisualBasic`, `CSharp` | (template default) | Expression syntax for XAML workflows |
-| `--target-framework` | `Legacy`, `Windows`, `Portable` | (template default) | .NET target framework |
-| `--description` | Any string | (none) | Project description in project.json |
-
-**After creation:**
-1. Open the project in Studio: `uipcli rpa open-project --project-dir "/path/to/MyAutomation"`
-2. The project root is now `/path/to/parent/directory/MyAutomation/`
-3. Proceed to Phase 1 (Discovery) using the new project root
+For new project setup (`uipcli rpa new`), including all parameters, templates, and post-creation steps, see **[references/new-project-setup.md](./references/new-project-setup.md)**.
 
 **Note:** `uipcli rpa new` may return `success: false` but still create the project files (partial success). If it fails, check whether the project directory and `project.json` were created before retrying.
 
@@ -708,18 +408,7 @@ uipcli rpa new \
 
 ## CLI Error Recovery
 
-When `uipcli` commands fail, diagnose by error category:
-
-| Error Pattern | Cause | Recovery |
-|---------------|-------|----------|
-| `"connection refused"`, `"EPIPE"`, `"pipe not found"` | Studio IPC not available | Run `uipcli rpa start-studio`, then `uipcli rpa open-project --project-dir "..."` |
-| `"timeout"`, `"ETIMEDOUT"` | Command took too long | Increase timeout: `uipcli rpa --timeout 600 <command>`, or use `--skip-validation` for `get-errors` |
-| `"not authenticated"`, `401`, `403` | Auth required for cloud features | Run `uipcli login` and re-try |
-| `"package not found"`, `"version not available"` | Wrong package ID or version | Verify package name via `uipcli rpa find-activities`; omit `version` to auto-resolve latest |
-| `"project not found"`, `"no project open"` | Wrong project-dir or project not open | Verify `--project-dir` path, run `uipcli rpa open-project` |
-| `"file not found"` in `get-errors` | Wrong `--file-path` (must be relative to project) | Use path relative to project root, not absolute |
-| `"Studio is busy"`, `"operation in progress"` | Studio is processing a previous request | Wait a few seconds and retry the command |
-| Any unrecognized error | Unknown | Check `--verbose` flag on parent: `uipcli rpa --verbose <command>` for debug details, inform the user |
+For CLI error diagnosis and recovery patterns (IPC failures, auth errors, package issues, timeouts), see the **CLI Error Recovery** section in **[references/cli-reference.md](./references/cli-reference.md#cli-error-recovery)**.
 
 **General strategy:** Do NOT retry the same failing command in a loop. Diagnose the root cause, apply the recovery action, then retry once. If it fails again, inform the user.
 
