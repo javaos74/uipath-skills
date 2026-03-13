@@ -92,6 +92,24 @@ uipcli rpa run-file --file-path "..."              # Run a workflow
 - Node.js (for `uipcli` CLI)
 - Claude Code CLI
 
+### Setting up uipcli
+
+The `uipcli` CLI is required for both RPA and coded workflow skills. It is temporarily hosted on **GitHub Packages** during development and will be moved to the public npm registry for public release. Until then, you need to set an authentication token before the plugin can install it automatically.
+
+Add `GH_NPM_REGISTRY_TOKEN` to your shell profile so it's available on every session:
+
+```powershell
+# PowerShell — add to $PROFILE
+$env:GH_NPM_REGISTRY_TOKEN = "ghp_your_token_here"
+```
+
+```bash
+# Bash / Zsh — add to ~/.bashrc or ~/.zshrc
+export GH_NPM_REGISTRY_TOKEN=ghp_your_token_here
+```
+
+The plugin handles the rest (registry configuration, installation, and updates) on session start.
+
 ## Resources
 
 - [UiPath Documentation](https://docs.uipath.com/)
