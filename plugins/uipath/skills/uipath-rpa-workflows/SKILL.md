@@ -34,7 +34,7 @@ Use the default (table) only when displaying results directly to the user for re
 
 ### Installed Package Activity Documentation (Primary Discovery)
 
-Auto-synced from installed packages to `{projectRoot}/.local/docs/packages/{PackageId}/`. The **most reliable source** for activity configuration. Available only for installed packages (newer versions more likely to ship docs). Structure is deterministic: `overview.md` at root, `activities/{ActivitySimpleClassName}.md` per activity. See [Step 1.2](#step-12-discover-activity-documentation-primary-source) for the full template description and smart access patterns.
+Located at `{projectRoot}/.local/docs/packages/{PackageId}/`. See [Step 1.2](#step-12-discover-activity-documentation-primary-source) for full details on structure, template, availability, and access patterns.
 
 | Action | How | Key Parameters |
 |--------|-----|----------------|
@@ -124,9 +124,7 @@ Use these when building UI Automation workflows to capture selectors into the Ob
 
 ## Supporting References
 
-### Installed Activity Documentation (Auto-Generated, Primary)
-
-The **primary reference** for activity properties, types, and XAML examples is the auto-generated documentation at `{projectRoot}/.local/docs/packages/{PackageId}/`. These docs are synced from installed NuGet packages and contain source-accurate activity specifications with a consistent, structured template. Available only for installed packages (newer versions more likely to include docs -- prefer updating packages when docs are missing). **Always check these first** before falling back to the bundled reference files below. See [Step 1.2](#step-12-discover-activity-documentation-primary-source) for the full template description, filesystem structure, and access patterns.
+**Always check installed activity docs first** (`{projectRoot}/.local/docs/packages/`) before using the bundled references below. See [Step 1.2](#step-12-discover-activity-documentation-primary-source).
 
 ### Bundled Reference Files
 
@@ -265,70 +263,37 @@ The directory layout is fixed and predictable:
 - `{PackageId}` matches the NuGet package ID from `project.json` dependencies (e.g., `UiPath.WebAPI.Activities`)
 - `{ActivitySimpleClassName}` is the short class name without namespace (e.g., `NetHttpRequest`, not `UiPath.Web.Activities.Http.NetHttpRequest`)
 
-#### Smart Access Patterns
-
-**If you already know the package and activity** (the common case -- you're familiar with the domain or already identified the activity via `find-activities`), go directly:
-
-```
-Read: file_path="{projectRoot}/.local/docs/packages/UiPath.WebAPI.Activities/activities/NetHttpRequest.md"
-```
-
-No need to list packages or read the overview first. The filesystem structure is deterministic.
-
-**If you know the package but not which activity**, read the overview:
-
-```
-Read: file_path="{projectRoot}/.local/docs/packages/UiPath.WebAPI.Activities/overview.md"
-```
-
-**If you don't know which package has what you need**, search across all docs:
-
-```
-Grep: pattern="send mail|email" path="{projectRoot}/.local/docs/packages/"
-```
-
-**If no `.local/docs/packages/` directory exists**, skip to Step 1.3.
-
 #### Activity Doc Template (All Files Follow This Structure)
 
-Every `activities/{ActivityName}.md` file follows a consistent, structured template. Knowing the template lets you extract exactly what you need efficiently:
+Every `activities/{ActivityName}.md` follows a consistent template:
 
-1. **Header** -- `# Display Name`, then the fully qualified class name in a code span (e.g., `` `UiPath.Web.Activities.Http.NetHttpRequest` ``), then a one-line description
-2. **Metadata** -- `**Package:**`, `**Category:**`, and optionally `**Platform:**` (`Cross-platform` or `Windows`)
-3. **`## Properties`** -- organized into subsections:
+1. **Header** -- `# Display Name`, fully qualified class name in code span, one-line description
+2. **Metadata** -- `**Package:**`, `**Category:**`, optionally `**Platform:**` (`Cross-platform` or `Windows`)
+3. **`## Properties`** -- subsections:
    - **`### Input`** -- table: Name, Display Name, Kind (`InArgument`/`Property`), Type, Required, Default, Description
-   - **`### Output`** -- table: Name, Display Name, Kind (`OutArgument`), Type, Description. May include output type property breakdowns (e.g., fields of `HttpResponseSummary`)
-   - **`### {GroupName} (conditional)`** -- conditional property groups with a `Visible When` column showing which controlling property value makes each property appear. Critical for modes like authentication, request body type, retry policy, etc.
-   - **`### Common`** / **`### Options`** -- additional property groups (ContinueOnError, Timeout, etc.)
-4. **`## Valid Configurations`** -- explains the conditional modes, mutually exclusive groups, and valid property combinations
-5. **`## Enum Reference`** -- exhaustive list of valid values for each enum-typed property (e.g., `HttpMethod`: `GET`, `POST`, `PUT`, ...)
-6. **`## XAML Examples`** -- one or more working XAML snippets with descriptions. **These are copy-paste ready and the best starting point for new activities** -- they show correct syntax, property formatting, and realistic configurations.
-7. **`## Notes`** -- tips, caveats, internal implementation details, migration guidance
+   - **`### Output`** -- table: Name, Display Name, Kind (`OutArgument`), Type, Description. May include output type property breakdowns
+   - **`### {GroupName} (conditional)`** -- groups with a `Visible When` column showing which controlling property value makes each property appear. Critical for modes like authentication, request body type, retry policy, etc.
+   - **`### Common`** / **`### Options`** -- ContinueOnError, Timeout, etc.
+4. **`## Valid Configurations`** -- conditional modes, mutually exclusive groups, valid property combinations
+5. **`## Enum Reference`** -- exhaustive valid values per enum-typed property
+6. **`## XAML Examples`** -- **copy-paste ready** snippets with correct syntax and realistic configurations. Best starting point for new activities -- richer than `get-default-activity-xaml` output.
+7. **`## Notes`** -- tips, caveats, migration guidance
 
-The `overview.md` provides: package summary, categorized activity index table (activity display name, description, link to its `.md` file), and documentation section links.
-
-#### What This Means in Practice
-
-When activity docs exist, you have authoritative answers to the most common questions:
-- **"What properties does this activity have?"** -- the Properties tables list every property with its exact name, Kind, and CLR type
-- **"What values are valid for this enum?"** -- the Enum Reference section lists them all
-- **"Which properties do I set for this mode?"** -- Conditional groups with `Visible When` tell you exactly
-- **"What does the XAML look like?"** -- XAML Examples section has ready-to-use snippets
-- **"What type does the output return?"** -- Output tables show the type, and complex types get property breakdowns
-
-When docs exist, you typically **don't need** `get-default-activity-xaml` -- the doc's XAML examples are richer (configured properties, realistic values) than the bare default template.
+The `overview.md` provides: package summary and categorized activity index table with links to per-activity docs.
 
 #### Decision Table
 
+The filesystem structure is deterministic -- use it to skip unnecessary enumeration steps.
+
 | Situation | Action |
 |-----------|--------|
-| **You know the package + activity name** | Go directly to `{projectRoot}/.local/docs/packages/{PackageId}/activities/{ActivityName}.md`. |
-| **You know the package, not the activity** | Read `overview.md` to find the right activity, then read its doc. |
-| **You don't know the package** | `ls` to see available packages, or `Grep` across `.local/docs/packages/` for keywords. |
-| **Docs exist but the specific activity isn't documented** | Use docs for other activities in the same package as structural reference, then fall back to `get-default-activity-xaml`. |
-| **No docs for the package** | **Update the package first** (`uipcli rpa install-or-update-packages` with latest version) -- this often adds docs. If still no docs after update, fall back to `find-activities` (Step 1.4), `get-default-activity-xaml` (Step 1.5), and the examples repository (Step 1.6). |
-| **Package not installed** | **Install it first** (`uipcli rpa install-or-update-packages`) -- both docs and `get-default-activity-xaml` require the package to be installed. After install, check for docs before proceeding to fallbacks. |
-| **No `.local/docs/` directory at all** | Project may not support this feature yet. Use the full fallback flow starting at Step 1.3. |
+| **You know the package + activity name** | Go directly: `Read: file_path="{projectRoot}/.local/docs/packages/{PackageId}/activities/{ActivityName}.md"` |
+| **You know the package, not the activity** | `Read` the `overview.md`, then read the identified activity doc. |
+| **You don't know the package** | `Grep` across `.local/docs/packages/` for keywords. |
+| **Docs exist but activity isn't documented** | Use other activity docs in the same package as structural reference, fall back to `get-default-activity-xaml`. |
+| **No docs for the package** | **Update the package first** (`uipcli rpa install-or-update-packages`) -- this often adds docs. If still no docs, fall back to Steps 1.4-1.7. |
+| **Package not installed** | **Install it first** (`uipcli rpa install-or-update-packages`) -- both docs and `get-default-activity-xaml` require it. After install, check for docs before proceeding to fallbacks. |
+| **No `.local/docs/` directory at all** | Project may not support this feature yet. Use fallback flow starting at Step 1.3. |
 
 ### Step 1.3: Search Current Project
 
@@ -362,7 +327,7 @@ uipcli rpa find-activities --query "send mail" --limit 10 --format json
 **How search works:**
 - Works similarly to Studio's activity search bar
 - Returns **global** results — not limited to packages currently installed in the project
-- **If a useful activity is found in a package that isn't installed, install it immediately** with `uipcli rpa install-or-update-packages` before proceeding. Installing unlocks both activity docs (if the package ships them) and `get-default-activity-xaml`. After installing, check `.local/docs/packages/{PackageId}/` — docs may now be available, which is a better source than `get-default-activity-xaml`.
+- **If a useful activity is found in an uninstalled package, install it immediately** (see [Step 1.2 Availability](#step-12-discover-activity-documentation-primary-source)) — this unlocks both activity docs and `get-default-activity-xaml`
 - Tags can be used alongside the query to narrow down results further
 
 **Examples:**
@@ -376,10 +341,6 @@ uipcli rpa find-activities --query "get weather" --format json
 # Find Excel read activities
 uipcli rpa find-activities --query "read range" --limit 10 --format json
 ```
-
-**Do NOT use when:**
-- Activity docs already provide the fully qualified class name and configuration you need
-- You already know the exact activity to use and its exact fully qualified class name and/or type ID
 
 ### Step 1.5: Disambiguate Service / Provider
 
@@ -405,11 +366,7 @@ When results contain multiple competing packages for the same capability (e.g., 
 
 ### Step 1.6: Resolve Activity Properties (Fallback)
 
-Use `uipcli rpa get-default-activity-xaml` to retrieve the activity's default XAML template when you need the exact Studio-rendered default for a specific activity. This ensures Studio can properly render and parse the activity.
-
-**Prerequisite: the activity's package must be installed.** This command only works for activities whose package is already in the project. If it's not installed, run `uipcli rpa install-or-update-packages` first — and after installing, check for activity docs at `.local/docs/packages/{PackageId}/` before falling back to this command.
-
-**If activity docs exist and contain XAML examples for the activity, prefer using those examples as your starting point** — they often include more context (configured properties, realistic values) than the bare default template.
+Use `uipcli rpa get-default-activity-xaml` to retrieve the activity's default XAML template. **Requires the package to be installed** (see [Step 1.2 Availability](#step-12-discover-activity-documentation-primary-source)). If activity docs exist with XAML examples, prefer those as your starting point -- they're richer than bare defaults.
 
 The command handles both non-dynamic and dynamic activities.
 
@@ -439,11 +396,6 @@ uipcli rpa get-default-activity-xaml --activity-type-id "178a864d-90fd-43d3-a305
 - `--activity-class-name`: For non-dynamic activities. Must be fully qualified (e.g., `UiPath.Core.Activities.WriteLine`)
 - `--activity-type-id`: For dynamic activities. Use `uipcli rpa find-activities` to find the exact type ID
 - `--connection-id`: Optional, only used for dynamic activities. Discover available connections using `uipcli is connections list [connector-key]`
-
-**Do NOT use when:**
-- Activity docs already provide complete XAML examples and property details for the activity
-- You already have the correct, error-free activity XAML
-- You're unsure which activity to use (use `uipcli rpa find-activities` first)
 
 **For JIT custom types**, read the schema file:
 
@@ -505,13 +457,7 @@ Bash: uipcli is connections list --format json              → available Integr
 Bash: uipcli is connectors list --format json               → available connectors
 ```
 
-This provides:
-- Existing variables and their types/scopes (from XAML files)
-- Current arguments and their directions (In/Out/InOut) (from XAML `<x:Members>`)
-- Activity hierarchy and flow structure (from XAML body)
-- Available imports and namespaces (from XAML `<TextExpression.NamespacesForImplementation>`)
-- Whether the project is C# or VB (`expressionLanguage` in `project.json`, or check for `Microsoft.VisualBasic` in imports)
-- Available assets, connections, queues, credentials, and other project-level or global-level resources
+This surfaces variables, arguments, imports, expression language, available connections, and reusable project-level resources.
 
 ### Step 1.9: Discover Connector Capabilities (For IS/Connector Workflows)
 
@@ -548,10 +494,8 @@ If the ping fails, offer to re-authenticate: `uipcli is connections edit <connec
 
 ## Phase 2: Generate or Edit
 
-### IMPORTANT Guidelines for both CREATE and EDIT:
-- Always start with a minimal working version (e.g., XAML examples from activity docs, or default activity representation), then iterate based on errors and validation
-- **CRITICAL:** If activity docs exist at `{projectRoot}/.local/docs/packages/`, use the XAML examples and property tables from those docs as your primary reference for activity configuration. Then read the relevant [reference files](./references/) for XAML structure, control flow, and domain patterns.
-- Before generating ANY XAML, ensure you have consulted activity docs (if available) and/or studied relevant examples and understand the required structure and properties
+### Guidelines for both CREATE and EDIT:
+Apply Core Principles: consult activity docs first, read relevant [reference files](./references/) for XAML structure and patterns, start minimal and iterate.
 
 ### For CREATE Requests
 
@@ -610,13 +554,7 @@ uipcli rpa get-errors --format json
 uipcli rpa get-errors --file-path "Workflows/MyWorkflow.xaml" --skip-validation --format json
 ```
 
-**Important notes on `--file-path`:**
-- The path must be **relative to the project directory**, not an absolute path
-- Example: `--file-path "Workflows/SendEmail.xaml"`, NOT `--file-path "C:\Users\...\Workflows\SendEmail.xaml"`
-- By default, `get-errors` forces Studio to re-validate before returning errors, ensuring up-to-date results
-- Use `--skip-validation` only when you want to quickly check the last known errors without triggering a new validation pass
-- **Always prefer `--file-path`** for targeted checks — much faster than full-project validation
-- For long-running projects, consider using `--timeout` on the parent `uipcli rpa` command if validation takes too long: `uipcli rpa --timeout 600 get-errors --file-path "..."`
+**Notes:** `--file-path` must be **relative to the project directory** (e.g., `"Workflows/SendEmail.xaml"`, not absolute). Always prefer `--file-path` for targeted checks (faster). Use `--skip-validation` only for quick cached-error checks. For slow projects, increase timeout: `uipcli rpa --timeout 600 get-errors --file-path "..."`.
 
 ### Step 3.2: Categorize and Fix
 
@@ -789,27 +727,19 @@ When `uipcli` commands fail, diagnose by error category:
 
 ## Anti-Patterns
 
-**Never:**
-- Try to generate large, complex workflows in one single go
-- Generate XAML without first checking project structure, activity docs, default representation, and/or existing examples
-- Skip checking `{projectRoot}/.local/docs/packages/` when it exists — these docs are the most reliable source for activity configuration
-- Guess activity properties, types, or enum values
-- Jump straight to `get-default-activity-xaml` or the examples repository when activity docs exist for the target package
+**Never** (items not already covered by Core Principles):
+- Generate large, complex workflows in one go — build incrementally
 - Assume a create/edit succeeded without validating with `uipcli rpa get-errors`
-- Stop iteration loop before reaching 0 errors
-- Guess file paths without exploring project structure first
-- Edit or create XAML without reading the appropriate [reference files](./references/) for proper structure, syntax, rules, and patterns
-- Use a non-unique string for replacement that matches multiple locations in the file
+- Stop the iteration loop before reaching 0 errors
+- Edit or create XAML without reading the appropriate [reference files](./references/)
+- Use a non-unique `old_string` for `Edit` that matches multiple locations
 - Create non-XAML workflow files (this skill creates XAML only)
 - Use incorrect/guessed keys with `uipcli rpa get-workflow-example` (always use keys from list results)
-- Guess activity class names or type IDs (use activity docs or `uipcli rpa find-activities` to find the exact type ID and FQDN class name first)
-- Skip `uipcli rpa find-activities` when unsure which activity implements a user-described action and activity docs don't cover it
-- Guess dynamic activity property names or types without consulting activity docs or using `uipcli rpa get-default-activity-xaml` with `--activity-type-id`
 - Pass absolute paths to `--file-path` in `get-errors` (must be relative to project directory)
-- Ask the user to choose a service provider without first checking project signals (installed packages, connections, existing activities) — auto-select when possible (Step 1.5)
+- Ask the user to choose a service provider without first checking project signals — auto-select when possible (Step 1.5)
 - Retry failing CLI commands in a loop without diagnosing the root cause
-- Skip Phase 0 (Studio readiness) — all subsequent phases depend on Studio IPC being available
-- Use connector/dynamic activities without checking whether a connection exists (use `uipcli is connections list` first)
+- Skip Phase 0 (Studio readiness) — all subsequent phases depend on Studio IPC
+- Use connector/dynamic activities without checking whether a connection exists (`uipcli is connections list`)
 
 ---
 
@@ -821,17 +751,11 @@ Before handover, verify:
 - [ ] Studio is running and connected (Phase 0 completed)
 - [ ] Project root is correctly identified and used consistently
 
-**Discovery & Activity Docs:**
-- [ ] Checked `{projectRoot}/.local/docs/packages/` for installed package documentation
-- [ ] Read `overview.md` for relevant packages to identify activities
-- [ ] Read activity-specific `.md` files for properties, types, defaults, and XAML examples
-- [ ] Used activity doc XAML examples as primary reference for activity configuration
-- [ ] Local project was explored for existing patterns and workflows
-- [ ] Used `uipcli rpa find-activities` and/or `uipcli rpa get-default-activity-xaml`; examples repository (`uipcli rpa list-workflow-examples`) for workflow composition patterns
-- [ ] For unknown activities: discovered with `uipcli rpa find-activities`
-- [ ] For dynamic activities without docs: properties resolved with `uipcli rpa get-default-activity-xaml` (for custom types, see "Resolving Dynamic Activity Custom Types")
-- [ ] Service/provider disambiguation was resolved — auto-selected or prompted when all signals were ambiguous (Step 1.5)
-- [ ] Started with a safe default XAML structure using the examples in the `.local` docs or `uipcli rpa get-default-activity-xaml` (with correct parameters for dynamic vs non-dynamic)
+**Discovery:**
+- [ ] Activity docs consulted for relevant packages (or confirmed unavailable / package updated)
+- [ ] Activity properties sourced from docs, `find-activities`, or `get-default-activity-xaml` (priority ladder followed)
+- [ ] Local project explored for existing patterns and conventions
+- [ ] Service/provider disambiguation resolved — auto-selected or prompted only when ambiguous (Step 1.5)
 - [ ] For connector workflows: connections verified with `uipcli is connections list`
 
 **XAML Content Quality:**
