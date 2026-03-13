@@ -50,7 +50,6 @@ Detailed procedures extracted from the main workflow phases:
 - **[cli-reference.md](./references/cli-reference.md)** — Full `uipcli` CLI command reference guide (all tools, parameters, commands)
 - **[environment-setup.md](./references/environment-setup.md)** — Phase 0 details: project root detection, Studio verification, authentication, and new project creation
 - **[validation-and-fixing.md](./references/validation-and-fixing.md)** — Phase 3 details: package resolution, JIT custom types, focus-activity debugging, iteration loop, smoke testing
-- **[examples-repository.md](./references/examples-repository.md)** — Workflow examples search commands, tag guidelines, and how to study retrieved examples
 - **[connector-capabilities.md](./references/connector-capabilities.md)** — IS connector discovery, resource schema inspection, connection management
 
 ### Domain Reference Files
@@ -287,7 +286,39 @@ For more details, see **[jit-custom-types-schema.md](./references/jit-custom-typ
 
 ### Step 1.7: Search Examples Repository
 
-Use when activity docs, `find-activities`, `get-default-activity-xaml`, and domain-specific [reference](./references/) files don't provide enough context — or when you need **full end-to-end workflow composition patterns**. See **[references/examples-repository.md](./references/examples-repository.md)** for search commands, tag guidelines, and how to study retrieved examples.
+Use when activity docs, `find-activities`, `get-default-activity-xaml`, and domain-specific [reference](./references/) files don't provide enough context — or when you need **full end-to-end workflow composition patterns**.
+
+## Searching Examples
+
+```bash
+# Search by service tags (AND logic — all tags must match)
+uipcli rpa list-workflow-examples --tags '["web"]' --limit 10 --format json
+
+# Multiple tags narrow down results (AND logic — all tags must match)
+uipcli rpa list-workflow-examples --tags '["jira", "confluence"]' --limit 10 --format json
+
+# Use prefix to filter by category
+uipcli rpa list-workflow-examples --tags '["gmail"]' --prefix "email-communication/" --limit 15 --format json
+
+# Once you identify relevant examples from the list operation, retrieve XAML content:
+uipcli rpa get-workflow-example --key "email-communication/add-new-gmail-emails-to-keap-as-contacts.xaml"
+```
+
+**Complete tag list:** `adobe-sign`, `asana`, `box`, `concur`, `confluence`, `database`, `document-understanding`, `docusign`, `dropbox`, `email-generic`, `excel`, `excel-online`, `freshbooks`, `freshdesk`, `github`, `gmail`, `google-calendar`, `google-docs`, `google-drive`, `google-sheets`, `gsuite`, `hubspot`, `intacct`, `jira`, `mailchimp`, `marketo`, `microsoft-365`, `onedrive`, `outlook`, `outlook-calendar`, `pdf`, `powerpoint`, `productivity`, `quickbooks`, `salesforce`, `servicenow`, `sharepoint`, `shopify`, `slack`, `smartsheet`, `stripe`, `teams`, `testing`, `trello`, `web`, `webex`, `word`, `workday`, `zendesk`, `zoom`
+
+## When to Use
+
+- Activity docs, `find-activities`, and `get-default-activity-xaml` didn't provide enough context
+- You need end-to-end workflow patterns showing multiple activities composed together
+- You need to understand service-specific integration patterns (e.g., OAuth flows, trigger setups)
+- You're building a complex multi-activity workflow and want to see how others structured similar automations
+
+## Studying Retrieved Examples
+
+When studying repository examples from `uipcli rpa get-workflow-example`:
+- The command returns the full XAML content directly
+- Parse the namespace declarations at the top to identify required packages
+- Examine the exact set of activity configurations, properties, variables, types, and set values. These are valid configurations
 
 ### Step 1.8: Get Current Context (As Needed)
 
@@ -394,7 +425,7 @@ uipcli rpa get-errors --file-path "Workflows/MyWorkflow.xaml" --skip-validation 
 - For dynamic activities, Integration Service connectors, JIT types: see [jit-custom-types-schema.md](./references/jit-custom-types-schema.md)
 - If docs are unavailable, use `uipcli rpa get-default-activity-xaml` to see the expected default property types
 - Push for package updates if docs are missing, inaccurate, or if `get-default-activity-xaml` cannot resolve
-- If default activity activity XAML is unavailable, check for examples in the examples repository. See [examples-repository](./references/examples-repository.md)
+- If default activity activity XAML is unavailable, check for examples in the examples repository (`list-workflow-examples` and `get-workflow-example`)
 
 **4. Activity Properties Errors** — Unknown properties, misconfigured conditional groups, missing required fields
 - **Primary:** Read the activity doc — it documents all properties, conditional groups (`Visible When`), valid configurations, and enum values
