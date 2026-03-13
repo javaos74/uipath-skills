@@ -62,6 +62,8 @@ Expect multiple iteration cycles for complex workflows.
 
 ## Smoke Test (Optional but Recommended)
 
+**Important:** `get-errors` (Studio validation) and `run-file` (runtime compilation) use different validation paths. Some errors — such as invalid enum values on activity properties — pass Studio validation but fail at runtime. Always treat the smoke test as a critical validation step, not just an optional extra.
+
 After reaching 0 errors, optionally run the workflow to catch runtime errors (wrong credentials, missing files, logic bugs) that static validation cannot detect:
 
 ```bash

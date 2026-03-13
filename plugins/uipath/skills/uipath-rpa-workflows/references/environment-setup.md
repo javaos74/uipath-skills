@@ -40,6 +40,8 @@ uipcli rpa open-project --project-dir "{projectRoot}"
 3. If Studio is running but IPC fails, the user may need to restart Studio
 4. Inform the user and ask them to ensure Studio Desktop is open and responsive
 
+**Note:** If `start-studio` fails with a registry key error, pass `--studio-dir` explicitly pointing to the Studio installation directory.
+
 ## Step 0.3: Authentication (If Needed)
 
 Some commands (IS connections, workflow examples, cloud features) require authentication:
