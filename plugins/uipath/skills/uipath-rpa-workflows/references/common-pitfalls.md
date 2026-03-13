@@ -81,6 +81,18 @@ Some properties are only required when another property has a specific value:
 - Input method resolution: `SendWindowMessages` → WINDOW_MESSAGES; else `SimulateClick` → API; else → HARDWARE_EVENTS (physical)
 - These are validated both at design-time (CacheMetadata) and runtime
 
+## NKeyboardShortcuts: `Shortcuts` vs `ShortcutsArgument`
+
+`NKeyboardShortcuts` has **two** shortcut properties — using the wrong one causes VB bracket parsing failures:
+
+- **`Shortcuts`** (`string`) — **Always use this** for hotkey encoding like `[d(hk)][d(ctrl)]a[u(ctrl)][u(hk)]`. Brackets are literal text.
+- **`ShortcutsArgument`** (`InArgument<string>`) — Only for dynamic/variable-driven values. Brackets here are parsed as VB expressions, so `[d(hk)]` would fail (VB tries to call function `d(hk)`).
+
+**Wrong:** `ShortcutsArgument="[d(hk)][d(ctrl)]a[u(ctrl)][u(hk)]"` → VB parser error
+**Correct:** `Shortcuts="[d(hk)][d(ctrl)]a[u(ctrl)][u(hk)]"` → literal string, works fine
+
+See `ui-automation.md` NKeyboardShortcuts section for the full hotkey encoding reference.
+
 ## ActivityAction/ActivityFunc Initialization
 
 Scope activities (like `ExcelApplicationCard`, `Use Application/Browser`) use `ActivityAction` to wrap their child content. The XAML pattern is:
