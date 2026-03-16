@@ -49,14 +49,15 @@ claude plugin uninstall <plugin-name>
 
 Example:
 ```bash
-claude plugin uninstall uipath-coded-agent
+claude plugin uninstall uipath-coded-agents
 ```
 
 ## Plugins in This Marketplace
 
 | Plugin | Description | Version |
 |--------|-------------|---------|
-| [**uipath-coded-agents**](./plugins/uipath-coded-agents/README.md) | Create, run, and evaluate UiPath coded agents with AI-powered assistance | 0.0.1 |
+| [**uipath-coded-agents**](./uipath-coded-agents/README.md) | Create, run, and evaluate UiPath coded agents with AI-powered assistance | 0.0.1 |
+| [**uipath**](./uipath/README.md) | UiPath plugin for Claude Code — custom skills, agents, hooks, and MCP servers for UiPath workflows | 0.0.7 |
 
 ## Project Structure
 
@@ -66,11 +67,8 @@ This marketplace contains:
 
 - **`.claude-plugin/`** - Plugin configuration directory
   - `marketplace.json` - Marketplace definition listing all available plugins
-  - `plugins/` - Directory containing individual plugin implementations
-
-- **`.claude/`** - Claude Code settings
-  - `settings.local.json` - Local configuration
-
+- **`uipath-coded-agents/`** - UiPath coded agents plugin
+- **`uipath/`** - UiPath workflows plugin
 - **README.md** - This file
 
 ## Getting Help
@@ -85,4 +83,4 @@ claude plugin --help
 claude plugin marketplace --help
 ```
 
-For plugin-specific documentation, see the README files in individual plugin directories under `plugins/`
+For plugin-specific documentation, see the README files in individual plugin directories (`uipath-coded-agents/`, `uipath/`)
