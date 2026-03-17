@@ -8,9 +8,11 @@ Follow these steps in order when the user asks to interact with an external serv
 - Step 2: Find a Connection
 - Step 3: Ping the Connection
 - Step 4: Discover Capabilities
+- Step 4T: Trigger Metadata (if trigger workflow)
 - Step 5: Resolve Reference Fields
 - Step 6: Execute
-- Happy-Path Example
+- Happy-Path Example (CRUD)
+- Happy-Path Example (Triggers)
 
 ## Progress Checklist
 
@@ -21,6 +23,7 @@ Copy and track progress:
 - [ ] Step 2: Find connection (get Id)
 - [ ] Step 3: Ping connection (confirm Enabled)
 - [ ] Step 4: Discover capabilities (activities first, then resources)
+- [ ] Step 4T: (Triggers only) Get trigger objects → get trigger metadata
 - [ ] Step 5: Resolve reference fields (if any)
 - [ ] Step 6: Execute operation
 ```
@@ -94,6 +97,44 @@ uipcli is resources describe "<connector-key>" "<object>" \
 
 See [resources.md](resources.md) for why `--connection-id` and `--operation` are critical.
 
+## Step 4T: Trigger Metadata (if user needs trigger/event configuration)
+
+If the user's task involves **event triggers** (e.g., "when a record is created", "listen for updates"), discover trigger metadata instead of (or in addition to) CRUD resources.
+
+**4T-a. List trigger activities** to see what events the connector supports:
+
+```bash
+uipcli is activities list "<connector-key>" --triggers --format json
+```
+
+Present trigger activities to the user. Note the **Operation** field (e.g., CREATED, UPDATED, DELETED).
+
+**4T-b. For CREATED/UPDATED/DELETED operations** — get available trigger objects:
+
+```bash
+uipcli is triggers objects "<connector-key>" "<OPERATION>" \
+  --connection-id "<id>" --format json
+```
+
+Present objects to the user and let them choose.
+
+**4T-c. Get trigger field metadata** for the selected object:
+
+```bash
+uipcli is triggers describe "<connector-key>" "<OPERATION>" "<object-name>" \
+  --connection-id "<id>" --format json
+```
+
+**4T-d. For non-CRUD trigger operations** — skip 4T-b. Use the activity's **ObjectName** as the `<object-name>` and go directly to 4T-c.
+
+| Trigger outcome | Action |
+|---|---|
+| Trigger activities found | Present to user, proceed to 4T-b or 4T-c based on operation type |
+| No trigger activities | Connector doesn't support events. Inform user. |
+| No objects for operation | Verify operation name is uppercase (CREATED/UPDATED/DELETED). Check connector `hasEvents`. |
+
+See [triggers.md](triggers.md) for full trigger domain reference and response fields.
+
 ## Step 5: Resolve Reference Fields
 
 **When describe succeeded:** Check output for `referenceFields`. If none exist, skip to Step 6. For each reference field: list the referenced object, collect valid IDs, and present options to the user.
@@ -113,7 +154,7 @@ See [resources.md — Execute Operations](resources.md#execute-operations) for t
 
 ---
 
-## Happy-Path Example
+## Happy-Path Example (CRUD)
 
 ```bash
 # 1. Find connector
@@ -147,4 +188,37 @@ uipcli is resources describe "uipath-salesforce-sfdc" "Contact" \
 # 6. Execute
 uipcli is resources execute create "uipath-salesforce-sfdc" "Contact" \
   --connection-id "abc-123" --body '{"LastName": "Doe", "FirstName": "Jane"}' --format json
+```
+
+---
+
+## Happy-Path Example (Triggers)
+
+```bash
+# 1. Find connector
+uipcli is connectors list --filter "salesforce" --format json
+# → Key: "uipath-salesforce-sfdc"
+
+# 2. Find connection
+uipcli is connections list "uipath-salesforce-sfdc" --format json
+# → Id: "228624", IsDefault: Yes, State: Enabled
+
+# 3. Ping
+uipcli is connections ping "228624" --format json
+# → Status: Enabled
+
+# 4T-a. List trigger activities
+uipcli is activities list "uipath-salesforce-sfdc" --triggers --format json
+# → Trigger activities with Operation: CREATED, UPDATED, DELETED
+
+# 4T-b. Get objects for CREATED operation
+uipcli is triggers objects "uipath-salesforce-sfdc" CREATED \
+  --connection-id "228624" --format json
+# → [AccountHistory, Contact, Lead, ...]
+# → User picks "AccountHistory"
+
+# 4T-c. Get trigger metadata (fields) for AccountHistory
+uipcli is triggers describe "uipath-salesforce-sfdc" CREATED "AccountHistory" \
+  --connection-id "228624" --format json
+# → Returns field definitions (names, types, descriptions)
 ```
