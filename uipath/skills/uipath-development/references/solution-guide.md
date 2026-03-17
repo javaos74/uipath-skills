@@ -39,7 +39,7 @@ Create → Add Projects → Pack → Publish → Deploy → Activate
 Create a new empty solution file:
 
 ```bash
-uipcli solution new "MySolution" --format json
+uip solution new "MySolution" --format json
 ```
 
 This creates `MySolution.uipx` in the current directory.
@@ -50,10 +50,10 @@ Add existing automation projects to the solution:
 
 ```bash
 # Add a project (auto-discovers nearest .uipx)
-uipcli solution project add ./ProjectA --format json
+uip solution project add ./ProjectA --format json
 
 # Add with explicit solution file
-uipcli solution project add ./ProjectB ./MySolution.uipx --format json
+uip solution project add ./ProjectB ./MySolution.uipx --format json
 ```
 
 The project folder must contain `project.uiproj` or `project.json`.
@@ -61,7 +61,7 @@ The project folder must contain `project.uiproj` or `project.json`.
 ### 3. Remove Projects from a Solution
 
 ```bash
-uipcli solution project remove ./ProjectA --format json
+uip solution project remove ./ProjectA --format json
 ```
 
 ### 4. Pack the Solution
@@ -69,13 +69,13 @@ uipcli solution project remove ./ProjectA --format json
 Pack the solution into a deployable .zip package:
 
 ```bash
-uipcli solution pack ./MySolution ./output --format json
+uip solution pack ./MySolution ./output --format json
 ```
 
 With version and custom name:
 
 ```bash
-uipcli solution pack ./MySolution ./output --name "MySolution" --version "2.0.0" --format json
+uip solution pack ./MySolution ./output --name "MySolution" --version "2.0.0" --format json
 ```
 
 ### 5. Publish the Package
@@ -83,14 +83,14 @@ uipcli solution pack ./MySolution ./output --name "MySolution" --version "2.0.0"
 Upload the packed solution to UiPath (requires authentication):
 
 ```bash
-uipcli login --format json
-uipcli solution publish ./output/MySolution.1.0.0.zip --format json
+uip login --format json
+uip solution publish ./output/MySolution.1.0.0.zip --format json
 ```
 
 With tenant and location override:
 
 ```bash
-uipcli solution publish ./output/MySolution.1.0.0.zip --tenant "Production" --format json
+uip solution publish ./output/MySolution.1.0.0.zip --tenant "Production" --format json
 ```
 
 ---
@@ -105,19 +105,19 @@ Deploy supports three input modes:
 
 **From source directory (auto-packs):**
 ```bash
-uipcli solution deploy --folder "Finance" --format json
+uip solution deploy --folder "Finance" --format json
 # or with explicit path:
-uipcli solution deploy --path ./MySolution --folder "Finance" --format json
+uip solution deploy --path ./MySolution --folder "Finance" --format json
 ```
 
 **From local package:**
 ```bash
-uipcli solution deploy --package ./output/MySolution.1.0.0.zip --folder "Finance" --format json
+uip solution deploy --package ./output/MySolution.1.0.0.zip --folder "Finance" --format json
 ```
 
 **From previously uploaded package:**
 ```bash
-uipcli solution deploy --name "MySolution" --version "1.0.0" --folder "Finance" --format json
+uip solution deploy --name "MySolution" --version "1.0.0" --folder "Finance" --format json
 ```
 
 **Key options:**
@@ -137,31 +137,31 @@ uipcli solution deploy --name "MySolution" --version "1.0.0" --folder "Finance" 
 ### Activate a Deployment
 
 ```bash
-uipcli solution activate --deployment "MySolution" --folder "Finance" --format json
+uip solution activate --deployment "MySolution" --folder "Finance" --format json
 ```
 
 ### Check Deployment Status
 
 ```bash
-uipcli solution status --deployment "MySolution" --folder "Finance" --format json
+uip solution status --deployment "MySolution" --folder "Finance" --format json
 ```
 
 ### List Deployed Solutions
 
 ```bash
-uipcli solution list --folder "Finance" --format json
+uip solution list --folder "Finance" --format json
 ```
 
 ### Uninstall a Solution
 
 ```bash
-uipcli solution uninstall --deployment "MySolution" --folder "Finance" --format json
+uip solution uninstall --deployment "MySolution" --folder "Finance" --format json
 ```
 
 ### Download Configuration
 
 ```bash
-uipcli solution download-config --deployment "MySolution" --folder "Finance" --output ./config.json --format json
+uip solution download-config --deployment "MySolution" --folder "Finance" --output ./config.json --format json
 ```
 
 ---
@@ -182,22 +182,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uipcli
+      - name: Install uip
         run: npm install -g @uipath/cli
 
       - name: Authenticate
         run: |
-          uipcli login \
+          uip login \
             --client-id "${{ secrets.UIPATH_CLIENT_ID }}" \
             --client-secret "${{ secrets.UIPATH_CLIENT_SECRET }}" \
             --tenant "${{ secrets.UIPATH_TENANT }}" \
             --format json
 
       - name: Pack solution
-        run: uipcli solution pack ./MySolution ./output --version "${{ github.sha }}" --format json
+        run: uip solution pack ./MySolution ./output --version "${{ github.sha }}" --format json
 
       - name: Publish solution
-        run: uipcli solution publish ./output/MySolution.*.zip --format json
+        run: uip solution publish ./output/MySolution.*.zip --format json
 ```
 
 ### Environment Promotion Pattern
@@ -210,13 +210,13 @@ PACKAGE=$1  # e.g., ./output/MySolution.1.0.0.zip
 
 # Deploy to Staging
 echo "Deploying to Staging..."
-uipcli login tenant set "Staging" --format json
-uipcli solution publish "$PACKAGE" --format json
+uip login tenant set "Staging" --format json
+uip solution publish "$PACKAGE" --format json
 
 # After manual approval, deploy to Production
 echo "Deploying to Production..."
-uipcli login tenant set "Production" --format json
-uipcli solution publish "$PACKAGE" --format json
+uip login tenant set "Production" --format json
+uip solution publish "$PACKAGE" --format json
 ```
 
 ---
@@ -227,19 +227,19 @@ uipcli solution publish "$PACKAGE" --format json
 
 ```bash
 # 1. Create solution
-uipcli solution new "InvoiceAutomation" --format json
+uip solution new "InvoiceAutomation" --format json
 
 # 2. Add projects
-uipcli solution project add ./InvoiceProcessor --format json
-uipcli solution project add ./InvoiceReporter --format json
+uip solution project add ./InvoiceProcessor --format json
+uip solution project add ./InvoiceReporter --format json
 
 # 3. Pack
-uipcli solution pack . ./output --version "1.0.0" --format json
+uip solution pack . ./output --version "1.0.0" --format json
 
 # 4. Login and publish
-uipcli login --format json
-uipcli login tenant set "Production" --format json
-uipcli solution publish ./output/InvoiceAutomation.1.0.0.zip --format json
+uip login --format json
+uip login tenant set "Production" --format json
+uip solution publish ./output/InvoiceAutomation.1.0.0.zip --format json
 ```
 
 ### Version Bumping
@@ -248,16 +248,16 @@ Always increment version when republishing:
 
 ```bash
 # Initial release
-uipcli solution pack ./MySolution ./output --version "1.0.0" --format json
+uip solution pack ./MySolution ./output --version "1.0.0" --format json
 
 # Bug fix
-uipcli solution pack ./MySolution ./output --version "1.0.1" --format json
+uip solution pack ./MySolution ./output --version "1.0.1" --format json
 
 # New feature
-uipcli solution pack ./MySolution ./output --version "1.1.0" --format json
+uip solution pack ./MySolution ./output --version "1.1.0" --format json
 
 # Breaking change
-uipcli solution pack ./MySolution ./output --version "2.0.0" --format json
+uip solution pack ./MySolution ./output --version "2.0.0" --format json
 ```
 
 ---

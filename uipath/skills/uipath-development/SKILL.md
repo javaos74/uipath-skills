@@ -1,6 +1,6 @@
 ---
 name: uipath-development
-description: "UiPath development environment assistant — authentication, Orchestrator management (folders, assets), solution lifecycle (pack, publish, deploy), Integration Service, CLI tools, and general UiPath platform knowledge. TRIGGER when: User asks about UiPath platform operations (authentication, Orchestrator, folders, assets, robots, queues, packages, processes); User asks about solution lifecycle (pack, publish, deploy, activate); User references Integration Service (connectors, connections, activities, resources); User wants to use uipcli CLI commands; User asks about environment setup, credentials, or tenant configuration; User asks general UiPath platform questions (folders, robots, queues, triggers, machine policies). DO NOT TRIGGER when: User is writing or editing workflow code (use uipath-coded-workflows or uipath-rpa-workflows instead), or asking how to automate a specific task within a workflow."
+description: "UiPath development environment assistant — authentication, Orchestrator management (folders, assets), solution lifecycle (pack, publish, deploy), Integration Service, CLI tools, and general UiPath platform knowledge. TRIGGER when: User asks about UiPath platform operations (authentication, Orchestrator, folders, assets, robots, queues, packages, processes); User asks about solution lifecycle (pack, publish, deploy, activate); User references Integration Service (connectors, connections, activities, resources); User wants to use uip CLI commands; User asks about environment setup, credentials, or tenant configuration; User asks general UiPath platform questions (folders, robots, queues, triggers, machine policies). DO NOT TRIGGER when: User is writing or editing workflow code (use uipath-coded-workflows or uipath-rpa-workflows instead), or asking how to automate a specific task within a workflow."
 metadata: 
    allowed-tools: Bash, Read, Write, Glob, Grep
 ---
@@ -16,21 +16,22 @@ Comprehensive guide for setting up and managing UiPath development environments,
 - User wants to **manage Orchestrator assets** (list, create, get, delete)
 - User wants to **work with solutions** (create, pack, publish, deploy, activate)
 - User asks about **UiPath platform concepts** (tenants, folders, robots, queues, packages)
-- User wants to **install or manage CLI tools** (search, install, upgrade)
+- User wants to **install or manage CLI tools** (search, install, update)
 - User wants to set up a **CI/CD pipeline** for UiPath automation projects
 - User asks **how to deploy** an automation to Orchestrator
 - User wants to **manage flow projects** (init, pack, validate, run jobs, trace)
 
 ## Critical: Two CLI Versions
 
-There are **two different `uipcli` versions** that may be installed. They have completely different command structures:
+There are **two different CLI versions** that may be installed. They have completely different command structures:
 
 | | Legacy CLI (.NET) | New CLI (Node.js/Bun) |
 |---|---|---|
+| **Binary name** | `uipcli` | `uip` |
 | **Install location** | `~/.dotnet/tools/uipcli` | `dev4/uipcli/packages/cli/dist/index.js` |
 | **Version** | v25.10.x | v0.0.x |
 | **Auth** | Inline on every command (`-u`/`-p`, `-I`/`-S`) | Session-based (`login` → token stored at `~/.uipcli/.env`) |
-| **Asset commands** | `asset deploy <csv>` (CSV bulk) | `orch assets create <folder-id> <name> <value>` |
+| **Asset commands** | `asset deploy <csv>` (CSV bulk) | REST API only (assets not yet in `or` tool) |
 | **Pack** | `package pack <path> -o <output>` | `solution pack <path> <output>` |
 | **Deploy** | `package deploy <nupkg> <url> <tenant> -I ... -S ...` | `solution publish <zip>` |
 
@@ -102,15 +103,15 @@ The legacy CLI does not have a `login` command. Auth is passed inline on every c
 List available tenants and set the active one:
 
 ```bash
-uipcli login tenant list --format json
-uipcli login tenant set "<TENANT_NAME>" --format json
+uip login tenant list --format json
+uip login tenant set "<TENANT_NAME>" --format json
 ```
 
 ### Step 3 — Explore Orchestrator
 
 List folders to orient yourself:
 ```bash
-uipcli orch folders list --format json
+uip or folders list --format json
 ```
 
 ### Step 4 — Work with Solutions or Orchestrator Resources
@@ -211,23 +212,24 @@ Organization
 
 ## CLI Overview
 
-The UiPath CLI (`uipcli`) is a unified command-line tool for interacting with the UiPath platform:
+The UiPath CLI (`uip`) is a unified command-line tool for interacting with the UiPath platform:
 
 | Command Group | Prefix | Description | Status |
 |---|---|---|---|
 | **Authentication** | `login`, `logout` | OAuth2, client credentials, PAT, tenant management | Available |
-| **Orchestrator** | `orch` | Folders, assets management | Available |
-| **Solutions** | `solution` | Create, pack, publish, deploy, activate solutions | Available |
+| **Orchestrator** | `or` | Folders, jobs, processes, releases | Available |
+| **Solutions** | `solution` | Create, pack, publish, deploy solutions | Available |
 | **Flow** | `flow` | Flow project lifecycle (init, pack, validate, run, trace) | Available |
 | **Integration Service** | `is` | Connectors, connections, activities, resources | Available |
 | **Tools** | `tools` | CLI tool extension management | Available |
 | **MCP** | `mcp` | Model Context Protocol server | Available |
 | **Coded Agents** | `codedagents` | Python agent lifecycle (setup, exec) | Available |
 | **RPA** | `rpa` | RPA workflow management (create, compile, validate, execute) | Available |
+| **Test Manager** | `tm` | Test management operations | Available |
 
 ### Global Options
 
-Every `uipcli` command accepts:
+Every `uip` command accepts:
 
 | Option | Description | Default |
 |---|---|---|
@@ -236,7 +238,7 @@ Every `uipcli` command accepts:
 | `--help` / `-h` | Display help for the command | -- |
 | `--version` / `-v` | Display CLI version | -- |
 
-> **Always use `--format json`** when calling uipcli commands programmatically. JSON is compact and machine-readable.
+> **Always use `--format json`** when calling `uip` commands programmatically. JSON is compact and machine-readable.
 
 ## Deployment Lifecycle
 
@@ -244,19 +246,18 @@ The typical deployment workflow for a UiPath automation:
 
 ```
 1. Develop    → Create/edit coded workflows or RPA projects locally
-2. Validate   → rpa-tool validate / uipcli rpa validate
-3. Pack       → uipcli solution pack / uipcli flow pack
-4. Login      → uipcli login
-5. Publish    → uipcli solution publish
-6. Deploy     → uipcli solution deploy --folder "<FOLDER>"
-7. Activate   → uipcli solution activate --deployment "<NAME>" --folder "<FOLDER>"
+2. Validate   → uip rpa validate
+3. Pack       → uip solution pack / uip flow pack
+4. Login      → uip login
+5. Publish    → uip solution publish
+6. Deploy     → uip solution deploy run -n "<NAME>" -c "<CONFIG_KEY>"
 ```
 
 ### Practical Deployment Notes
 
 - **Studio locks the project database.** If `package pack` fails with "project is already opened in another Studio instance", close the project first: `rpa-tool close-project --project-dir "<DIR>" --format json`
 - **Starting jobs requires runtimes.** If you get error 2818 "no runtimes configured", the target folder needs machine templates with Unattended/Development runtimes assigned.
-- **Fallback: direct REST API.** When CLI tools don't support an operation, use the Orchestrator REST API with the access token from `~/.uipcli/.env`. See [references/orchestrator-guide.md - REST API](references/orchestrator-guide.md).
+- **Fallback: direct REST API.** When CLI tools don't support an operation, use the Orchestrator REST API with the access token from `~/.uipcli/.env`. See [references/orchestrator-guide.md - REST API](references/orchestrator-guide.md). Note: Asset management is currently REST API only (not yet in `or` tool).
 
 ## Orchestrator REST API (Fallback)
 
@@ -286,11 +287,11 @@ curl -X POST "${UIPATH_URL}/${UIPATH_ORG_NAME}/${UIPATH_TENANT_NAME}/orchestrato
   -d '{"startInfo":{"ReleaseKey":"<RELEASE_KEY>","Strategy":"ModernJobsCount","JobsCount":1,"RuntimeType":"Unattended","InputArguments":"{}"}}'
 ```
 
-The `X-UIPATH-OrganizationUnitId` header is the **folder ID** (get it from `orch folders list`).
+The `X-UIPATH-OrganizationUnitId` header is the **folder ID** (get it from `uip or folders list`).
 
 ## References
 
-- **[Complete CLI Command Reference](references/uipcli-commands.md)** — Every uipcli command with parameters
+- **[Complete CLI Command Reference](references/uipcli-commands.md)** — Every `uip` command with parameters
 - **[Orchestrator Guide](references/orchestrator-guide.md)** — Concepts, folders, assets, and planned features
 - **[Solution Guide](references/solution-guide.md)** — Solution lifecycle: create, pack, publish, deploy
 - **[Integration Service](references/integration-service/integration-service.md)** — Connectors, connections, activities, resources for third-party services
