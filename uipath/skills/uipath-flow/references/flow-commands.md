@@ -75,9 +75,9 @@ Manage deployed Flow processes in Orchestrator. **Requires `uip login`.**
 ```bash
 uip flow process list --format json
 uip flow process list --folder-id <id> --format json
-uip flow process get <processId> --format json
-uip flow process run <processId> --format json
-uip flow process run <processId> --input '{"key":"value"}' --format json
+uip flow process get <process-key> <feed-id> --format json
+uip flow process run <process-key> <folder-key> --format json
+uip flow process run <process-key> <folder-key> --input '{"key":"value"}' --format json
 ```
 
 ## uip flow job
@@ -85,8 +85,8 @@ uip flow process run <processId> --input '{"key":"value"}' --format json
 Monitor Flow jobs. **Requires `uip login`.**
 
 ```bash
-uip flow job status <jobId> --format json
-uip flow job traces <jobId> --format json
+uip flow job status <job-key> --format json
+uip flow job traces <job-key> --format json
 ```
 
 ## uip flow registry
