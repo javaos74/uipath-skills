@@ -68,13 +68,27 @@ uip flow registry get <nodeType> --format json  # full schema for one node type
 
 > **Auth note**: Without `uip login`, registry shows OOTB nodes only. After login, tenant-specific connector nodes are also available.
 
-### Step 4 — Edit the `.flow` file
+### Step 4 — Plan the flow
+
+Before editing the `.flow` file, create a plan and get user approval.
+
+1. **Create `<ProjectName>-plan.md`** in the project directory with:
+   - **Goal** — one-line summary of what the flow does
+   - **Nodes** — numbered list of each step, its node type, and what it does
+   - **Connections** — how nodes connect (which output port → which input port)
+   - **Inputs** — what the flow needs to start (trigger type, input arguments)
+   - **Outputs** — what the flow produces (return values, side effects)
+   - **Missing information** — anything the user hasn't specified that you need to proceed, marked as `[REQUIRED: description]` (e.g. connector IDs, channel names, credentials)
+
+2. **Ask the user to review the plan before proceeding.** Do NOT move to Step 5 until the user confirms.
+
+### Step 5 — Edit the `.flow` file
 
 Edit `flow_files/<ProjectName>.flow` only. Never edit `content/<ProjectName>.bpmn` — it is auto-generated.
 
 See [references/flow-file-format.md](references/flow-file-format.md) for the full JSON schema, node/edge structure, and definition requirements.
 
-### Step 5 — Validate locally
+### Step 6 — Validate locally
 
 ```bash
 uip flow validate flow_files/<ProjectName>.flow --format json
@@ -82,13 +96,15 @@ uip flow validate flow_files/<ProjectName>.flow --format json
 
 Validates JSON structure and cross-references (edges point to existing nodes, every node type has a `definitions` entry). No auth required, runs instantly.
 
-### Step 6 — Debug (cloud)
+### Step 7 — Debug (cloud) — only when explicitly requested
 
 ```bash
 uip flow debug flow_files/<ProjectName>.flow
 ```
 
 Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchestrator, and streams results. Use `flow validate` first — cloud debug is slower and requires connectivity.
+
+**Do NOT run `flow debug` automatically.** Debug executes the flow for real — it will send emails, post Slack messages, call APIs, write to databases, etc. Only run debug when the user explicitly asks to debug or test the flow. After validation succeeds, tell the user the flow is ready and ask if they want to debug it.
 
 ## Task Navigation
 
