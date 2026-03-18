@@ -15,11 +15,13 @@ Comprehensive guide for creating, editing, validating, and debugging UiPath Flow
 - User is **editing a `.flow` file** — adding nodes, edges, or logic
 - User wants to **explore available node types** via the registry
 - User wants to **validate** a Flow file locally
-- User wants to **debug or run** a Flow (cloud or local)
+- User wants to **debug** a Flow (cloud)
 - User asks about the **`.flow` JSON format**, nodes, edges, definitions, or ports
 - User asks **how to implement logic** in a Flow (scripts, HTTP calls, branching, etc.)
 
 ## Quick Start
+
+These steps are for **creating a new flow from scratch**. For existing projects, skip to the relevant step. For small targeted edits (changing a script body, renaming a node, tweaking a port), skip straight to Step 5.
 
 ### Step 0 — Resolve the `uip` binary
 
@@ -70,17 +72,19 @@ uip flow registry get <nodeType> --format json  # full schema for one node type
 
 ### Step 4 — Plan the flow
 
+**Only for new flows or major restructuring** (adding multiple nodes, redesigning connections). Skip this step for small targeted edits.
+
 Before editing the `.flow` file, create a plan and get user approval.
 
 1. **Create `<ProjectName>-plan.md`** in the project directory with:
-   - **Goal** — one-line summary of what the flow does
-   - **Nodes** — numbered list of each step, its node type, and what it does
-   - **Connections** — how nodes connect (which output port → which input port)
-   - **Inputs** — what the flow needs to start (trigger type, input arguments)
-   - **Outputs** — what the flow produces (return values, side effects)
-   - **Missing information** — anything the user hasn't specified that you need to proceed, marked as `[REQUIRED: description]` (e.g. connector IDs, channel names, credentials)
+   - **Goal** -- one-line summary of what the flow does
+   - **Nodes** -- numbered list of each step, its node type, and what it does
+   - **Connections** -- how nodes connect (which output port to which input port)
+   - **Inputs** -- what the flow needs to start (trigger type, input arguments)
+   - **Outputs** -- what the flow produces (return values, side effects)
+   - **Missing information** -- anything the user hasn't specified that you need to proceed, marked as `[REQUIRED: description]` (e.g. connector IDs, channel names, credentials)
 
-2. **Ask the user to review the plan before proceeding.** Do NOT move to Step 5 until the user confirms.
+2. **Ask the user to review the plan before proceeding.** Do NOT move to Step 5 until the user confirms. If the user requests changes, revise the plan and ask again.
 
 ### Step 5 — Edit the `.flow` file
 
@@ -95,6 +99,8 @@ uip flow validate flow_files/<ProjectName>.flow --format json
 ```
 
 Validates JSON structure and cross-references (edges point to existing nodes, every node type has a `definitions` entry). No auth required, runs instantly.
+
+If validation fails, read the errors, fix the `.flow` file, and re-validate. Repeat until validation passes.
 
 ### Step 7 — Debug (cloud) — only when explicitly requested
 
