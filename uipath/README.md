@@ -43,7 +43,7 @@ Build UiPath coded automations in C# with automatic validation and activity refe
 - **[Coding Guidelines](skills/uipath-coded-workflows/references/coding-guidelines.md)** - Using statements, best practices, and common issues
 - **[CodedWorkflow Reference](skills/uipath-coded-workflows/references/codedworkflow-reference.md)** - Base class methods, hooks, and invocation patterns
 - **[UI Automation Guide](skills/uipath-coded-workflows/references/ui-automation/ui-automation.md)** - Object Repository, descriptors, and UI interaction
-- **[UiPath CLI Guide](skills/uipath-coded-workflows/references/uipcli-guide.md)** - Build, pack, and run commands
+- **[UiPath CLI Guide](skills/uipath-coded-workflows/references/uip-guide.md)** - Build, pack, and run commands
 - **[Third-Party Packages](skills/uipath-coded-workflows/references/third-party-packages-guide.md)** - Adding and inspecting NuGet dependencies
 
 ### Activity References

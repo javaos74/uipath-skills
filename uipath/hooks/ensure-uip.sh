@@ -1,5 +1,5 @@
 #!/bin/bash
-# Ensures @uipath/cli (provides the `uip` binary) and @uipath/rpa-tool are installed globally.
+# Ensures @uipath/cli and @uipath/rpa-tool are installed globally.
 # Runs once per session via the SessionStart plugin hook.
 # If npm is missing, attempts to install Node.js first.
 # Supports Windows, macOS, and Linux.
