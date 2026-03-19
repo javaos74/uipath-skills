@@ -79,10 +79,21 @@ ensure_github_packages_registry() {
   npm config set //npm.pkg.github.com/:_authToken "$GH_NPM_REGISTRY_TOKEN"
 }
 
+# npm install -g always re-downloads and re-installs, even if the same version
+# is already present. This is slow for a synchronous session hook and also
+# re-triggers package lifecycle scripts (e.g. servo runs preinstall hooks
+# that should only execute on actual version changes). Check first, install
+# only when needed.
 ensure_npm_package() {
   local pkg="$1"
-  echo "Installing or updating $pkg globally..." >&2
 
+  if npm ls -g "$pkg" --depth=0 &>/dev/null \
+     && [ -z "$(npm outdated -g "$pkg" 2>/dev/null)" ]; then
+    echo "$pkg is already installed and up to date." >&2
+    return
+  fi
+
+  echo "Installing or updating $pkg globally..." >&2
   if ! npm install -g "$pkg" 2>&1; then
     echo "Failed to install $pkg. Please run: npm install -g $pkg" >&2
     exit 2
