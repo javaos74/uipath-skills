@@ -11,6 +11,9 @@ Comprehensive UiPath automation plugin for Claude Code — covering coded workfl
 # RPA workflow architect — generate and edit XAML workflows in UiPath Studio Desktop
 /uipath:uipath-rpa-workflows
 
+# Flow project assistant — create, edit, validate, and debug .flow projects
+/uipath:uipath-flow
+
 # Development environment — authentication, Orchestrator, deployment, CLI tools, Integration Service
 /uipath:uipath-development
 ```
@@ -21,6 +24,7 @@ Comprehensive UiPath automation plugin for Claude Code — covering coded workfl
 |-------|---------|-------------|
 | **Coded Workflows** | `/uipath:uipath-coded-workflows` | Full coding assistant for creating, editing, validating, and running UiPath coded automation projects (.cs) |
 | **RPA Workflows** | `/uipath:uipath-rpa-workflows` | Generate and edit RPA workflows (XAML) using a discovery-first approach with iterative error-driven refinement |
+| **Flow Projects** | `/uipath:uipath-flow` | Create, edit, validate, and debug UiPath Flow projects using the `uip` CLI and `.flow` file format |
 | **Development** | `/uipath:uipath-development` | Environment setup, authentication, Orchestrator management, solution lifecycle, Integration Service, and CLI tooling |
 
 ## Coded Workflows
@@ -84,6 +88,32 @@ uip rpa get-workflow-example --key "..."        # Retrieve example XAML
 uip rpa get-errors --format json                # Validate workflow files
 uip rpa run-file --file-path "..."              # Run a workflow
 ```
+
+## Flow Projects
+
+Build and run UiPath Flow projects — JSON-based workflow definitions executed via the `uip` CLI.
+
+- **Project Scaffolding**: Create new Flow projects with `uip flow init`
+- **Node Registry**: Discover available node types via `uip flow registry search/get`
+- **Local Validation**: Instant schema + cross-reference check with `uip flow validate` (no auth needed)
+- **Cloud Debug**: Upload and run in Orchestrator via `uip flow debug` (requires `uip login`)
+- **Format Reference**: Full `.flow` JSON schema — nodes, edges, definitions, ports, and gotchas
+
+### Key CLI Commands
+
+```bash
+uip flow init <ProjectName>                  # scaffold new project
+uip flow validate <ProjectName>.flow         # local schema check (no auth needed)
+uip flow debug <ProjectName>.flow            # cloud debug session (requires login)
+uip flow registry pull                       # refresh node type cache
+uip flow registry search <keyword>           # find node types
+uip flow registry get <nodeType> --format json   # full schema for one node type
+```
+
+### References
+
+- **[.flow File Format](skills/uipath-flow/references/flow-file-format.md)** — JSON schema, node/edge/definition structure, common node types, ports, and examples
+- **[CLI Command Reference](skills/uipath-flow/references/flow-commands.md)** — All `uip flow` subcommands with parameters
 
 ## Requirements
 
