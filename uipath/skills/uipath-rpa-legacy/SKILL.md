@@ -29,6 +29,7 @@ Legacy UiPath RPA projects: .NET Framework 4.6.1, VB.NET expressions, classic ac
 | Analyze (only when asked) | `uip rpa-legacy analyze "{projectRoot}" --format json` | [cli-reference.md](./references/cli-reference.md) |
 | Package (optional) | `uip rpa-legacy package "{projectRoot}" -o "{dir}"` | [cli-reference.md](./references/cli-reference.md) |
 | Debug | `uip rpa-legacy debug "{projectRoot}/File.xaml"` | [cli-reference.md](./references/cli-reference.md) |
+| Create new project | Create project.json with right packages | [project-structure.md](./references/project-structure.md) |
 | Create test data | Generate Excel/CSV/JSON/types for testing | [test-data-guide.md](./references/test-data-guide.md) |
 
 If unclear which file to edit, **ask the user**.
@@ -62,6 +63,7 @@ No Studio needed. See [environment-setup.md](./references/environment-setup.md) 
 | InvokeCode patterns | [activity-docs/_INVOKE-CODE.md](./references/activity-docs/_INVOKE-CODE.md) |
 | REFramework structure | [activity-docs/_REFRAMEWORK.md](./references/activity-docs/_REFRAMEWORK.md) |
 | Document Understanding pipeline | [activity-docs/_DU-PROCESS.md](./references/activity-docs/_DU-PROCESS.md) |
+| **Search NuGet for packages** | `uip rpa-legacy find-package --query "..." --format json` — searches all configured feeds |
 | Official UiPath docs (fallback) | `uip docsai ask "question" --format json` |
 | Community solutions (last resort) | `WebSearch` — UiPath Forum, Stack Overflow, GitHub, Reddit |
 
@@ -198,6 +200,7 @@ See [cli-reference.md](./references/cli-reference.md) for all options.
 | `uip rpa-legacy type-definition <path> --type "..." --format json` | Inspect types, enum values, properties |
 | `uip rpa-legacy validate <file-or-project-path> --format json` | Validate single file or entire project |
 | `uip rpa-legacy analyze <path> --format json` | Run workflow analyzer rules (only when asked) |
+| `uip rpa-legacy find-package --query "..." --format json` | Search NuGet feeds for packages |
 | `uip rpa-legacy package <path> -o <dir>` | Package into .nupkg (optional) |
 | `uip rpa-legacy debug <xaml-path> -i '...'` | Execute via UiRobot |
 | `uip docsai ask "question" --format json` | Search UiPath documentation |

@@ -77,6 +77,20 @@ When to run: any enum property, any complex type argument, any type without list
 
 ---
 
+## Step 5.5: Search NuGet for Packages (When Needed)
+
+When the known packages in [project-structure.md](./project-structure.md) and `find-activities` don't cover a capability:
+
+```bash
+uip rpa-legacy find-package --query "barcode" --limit 10 --format json
+```
+
+Searches all configured NuGet feeds by name and description. After finding the right package, add it to `dependencies` in project.json, then `find-activities` will index its activities.
+
+Also works for arbitrary .NET packages (e.g., `CsvHelper`, `HtmlAgilityPack`). Avoid packages already bundled with Studio (e.g., `Newtonsoft.Json`) — version conflicts can cause issues.
+
+---
+
 ## Step 6: Search UiPath Documentation (Fallback)
 
 ```bash

@@ -34,6 +34,7 @@ uip rpa-legacy validate --help             # parameters for validate
 | **Search for activities** | `Bash`: `uip rpa-legacy find-activities <project-path> --query "..." --format json` | `<project-path>` (required), `--query`, `--tags`, `--limit` (default 50) |
 | **Search with type info** | `Bash`: `uip rpa-legacy find-activities <project-path> --query "..." --include-type-definitions --format json` | Adds full type definitions for argument types |
 | **Inspect a .NET type** | `Bash`: `uip rpa-legacy type-definition <project-path> --type "FullyQualifiedTypeName" --format json` | `<project-path>` (required), `--type` (full or simple name) |
+| **Search NuGet for packages** | `Bash`: `uip rpa-legacy find-package --query "..." --format json` | `--query` (required), `--limit` (default 20) |
 
 ### find-activities
 
@@ -95,6 +96,22 @@ uip rpa-legacy type-definition "C:/Projects/MyLegacyProject" --type "System.Net.
 | `--type <name>` | Full or simple name of the type to inspect |
 | `--trace-level <level>` | Logging verbosity |
 | `--timeout <seconds>` | Timeout in seconds |
+
+### find-package
+
+Searches all configured NuGet feeds for packages by name or description. Use when known packages don't cover a capability.
+
+```bash
+uip rpa-legacy find-package --query "barcode" --limit 10 --format json
+uip rpa-legacy find-package --query "csv parser" --format json
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `--query <search>` | Search term to match against package name and description |
+| `-l, --limit <count>` | Maximum results per feed (default: 20) |
+
+After finding a package, add it to `dependencies` in project.json. Then `find-activities` will index its activities.
 
 ---
 
