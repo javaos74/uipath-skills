@@ -34,7 +34,7 @@ Use the default (table) only when displaying results directly to the user for re
 
 For the full CLI command reference (all tools, parameters, and error recovery), see **[references/cli-reference.md](./references/cli-reference.md)**.
 
-Key commands: `find-activities`, `type-definition`, `validate`, `analyze`, `build`, `debug`.
+Key commands: `find-activities`, `type-definition`, `validate`, `analyze`, `build`, `debug`. Also available: `uip docsai ask` for searching UiPath official documentation.
 
 **The CLI is fully self-documenting.** Append `--help` at any level: `uip rpa-legacy --help`, `uip rpa-legacy validate --help`, etc.
 
@@ -208,6 +208,63 @@ uip rpa-legacy type-definition "{projectRoot}" --type "System.Net.Mail.MailMessa
 - Any property that takes an enum value
 - Any activity argument with a complex type (not String/Int32/Boolean)
 - Any time the activity reference docs mention a type without listing its valid values
+
+### Step 1.6: Search UiPath Documentation (Fallback)
+
+Use `uip docsai ask` to search official UiPath documentation when bundled activity docs and CLI tools are insufficient:
+
+```bash
+# Best practices and guidelines
+uip docsai ask "best practices for Excel automation in legacy projects" --format json
+
+# Troubleshooting specific errors
+uip docsai ask "ExcelApplicationScope ActivityAction body validation error" --format json
+
+# Platform concepts and configuration
+uip docsai ask "Orchestrator queue item retry and deadline behavior" --format json
+
+# Activity configuration details
+uip docsai ask "How to configure REFramework MaxRetryNumber" --format json
+```
+
+**When to use:**
+- Bundled activity docs and `find-activities`/`type-definition` don't cover the topic
+- You need best practices, guidelines, or recommended patterns from UiPath
+- You encounter an unfamiliar error and need troubleshooting guidance
+- You need clarification on platform-level concepts (Orchestrator assets, queues, triggers, etc.)
+- You need configuration details not captured in the bundled reference docs
+
+### Step 1.7: Search the Web (Last Resort)
+
+When bundled docs, CLI tools, and `docsai` are all insufficient — use `WebSearch` to find answers from the broader UiPath community and developer ecosystem:
+
+```bash
+# Search UiPath Forum
+WebSearch: "UiPath forum ExcelApplicationScope ActivityAction body legacy"
+
+# Search Stack Overflow
+WebSearch: "site:stackoverflow.com UiPath legacy ExcelApplicationScope XAML"
+
+# Search GitHub for examples
+WebSearch: "site:github.com UiPath REFramework legacy XAML example"
+
+# Search for specific error messages
+WebSearch: "UiPath legacy \"Cannot create unknown type\" ExcelApplicationScope"
+
+# Search Reddit for community solutions
+WebSearch: "site:reddit.com r/UiPath legacy workflow best practices"
+```
+
+**When to use:**
+- All previous discovery steps (activity docs, CLI tools, docsai) don't resolve the issue
+- You encounter an obscure error message not covered by official docs
+- You need community-tested workarounds or alternative approaches
+- You need real-world examples of complex legacy workflow patterns
+- You need to verify whether a known bug or limitation exists
+
+**Good sources:** UiPath Forum (`forum.uipath.com`), Stack Overflow, GitHub (public UiPath repos and community projects), Reddit (`r/UiPath`), UiPath documentation (`docs.uipath.com`)
+
+**Always verify** web-sourced information against the project's actual installed package versions and configuration before applying.
 
 ---
 
@@ -427,6 +484,13 @@ For CLI error diagnosis and recovery patterns, see the **CLI Error Recovery** se
 **Symptom:** Property names from `Excel.md` or similar docs don't work in XAML.
 **Cause:** Activity docs cover behavior, not exact CLR property names. XAML property names may differ.
 **Fix:** Use `find-activities --include-type-definitions` to get exact property names and types from the compiled assemblies.
+
+### Stuck on an unfamiliar problem
+**Symptom:** Bundled docs, `find-activities`, and `type-definition` don't resolve the issue.
+**Escalation path:**
+1. `uip docsai ask "your question"` — search official UiPath documentation for best practices, guidelines, and troubleshooting
+2. `WebSearch` — search UiPath Forum, Stack Overflow, GitHub public repos, Reddit for community solutions and real-world examples
+3. If still unresolved, document the issue clearly and ask the user for guidance
 
 ---
 

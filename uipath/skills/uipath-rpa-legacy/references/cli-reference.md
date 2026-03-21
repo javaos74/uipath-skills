@@ -216,6 +216,41 @@ uip rpa-legacy debug "C:/Projects/MyLegacyProject/Main.xaml" --result-path "C:/o
 
 ---
 
+## Documentation Search
+
+| Action | How | Key Parameters |
+|--------|-----|----------------|
+| **Search UiPath docs** | `Bash`: `uip docsai ask "your question" --format json` | `<query>` (required) |
+
+### docsai ask
+
+Searches official UiPath documentation and returns relevant answers including best practices, guidelines, troubleshooting steps, and configuration details. Use as a fallback when bundled activity reference docs and CLI discovery tools are insufficient.
+
+```bash
+# Best practices and guidelines
+uip docsai ask "best practices for error handling in legacy UiPath workflows" --format json
+
+# Troubleshooting
+uip docsai ask "ExcelApplicationScope validation error ActivityAction body" --format json
+
+# Platform concepts
+uip docsai ask "Orchestrator queue item priority and deadline" --format json
+
+# Configuration details
+uip docsai ask "REFramework MaxRetryNumber and retry logic" --format json
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `<query>` | The question to ask (required, positional) |
+| `-t, --tenant <tenant-name>` | Tenant (optional, defaults to auth value) |
+
+**When to use:** Bundled activity docs and `find-activities`/`type-definition` don't cover the topic; you need best practices, guidelines, or troubleshooting from official UiPath documentation; you encounter an unfamiliar error.
+
+**If docsai is also insufficient**, use `WebSearch` to search the broader community: UiPath Forum (`forum.uipath.com`), Stack Overflow, GitHub public repos, Reddit (`r/UiPath`). Always verify web-sourced information against the project's actual configuration before applying.
+
+---
+
 ## CLI Error Recovery
 
 When `uip rpa-legacy` commands fail, diagnose by error category:
