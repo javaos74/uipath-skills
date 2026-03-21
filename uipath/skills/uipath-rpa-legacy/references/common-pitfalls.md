@@ -14,6 +14,7 @@ These classic activities **must** be placed inside a specific parent scope:
 | Activities | Required Parent Scope |
 |-----------|----------------------|
 | Excel Interop (ExcelReadRange, ExcelWriteCell, etc.) | `Excel Application Scope` |
+| Excel Modern (ReadRangeX, WriteRangeX, etc.) | `ExcelApplicationCard` inside `ExcelProcessScopeX` |
 | PowerPoint Interop (InsertSlide, InsertText, etc.) | `PowerPoint Application Scope` |
 | Word Interop (AppendText, ReplaceText, etc.) | `Word Application Scope` |
 | FTP activities (Download, Upload, Delete, etc.) | `FTP Session` (WithFtpSession) |
@@ -23,6 +24,55 @@ These classic activities **must** be placed inside a specific parent scope:
 | Office 365 activities (SendMail, CreateEvent, etc.) | `Microsoft Office 365 Scope` |
 | SAP BAPI activities (InvokeSapBapi) | `SAP Application Scope` |
 | SharePoint activities (GetListItems, UploadFile, etc.) | `SharePoint Application Scope` |
+
+---
+
+## Scope Activities Require ActivityAction Body (CRITICAL for XAML Generation)
+
+Scope activities (Excel Application Scope, ExcelProcessScopeX, ExcelApplicationCard, Word Application Scope, etc.) do **NOT** accept direct children. They require an `ActivityAction<T>` body wrapper with a `DelegateInArgument`. Placing activities directly inside the scope element will fail validation.
+
+**Wrong — direct children (fails validation):**
+```xml
+<ueab:ExcelApplicationCard WorkbookPath="file.xlsx">
+  <ueab:ReadRangeX ... />  <!-- WRONG -->
+</ueab:ExcelApplicationCard>
+```
+
+**Correct — ActivityAction body wrapper:**
+```xml
+<ueab:ExcelApplicationCard WorkbookPath="file.xlsx" DisplayName="Use Excel File">
+  <ueab:ExcelApplicationCard.Body>
+    <ActivityAction x:TypeArguments="ue:IWorkbookQuickHandle">
+      <ActivityAction.Argument>
+        <DelegateInArgument x:TypeArguments="ue:IWorkbookQuickHandle" Name="Excel" />
+      </ActivityAction.Argument>
+      <Sequence DisplayName="Do">
+        <!-- Child activities go here, using Excel handle -->
+        <ueab:ReadRangeX Range="[Excel.Sheet(&quot;Sheet1&quot;).Range(&quot;A1:A20&quot;)]" />
+      </Sequence>
+    </ActivityAction>
+  </ueab:ExcelApplicationCard.Body>
+</ueab:ExcelApplicationCard>
+```
+
+### Common Scope Body Patterns
+
+| Scope Activity | Body TypeArgument | DelegateInArgument Name |
+|---------------|-------------------|------------------------|
+| `ExcelProcessScopeX` | `ui:IExcelProcess` | `ExcelProcessScopeTag` |
+| `ExcelApplicationCard` (Use Excel File) | `ue:IWorkbookQuickHandle` | `Excel` |
+| `ExcelApplicationScope` (classic Interop) | `ue:WorkbookApplication` | `ExcelWorkbookScope` |
+| `WordApplicationScope` | (Word handle type) | `WordApplicationScope` |
+| `PowerPointApplicationScope` | (PowerPoint handle type) | `PowerPointApplication` |
+
+**Key xmlns required:**
+- `xmlns:ue="clr-namespace:UiPath.Excel;assembly=UiPath.Excel.Activities"`
+- `xmlns:ueab="clr-namespace:UiPath.Excel.Activities.Business;assembly=UiPath.Excel.Activities"`
+- `xmlns:ui="http://schemas.uipath.com/workflow/activities"`
+
+**Nested scopes:** Modern Excel requires TWO levels: `ExcelProcessScopeX` → `ExcelApplicationCard` → activities. Each level has its own `ActivityAction` body.
+
+**Always use `find-activities --include-type-definitions`** to discover the exact TypeArgument and body structure for any scope activity. Do not guess.
 
 ---
 

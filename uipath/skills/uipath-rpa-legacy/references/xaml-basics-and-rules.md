@@ -353,3 +353,4 @@ And the assembly reference:
 7. **Flowchart nodes must be listed at end** with `<x:Reference>` for the designer to render them
 8. **State Machine needs exactly one `IsFinal="True"` state** for proper termination
 9. **Legacy uses `assembly=mscorlib`** — not `assembly=System.Private.CoreLib` (which is .NET 6+)
+10. **Scope activities require `ActivityAction<T>` body** — `ExcelApplicationScope`, `ExcelProcessScopeX`, `ExcelApplicationCard`, `WordApplicationScope`, etc. do NOT accept direct children. They require a `.Body` property with `ActivityAction<T>` and `DelegateInArgument`. See [common-pitfalls.md](./common-pitfalls.md#scope-activities-require-activityaction-body-critical-for-xaml-generation) for the complete template.
