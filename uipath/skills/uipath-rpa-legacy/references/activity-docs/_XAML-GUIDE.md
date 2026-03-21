@@ -272,11 +272,109 @@ Variables are local to a container (Sequence, Flowchart, StateMachine, etc.). Th
 | `FlowSwitch<T>` | Multi-branch switch (like Switch activity) |
 | `x:Reference` | References between FlowSteps (creates arrows) |
 
-### Visual Layout
-- Each `FlowStep` has `ShapeLocation` (x,y position) and `ShapeSize` (width,height) in ViewState
-- `ConnectorLocation` is a `PointCollection` defining the arrow path between nodes
-- Nodes referenced at the end of `<Flowchart>` with `<x:Reference>` for the designer to render them
-- **Tip**: Keep ShapeLocation coordinates organized in a grid (e.g., x=270 center, y incrementing by ~110 per step)
+### Flowchart ViewState Layout Guide
+
+**MANDATORY for generated/edited Flowcharts.** Without ViewState, Studio stacks all nodes at (0,0) — unusable.
+
+**Required xmlns** on root `<Activity>`:
+```xml
+xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+```
+
+**Coordinate system:** Origin top-left (0,0), X increases right, Y increases down, units in pixels.
+
+**Standard node sizes:**
+
+| Node Type | ShapeSize (W×H) | Notes |
+|-----------|----------------|-------|
+| Start Node (Flowchart entry) | 60×75 | Positioned by Flowchart container ViewState |
+| FlowStep (activity box) | 230×65 | Width varies with activity content |
+| FlowDecision (diamond) | 60×75 | Same as start node |
+
+**Layout algorithm (grid-based):**
+1. Main path center X: **270**
+2. Start node at **(270, 2.5)** — set in the Flowchart container's ViewState
+3. First FlowStep at **(155, 120)** — centered below start (270 - 230/2 = 155)
+4. Vertical step: **~110px** (node height + ~45px gap)
+5. True branch: offset left — center X at **~120** (150px left of main center)
+6. False branch: offset right — center X at **~420** (150px right of main center)
+7. Merge node: back to center X **~155**
+
+**ConnectorLocation formula:**
+- `center_x = ShapeLocation.X + ShapeSize.Width / 2`
+- `bottom_y = ShapeLocation.Y + ShapeSize.Height`
+- `top_y = ShapeLocation.Y`
+- **Straight down:** `center_x,bottom_y center_x,next_top_y`
+- **Decision True (left):** `decision_left_x,decision_center_y target_center_x,decision_center_y target_center_x,target_top_y`
+- **Decision False (right):** `decision_right_x,decision_center_y target_center_x,decision_center_y target_center_x,target_top_y`
+  - Where `decision_left_x = ShapeLocation.X`, `decision_right_x = ShapeLocation.X + ShapeSize.Width`
+  - Where `decision_center_y = ShapeLocation.Y + ShapeSize.Height / 2`
+
+**ViewState placement per node:**
+```xml
+<FlowStep x:Name="__ReferenceID0">
+  <sap:WorkflowViewStateService.ViewState>
+    <scg:Dictionary x:TypeArguments="x:String, x:Object">
+      <av:Point x:Key="ShapeLocation">155,120</av:Point>
+      <av:Size x:Key="ShapeSize">230,65</av:Size>
+      <av:PointCollection x:Key="ConnectorLocation">270,185 270,240</av:PointCollection>
+    </scg:Dictionary>
+  </sap:WorkflowViewStateService.ViewState>
+  <!-- activity here -->
+  <FlowStep.Next>...</FlowStep.Next>
+</FlowStep>
+```
+
+**Flowchart container ViewState (start node position):**
+```xml
+<Flowchart DisplayName="Main Flowchart" sap2010:WorkflowViewState.IdRef="Flowchart_1">
+  <sap:WorkflowViewStateService.ViewState>
+    <scg:Dictionary x:TypeArguments="x:String, x:Object">
+      <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+      <av:Point x:Key="ShapeLocation">270,2.5</av:Point>
+      <av:Size x:Key="ShapeSize">60,75</av:Size>
+      <av:PointCollection x:Key="ConnectorLocation">300,77.5 300,120</av:PointCollection>
+    </scg:Dictionary>
+  </sap:WorkflowViewStateService.ViewState>
+  ...
+</Flowchart>
+```
+
+**FlowDecision ViewState (True/False connectors):**
+```xml
+<FlowDecision x:Name="__ReferenceID1" DisplayName="Has Data?">
+  <sap:WorkflowViewStateService.ViewState>
+    <scg:Dictionary x:TypeArguments="x:String, x:Object">
+      <av:Point x:Key="ShapeLocation">240,240</av:Point>
+      <av:Size x:Key="ShapeSize">60,75</av:Size>
+      <!-- True exits left -->
+      <av:PointCollection x:Key="TrueConnector">240,277.5 120,277.5 120,340</av:PointCollection>
+      <!-- False exits right -->
+      <av:PointCollection x:Key="FalseConnector">300,277.5 450,277.5 450,340</av:PointCollection>
+    </scg:Dictionary>
+  </sap:WorkflowViewStateService.ViewState>
+  ...
+</FlowDecision>
+```
+
+**Complete example layout map:**
+```
+              [Start]             (270, 2.5)     60×75
+                 │
+          [Read Data]             (155, 120)    230×65
+                 │
+            <Has Data?>           (240, 240)     60×75
+           /           \
+    [Calculate]     [Log None]    (5, 340)      (335, 340)   230×65
+         │
+    <Direction?>                  (240, 460)     60×75
+       /       \
+ [Bullish]  [Bearish]            (5, 560)       (335, 560)   230×65
+       \       /
+    [Write Output]                (155, 680)    230×65
+```
+
+**When adding nodes to an existing Flowchart:** Read existing ShapeLocation values first. Place new nodes below or beside existing ones with ≥110px vertical / ≥200px horizontal clearance.
 
 ---
 
@@ -362,10 +460,95 @@ Variables are local to a container (Sequence, Flowchart, StateMachine, etc.). Th
 | `Transition.Action` | Activities to execute during the transition |
 | `State IsFinal="True"` | Final state — workflow ends when this state is reached |
 
-### Visual Layout
-- States are positioned via `ShapeLocation` in ViewState
-- Transitions rendered as arrows between states
-- `StateContainerWidth` and `StateContainerHeight` control the canvas size
+### StateMachine ViewState Layout Guide
+
+**MANDATORY for generated/edited StateMachines.** Without ViewState, Studio stacks all states at (0,0) — unusable.
+
+**Required xmlns** on root `<Activity>`:
+```xml
+xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+```
+
+**Coordinate system:** Same as Flowchart — origin top-left (0,0), X right, Y down, pixels. StateMachine uses a 600×600 container.
+
+**Standard sizes:**
+
+| Node Type | ShapeSize (W×H) | Notes |
+|-----------|----------------|-------|
+| State | 134×61.6 | Universal — all states same size |
+| Final State (IsFinal="True") | 134×61.6 | Same size as regular states |
+
+**StateMachine container ViewState:**
+```xml
+<StateMachine DisplayName="Process" sap2010:WorkflowViewState.IdRef="StateMachine_1">
+  <sap:WorkflowViewStateService.ViewState>
+    <scg:Dictionary x:TypeArguments="x:String, x:Object">
+      <x:Boolean x:Key="IsExpanded">True</x:Boolean>
+      <x:Double x:Key="StateContainerWidth">600</x:Double>
+      <x:Double x:Key="StateContainerHeight">600</x:Double>
+      <av:Point x:Key="ShapeLocation">270,2.5</av:Point>
+      <av:Size x:Key="ShapeSize">60,75</av:Size>
+      <av:PointCollection x:Key="ConnectorLocation">270,77.5 270,107 110,107 110,109</av:PointCollection>
+    </scg:Dictionary>
+  </sap:WorkflowViewStateService.ViewState>
+  ...
+</StateMachine>
+```
+
+**Layout algorithm:**
+1. Container: **600×600** pixels
+2. Start connector at **(270, 2.5)** — centered top
+3. Initial state: **(43, 109)** — top-left area
+4. Horizontal spacing: **~200px** between state centers
+5. Vertical spacing: **~130px** between state centers
+6. Final state: below the last processing state
+
+**State ViewState:**
+```xml
+<State x:Name="__ReferenceID_Init" DisplayName="Init">
+  <sap:WorkflowViewStateService.ViewState>
+    <scg:Dictionary x:TypeArguments="x:String, x:Object">
+      <av:Point x:Key="ShapeLocation">43,109</av:Point>
+      <av:Size x:Key="ShapeSize">134,61.6</av:Size>
+    </scg:Dictionary>
+  </sap:WorkflowViewStateService.ViewState>
+  ...
+</State>
+```
+
+**Transition connector ViewState:**
+```xml
+<Transition DisplayName="Success">
+  <sap:WorkflowViewStateService.ViewState>
+    <scg:Dictionary x:TypeArguments="x:String, x:Object">
+      <av:PointCollection x:Key="ConnectorLocation">177,139 300,139 300,149</av:PointCollection>
+      <x:Int32 x:Key="SrcConnectionPointIndex">8</x:Int32>
+      <x:Int32 x:Key="DestConnectionPointIndex">12</x:Int32>
+    </scg:Dictionary>
+  </sap:WorkflowViewStateService.ViewState>
+  ...
+</Transition>
+```
+
+Connector formula: exit right edge of source state → route horizontally → enter top edge of target state. `SrcConnectionPointIndex` and `DestConnectionPointIndex` are internal Studio indices — use values from existing workflows or let Studio adjust them on first open.
+
+**Complete REFramework-style layout map:**
+```
+         [Start]              (270, 2.5)     60×75
+            │
+       [Init]                 (43, 109)     134×61.6
+       /         \
+  [Process]    [End]          (233, 149)    (233, 279)    134×61.6
+    ↺ (self-loop)             Final state
+```
+
+**Self-loop transition** (Process → Process for retry):
+```xml
+<av:PointCollection x:Key="ConnectorLocation">367,158 397,158 397,162 367,162</av:PointCollection>
+```
+Forms a small rectangle extending ~30px right of the state's right edge.
+
+**When adding states to an existing StateMachine:** Read existing ShapeLocation values. Place new states with ≥130px vertical / ≥200px horizontal clearance. Update `StateContainerWidth`/`StateContainerHeight` if new states exceed the 600×600 canvas.
 
 ---
 

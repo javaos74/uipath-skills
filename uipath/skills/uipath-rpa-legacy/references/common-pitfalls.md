@@ -7,6 +7,21 @@ For the complete VB.NET cheat sheet, see [activity-docs/_PATTERNS.md](./activity
 
 ---
 
+## Flowcharts/StateMachines Without ViewState Produce Unusable Layouts
+
+**Severity: HIGH.** Every FlowStep, FlowDecision, and State node needs `ShapeLocation` + `ShapeSize` in its ViewState. Flowcharts additionally need `ConnectorLocation` on every connector. StateMachines need `StateContainerWidth`/`StateContainerHeight` on the container.
+
+Missing ViewState causes Studio to stack all nodes at (0,0) — an unusable jumbled pile. This applies to:
+- **New Flowchart workflows** — generate ViewState for all nodes
+- **New StateMachine workflows** — generate ViewState for all states
+- **Adding nodes to existing Flowcharts/StateMachines** — generate ViewState for new nodes, positioned relative to existing ones
+
+**Required xmlns:** `xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation"`
+
+See the Flowchart and StateMachine ViewState Layout Guides in [activity-docs/_XAML-GUIDE.md](./activity-docs/_XAML-GUIDE.md) for coordinate systems, standard sizes, layout algorithms, connector formulas, and complete examples.
+
+---
+
 ## Required Parent Scopes
 
 These classic activities **must** be placed inside a specific parent scope:

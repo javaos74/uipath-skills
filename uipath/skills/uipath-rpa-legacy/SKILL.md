@@ -281,6 +281,27 @@ Before writing or editing any activity XAML, confirm you have completed:
 
 **Do not skip steps 1.4 and 1.5.** Activity reference docs alone are insufficient for generating valid XAML — they cover behavior, not exact CLR property names and enum values.
 
+### Plan Workflow Structure (MANDATORY for Flowchart/StateMachine)
+
+Before writing XAML for a Flowchart or StateMachine, plan the visual layout:
+
+1. **Choose the workflow type early:**
+   - **Sequence** — linear step-by-step processes (no visual layout needed)
+   - **Flowchart** — branching decisions, loops with conditions, complex control flow
+   - **StateMachine** — distinct states with transitions (REFramework pattern, approval workflows)
+
+2. **Sketch the node graph** — list all nodes and their connections:
+   - For Flowcharts: activities, decisions (True/False paths), merge points
+   - For StateMachines: states, transitions with conditions, final state
+
+3. **Assign coordinates** using the layout algorithms in [activity-docs/_XAML-GUIDE.md](./references/activity-docs/_XAML-GUIDE.md):
+   - Flowcharts: main path center X=270, branches offset ±150px, ~110px vertical step
+   - StateMachines: 600×600 container, ~200px horizontal / ~130px vertical spacing
+
+4. **Map branch paths** — for each FlowDecision, determine True (left) and False (right) targets and where paths merge back. For each StateMachine transition, determine source/target states.
+
+This planning step prevents generating logic-correct but visually unusable workflows.
+
 ### For CREATE Requests
 
 **Strategy:** Generate minimal working version, iterate. Build one activity at a time.
@@ -303,6 +324,7 @@ Write: file_path="{projectRoot}/Workflows/DescriptiveName.xaml"
 - VB.NET expressions use `[bracket]` notation
 - Classic activity names (no "X" suffix)
 - Include standard VB.NET namespace imports and assembly references
+- **Flowchart/StateMachine:** include `xmlns:av="http://schemas.microsoft.com/winfx/2006/xaml/presentation"` and generate ViewState with ShapeLocation/ShapeSize/ConnectorLocation for every node (see layout guides in `_XAML-GUIDE.md`)
 
 ### For EDIT Requests
 
@@ -322,6 +344,8 @@ Edit: file_path="{projectRoot}/WorkflowToEdit.xaml"
 ```
 
 **Critical:** `old_string` must match exactly what's in the file and be unique. Include surrounding context if needed to ensure uniqueness.
+
+**Flowchart/StateMachine edits:** When adding new nodes to an existing Flowchart or StateMachine, read existing ViewState positions first (`ShapeLocation` values), then generate ViewState for new nodes with coordinates that avoid overlap. Use ≥110px vertical / ≥200px horizontal clearance from existing nodes.
 
 ---
 
@@ -518,6 +542,8 @@ Before handover, verify:
 - [ ] Classic activity names used (no "X" suffix)
 - [ ] Legacy xmlns patterns used (`assembly=mscorlib`)
 - [ ] Required parent scopes present (Excel Application Scope, etc.)
+- [ ] Flowchart/StateMachine: ViewState generated with ShapeLocation/ShapeSize/ConnectorLocation for every node
+- [ ] Flowchart/StateMachine: visual layout planned before generation (node graph, coordinates, branch paths)
 
 **Validation & Testing:**
 - [ ] Workflow file path is valid and follows project conventions

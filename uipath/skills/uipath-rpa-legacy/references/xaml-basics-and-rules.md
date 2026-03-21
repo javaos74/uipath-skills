@@ -277,8 +277,23 @@ Variables declared in an outer container are accessible in nested containers but
 
 ## XAML Safety Rules
 
-### NEVER Touch ViewState
-The `<sap2010:WorkflowViewState.ViewStateManager>` section and `sap:WorkflowViewStateService.ViewState` dictionaries contain designer layout metadata. **Never modify them.** UiPath Studio manages these automatically.
+### ViewState Rules (Editing vs Generating)
+
+ViewState controls how activities appear in the designer. The rules differ for editing vs generating:
+
+**Editing existing workflows:**
+- Do NOT modify the global `<sap2010:WorkflowViewState.ViewStateManager>` section
+- Do NOT modify existing ViewState on nodes you're not changing
+- When **adding new nodes** to an existing Flowchart/StateMachine, **DO generate ViewState** (ShapeLocation, ShapeSize, ConnectorLocation) for the new nodes — read existing node positions first to avoid overlap
+
+**Generating new workflows:**
+- **Sequence workflows:** ViewState is optional — Studio auto-manages `IsExpanded`
+- **Flowchart workflows:** ViewState is **MANDATORY** — generate ShapeLocation, ShapeSize, ConnectorLocation for every FlowStep and FlowDecision, plus the Flowchart container's start node position
+- **StateMachine workflows:** ViewState is **MANDATORY** — generate ShapeLocation, ShapeSize for every State, plus StateContainerWidth/Height on the container
+
+**Without ViewState on Flowchart/StateMachine nodes, Studio stacks everything at (0,0) — producing an unusable jumbled pile.**
+
+See the Flowchart and StateMachine ViewState Layout Guides in [activity-docs/_XAML-GUIDE.md](./activity-docs/_XAML-GUIDE.md) for coordinate systems, standard sizes, layout algorithms, and complete examples.
 
 ### Preserve xmlns Declarations
 Never remove existing `xmlns` attributes from the root `<Activity>` element. Only add new ones as needed.
