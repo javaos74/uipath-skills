@@ -1,6 +1,6 @@
 ---
 name: uipath-rpa-legacy
-description: "Edit, create, build, and maintain legacy UiPath RPA projects (classic design experience, .NET Framework 4.6.1, VB.NET, XAML workflows) using uip rpa-legacy CLI. TRIGGER when: Legacy/classic RPA project detected (project.json with targetFramework 'Legacy' or absent targetFramework with .NET Framework dependencies); User mentions legacy workflows, classic activities (no 'X' suffix), VB.NET RPA expressions; User asks to create/edit/validate/analyze/build legacy UiPath automations; User asks to debug workflows via UiRobot; project.json has expressionLanguage 'VisualBasic' and classic activity package versions. DO NOT TRIGGER when: Project uses modern framework (targetFramework 'Portable' or 'Windows' with modern activities, 'X' suffix activities — use uipath-rpa-workflows instead); User works with coded workflows (.cs files with [Workflow]/[TestCase] attributes — use uipath-coded-workflows instead); User asks about Orchestrator/deployment/CLI setup (use uipath-development instead)."
+description: "Edit, create, build, and maintain legacy UiPath RPA projects (classic design experience, .NET Framework 4.6.1, VB.NET, XAML workflows) using uip rpa-legacy CLI. TRIGGER when: Legacy/classic RPA project detected (project.json with targetFramework 'Legacy' or absent targetFramework with .NET Framework dependencies); User mentions legacy workflows, classic activities (no 'X' suffix), VB.NET RPA expressions; User asks to create/edit/validate/analyze/package legacy UiPath automations; User asks to debug workflows via UiRobot; project.json has expressionLanguage 'VisualBasic' and classic activity package versions. DO NOT TRIGGER when: Project uses modern framework (targetFramework 'Portable' or 'Windows' with modern activities, 'X' suffix activities — use uipath-rpa-workflows instead); User works with coded workflows (.cs files with [Workflow]/[TestCase] attributes — use uipath-coded-workflows instead); User asks about Orchestrator/deployment/CLI setup (use uipath-development instead)."
 ---
 
 # Legacy RPA Workflow Architect
@@ -27,7 +27,7 @@ Legacy UiPath RPA projects: .NET Framework 4.6.1, VB.NET expressions, classic ac
 | Validate file | `uip rpa-legacy validate "{projectRoot}/File.xaml" --format json` | [validation-and-fixing.md](./references/validation-and-fixing.md) |
 | Validate project | `uip rpa-legacy validate "{projectRoot}" --format json` | [validation-and-fixing.md](./references/validation-and-fixing.md) |
 | Analyze (only when asked) | `uip rpa-legacy analyze "{projectRoot}" --format json` | [cli-reference.md](./references/cli-reference.md) |
-| Build | `uip rpa-legacy build "{projectRoot}" -o "{dir}"` | [cli-reference.md](./references/cli-reference.md) |
+| Package (optional) | `uip rpa-legacy package "{projectRoot}" -o "{dir}"` | [cli-reference.md](./references/cli-reference.md) |
 | Debug | `uip rpa-legacy debug "{projectRoot}/File.xaml"` | [cli-reference.md](./references/cli-reference.md) |
 | Create test data | Generate Excel/CSV/JSON/types for testing | [test-data-guide.md](./references/test-data-guide.md) |
 
@@ -144,21 +144,38 @@ See [validation-and-fixing.md](./references/validation-and-fixing.md) for detail
 
 ---
 
-## Phase 4-5: Build & Debug
+## Phase 4: Debug
+
+**Only when the user asks to test/run the workflow.** Do not auto-trigger. Suggest it after completing validation: _"Would you like me to run the workflow to test it?"_
+
+**Always validate before debugging** — don't debug a file with compilation errors.
 
 ```bash
-# Build to .nupkg
-uip rpa-legacy build "{projectRoot}" -o "{dir}" --version "1.0.0"
+# Basic execution
+uip rpa-legacy debug "{projectRoot}/Main.xaml"
 
-# Debug via UiRobot (CAUTION: performs real actions)
-uip rpa-legacy debug "{projectRoot}/Main.xaml" -i '{"in_TestMode": true}' --timeout 120
+# With input arguments
+uip rpa-legacy debug "{projectRoot}/Main.xaml" -i '{"in_FilePath": "C:\\data.xlsx", "in_Count": 5}'
+
+# Programmatic (suppress streaming logs, capture result to file)
+uip rpa-legacy debug "{projectRoot}/Main.xaml" -i '{"in_FilePath": "C:\\data.xlsx"}' --result-path /tmp/result.json --trace-level Error 2>/dev/null
 ```
+
+**Reading results:**
+- Exit code 0 → success: read `Data.Output` for out-argument values
+- Exit code 1 → failure: read `Data.Error` for diagnostics:
+  - `Error.ActivityDisplayName` + `Error.XamlFile` → locate the problem
+  - `Error.ExceptionType` + `Error.Message` → understand it
+  - `Error.StackTrace` → full call chain
+  - `Data.ErrorLog` → all error-level robot log entries for context
+
+**Fix-and-retry loop:** edit XAML → validate → debug again.
 
 See [cli-reference.md](./references/cli-reference.md) for all options.
 
 ---
 
-## Phase 6: Response Checklist
+## Phase 5: Response Checklist
 
 - [ ] File path of created/edited workflow
 - [ ] Brief description of what the workflow does
@@ -181,7 +198,7 @@ See [cli-reference.md](./references/cli-reference.md) for all options.
 | `uip rpa-legacy type-definition <path> --type "..." --format json` | Inspect types, enum values, properties |
 | `uip rpa-legacy validate <file-or-project-path> --format json` | Validate single file or entire project |
 | `uip rpa-legacy analyze <path> --format json` | Run workflow analyzer rules (only when asked) |
-| `uip rpa-legacy build <path> -o <dir>` | Package into .nupkg |
+| `uip rpa-legacy package <path> -o <dir>` | Package into .nupkg (optional) |
 | `uip rpa-legacy debug <xaml-path> -i '...'` | Execute via UiRobot |
 | `uip docsai ask "question" --format json` | Search UiPath documentation |
 

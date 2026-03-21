@@ -169,29 +169,29 @@ uip rpa-legacy analyze "C:/Projects/MyLegacyProject" --governance-file-path "C:/
 
 ---
 
-## Build & Debug Tools
+## Package & Debug Tools
 
 | Action | How | Key Parameters |
 |--------|-----|----------------|
-| **Build project** | `Bash`: `uip rpa-legacy build <project-path> -o <output-dir>` | `<project-path>` (required), `-o` output dir |
+| **Package project (optional)** | `Bash`: `uip rpa-legacy package <project-path> -o <output-dir>` | `<project-path>` (required), `-o` output dir |
 | **Debug workflow** | `Bash`: `uip rpa-legacy debug <xaml-path>` | `<xaml-path>` (required), `-i` input args |
 
-### build
+### package
 
-Compiles and packages an RPA project into a deployable `.nupkg` file.
+Packages an RPA project into a deployable `.nupkg` file. **Optional** — not required for debugging (legacy RPA can be debugged directly).
 
 ```bash
-# Basic build
-uip rpa-legacy build "C:/Projects/MyLegacyProject" -o "C:/output"
+# Basic package
+uip rpa-legacy package "C:/Projects/MyLegacyProject" -o "C:/output"
 
-# Build with version
-uip rpa-legacy build "C:/Projects/MyLegacyProject" -o "C:/output" --version "1.2.0"
+# Package with version
+uip rpa-legacy package "C:/Projects/MyLegacyProject" -o "C:/output" --version "1.2.0"
 
-# Auto-version build
-uip rpa-legacy build "C:/Projects/MyLegacyProject" -o "C:/output" --auto-version
+# Auto-version
+uip rpa-legacy package "C:/Projects/MyLegacyProject" -o "C:/output" --auto-version
 
-# Build with release notes
-uip rpa-legacy build "C:/Projects/MyLegacyProject" -o "C:/output" --version "1.2.0" --release-notes "Bug fixes and improvements"
+# With release notes
+uip rpa-legacy package "C:/Projects/MyLegacyProject" -o "C:/output" --version "1.2.0" --release-notes "Bug fixes and improvements"
 ```
 
 | Parameter | Description |
@@ -213,32 +213,86 @@ uip rpa-legacy build "C:/Projects/MyLegacyProject" -o "C:/output" --version "1.2
 
 ### debug
 
-Executes a XAML workflow locally via UiRobot and returns execution logs and output arguments.
+Executes a XAML workflow locally via UiRobot. Logs stream to console in real time. Returns structured JSON result with output arguments (success) or error diagnostics (failure).
+
+**Always validate before debugging** — don't debug a file with compilation errors.
 
 ```bash
-# Run a workflow
+# Basic execution
 uip rpa-legacy debug "C:/Projects/MyLegacyProject/Main.xaml"
 
-# Run with input arguments
-uip rpa-legacy debug "C:/Projects/MyLegacyProject/Main.xaml" -i '{"in_Name": "John", "in_Count": 5}'
+# With input arguments
+uip rpa-legacy debug "C:/Projects/MyLegacyProject/Main.xaml" -i '{"in_FilePath": "C:\\data.xlsx", "in_Count": 5}'
 
-# Run with timeout and verbose logging
-uip rpa-legacy debug "C:/Projects/MyLegacyProject/Main.xaml" --timeout 120 --trace-level Verbose
-
-# Save output arguments to file
-uip rpa-legacy debug "C:/Projects/MyLegacyProject/Main.xaml" --result-path "C:/output/result.json"
+# Programmatic: suppress streaming logs, capture result to file
+uip rpa-legacy debug "C:/Projects/MyLegacyProject/Main.xaml" \
+  -i '{"in_FilePath": "C:\\data.xlsx"}' \
+  --result-path /tmp/result.json \
+  --trace-level Error 2>/dev/null
 ```
 
 | Parameter | Description |
 |-----------|-------------|
 | `<xaml-path>` | Full path to the XAML workflow file to execute (required, positional) |
 | `-i, --input <json>` | Input arguments as a JSON string |
-| `--result-path <path>` | Write execution output (out arguments) to a JSON file instead of stdout |
-| `--timeout <seconds>` | Execution timeout in seconds (0 = no timeout) |
+| `--result-path <path>` | Write full result JSON to file (persists after command exits) |
+| `--timeout <seconds>` | Execution timeout in seconds (0 = no timeout); kills robot process if exceeded |
 | `--robot-path <path>` | Path to UiRobot.exe (auto-detected if not provided) |
 | `--trace-level <level>` | Logging verbosity (None\|Critical\|Error\|Warning\|Information\|Verbose) |
 
-**Caution:** `debug` executes the workflow — it will perform real actions (click buttons, send emails, modify files). Use only when safe to run, or with mock input data.
+**Exit codes:** 0 = success, 1 = failure.
+
+**Success output:**
+```json
+{
+  "Result": "Success",
+  "Code": "RpaLegacyDebug",
+  "Data": {
+    "XamlPath": "C:\\MyProject\\Main.xaml",
+    "Status": "Execution completed",
+    "Output": { "out_Result": "Done", "out_RowCount": 42 }
+  }
+}
+```
+`Output` is only present when the workflow has Out arguments with values.
+
+**Failure output:**
+```json
+{
+  "Result": "Failure",
+  "Message": "System.IO.FileFormatException: File contains corrupted data.",
+  "Data": {
+    "Error": {
+      "ExceptionType": "System.IO.FileFormatException",
+      "Message": "File contains corrupted data.",
+      "ActivityDisplayName": "Read Stock Data",
+      "ActivityType": "ReadRange",
+      "XamlFile": "Main.xaml",
+      "StackTrace": [
+        "at ReadRange \"Read Stock Data\"",
+        "at Sequence \"Initialize and Read Data\""
+      ]
+    },
+    "ErrorLog": [
+      {
+        "Timestamp": "2026-03-21T16:30:37",
+        "Level": "Error",
+        "Message": "Read Stock Data: File contains corrupted data."
+      }
+    ]
+  }
+}
+```
+
+**Reading failure diagnostics:**
+- `Error.ActivityDisplayName` + `Error.XamlFile` → locate the problem
+- `Error.ExceptionType` + `Error.Message` → understand it
+- `Error.StackTrace` → full call chain
+- `ErrorLog` → all error-level robot log entries (useful when multiple things failed)
+
+**Fix-and-retry loop:** edit XAML → validate → debug again.
+
+**Caution:** `debug` executes the workflow — it performs real actions (clicks, emails, file writes). Only use when safe to run, or with mock input data.
 
 ---
 

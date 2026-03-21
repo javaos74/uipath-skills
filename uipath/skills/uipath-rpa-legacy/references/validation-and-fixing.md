@@ -117,34 +117,41 @@ UNTIL: 0 errors OR all remaining errors require user action
 
 ---
 
-## Step 3.5: Build Verification (Optional)
+## Step 3.5: Package (Optional)
 
-After validation passes, optionally build to verify the project compiles and packages correctly:
+If a deployable `.nupkg` artifact is needed, package the project after validation passes:
 
 ```bash
-uip rpa-legacy build "{projectRoot}" -o "{outputDir}" --format json
+uip rpa-legacy package "{projectRoot}" -o "{outputDir}" --format json
 ```
 
-A successful build confirms:
-- All dependencies resolve correctly
-- All XAML files compile without errors
-- The project produces a valid `.nupkg` package
+Not required for debugging — legacy RPA can be debugged directly without packaging.
 
 ---
 
 ## Step 3.6: Smoke Test with Debug (Optional)
 
-For workflows that are safe to run locally, use `debug` as a smoke test:
+**Always validate before debugging** — don't debug a file with compilation errors.
 
 ```bash
-# Run with test input
-uip rpa-legacy debug "{projectRoot}/Main.xaml" -i '{"in_TestMode": true}'
+# Basic smoke test
+uip rpa-legacy debug "{projectRoot}/Main.xaml" -i '{"in_TestMode": true}' --timeout 60
 
-# Run with timeout to prevent hanging
-uip rpa-legacy debug "{projectRoot}/Main.xaml" --timeout 60
+# Programmatic: capture result to file, suppress streaming logs
+uip rpa-legacy debug "{projectRoot}/Main.xaml" -i '{"in_TestMode": true}' --result-path /tmp/result.json --trace-level Error 2>/dev/null
 ```
 
-**Caution:** `debug` executes the workflow via UiRobot — it will perform real actions. Only use when safe, with appropriate test inputs.
+**Reading results:**
+- Exit code 0 → success: check `Data.Output` for out-argument values
+- Exit code 1 → failure: check `Data.Error` for diagnostics:
+  - `Error.ActivityDisplayName` + `Error.XamlFile` → locate the problem
+  - `Error.ExceptionType` + `Error.Message` → understand it
+  - `Error.StackTrace` → full call chain
+  - `Data.ErrorLog` → all error-level log entries for context
+
+**Fix-and-retry:** edit XAML → validate → debug again.
+
+**Caution:** `debug` performs real actions (clicks, emails, file writes). Only use when safe.
 
 For test data creation (Excel files, CSV, JSON, common UiPath types), see **[test-data-guide.md](./test-data-guide.md)**.
 
