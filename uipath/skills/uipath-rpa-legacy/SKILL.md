@@ -9,11 +9,11 @@ Legacy UiPath RPA projects: .NET Framework 4.6.1, VB.NET expressions, classic ac
 
 ## Rules (Non-Negotiable)
 
-1. **Discover before writing** — run `find-activities` + `type-definition` for exact CLR names/enums before any XAML. Activity docs cover behavior, NOT property names.
+1. **Discover before writing** — for built-in activities (If, Assign, TryCatch, LogMessage, etc.), use XAML from `_BUILT-IN-ACTIVITIES.md` directly. For all others, run `find-activities` + `type-definition` first.
 2. **Validate frequently** — for Sequences with well-known activities, write the full XAML then validate once. For Flowcharts/StateMachines/unfamiliar activities, validate after each addition. Always validate after edits to existing files.
 3. **Absolute paths only** — store `{projectRoot}` as an absolute path at Phase 0. Pass it to every CLI command. **Never use `cd`.**
 4. **Fix by category** — Package → Structure → Type → Properties → Logic. This order prevents cascading errors.
-5. **Activity docs + CLI tools together** — docs for context/gotchas, CLI for precision. Neither alone is sufficient.
+5. **Activity docs for gotchas, CLI for precision** — read package docs (Excel.md, Mail.md) for gotchas before using those packages. Run `find-activities` only for activities not in `_BUILT-IN-ACTIVITIES.md`.
 6. **Always use `--format json`** — for any CLI output you need to parse. **Never suppress stderr** (`2>/dev/null`) — error details are in the JSON output.
 
 ---
@@ -49,27 +49,22 @@ No Studio needed. See [environment-setup.md](./references/environment-setup.md) 
 
 ## Phase 1: Discovery
 
-**Read only what's needed for the task — don't load all docs upfront:**
+**Start with the minimum. Add more only as needed.**
 
-| Task Type | Must Read | Also Read If Needed |
-|-----------|-----------|-------------------|
-| **WF4 control flow + UiPath core** | [_BUILT-IN-ACTIVITIES.md](./references/activity-docs/_BUILT-IN-ACTIVITIES.md) — **NO find-activities needed** | If, Assign, Sequence, TryCatch, ForEach, While, Switch, Throw, LogMessage, InvokeCode, ForEachRow, etc. |
-| **Any workflow** | [xaml-basics-and-rules.md](./references/xaml-basics-and-rules.md), run `find-activities` for non-built-in activities | [common-pitfalls.md](./references/common-pitfalls.md) |
-| Flowchart/StateMachine | + [_XAML-GUIDE.md](./references/activity-docs/_XAML-GUIDE.md) (ViewState layout) | |
-| Uses Excel/CSV | + [Excel.md](./references/activity-docs/Excel.md) | |
-| Uses Email | + [Mail.md](./references/activity-docs/Mail.md) | |
-| Uses InvokeCode | + [_INVOKE-CODE.md](./references/activity-docs/_INVOKE-CODE.md) | |
-| REFramework project | + [_REFRAMEWORK.md](./references/activity-docs/_REFRAMEWORK.md) | |
-| Don't know which package | [_INDEX.md](./references/activity-docs/_INDEX.md) | `find-package --query "..."` |
-| VB.NET expression help | [_PATTERNS.md](./references/activity-docs/_PATTERNS.md) | |
-| Stuck | `uip docsai ask "..."` → `WebSearch` → ask user | |
+1. Read [_BUILT-IN-ACTIVITIES.md](./references/activity-docs/_BUILT-IN-ACTIVITIES.md) — complete XAML for If, Assign, Sequence, TryCatch, ForEach, While, Switch, Throw, LogMessage, InvokeCode, ForEachRow, etc. **No CLI calls needed for these.**
 
-**CLI tools (for non-built-in activities):**
-- **Built-in activities** (If, Assign, TryCatch, LogMessage, InvokeCode, ForEachRow, etc.): use XAML from [_BUILT-IN-ACTIVITIES.md](./references/activity-docs/_BUILT-IN-ACTIVITIES.md) directly — no CLI calls needed
-- **All other activities**: `uip rpa-legacy find-activities "{projectRoot}" --query "..." --format json` — returns class names, arguments, XAML snippet, xmlns, body pattern
-- **Enum/type inspection**: `uip rpa-legacy type-definition "{projectRoot}" --type "TypeName" --format json`
+2. Read [xaml-basics-and-rules.md](./references/xaml-basics-and-rules.md) — XAML structure, baseline assembly references, safety rules.
 
-See [discovery-workflow.md](./references/discovery-workflow.md) for detailed step-by-step procedure.
+3. **Only if you need non-built-in activities** (Excel, Mail, HTTP, PDF, etc.):
+   - Run `find-activities "{projectRoot}" --query "..." --format json` for each — use returned `XamlSnippet`
+   - Run `type-definition` for any enums in the results
+   - Read the relevant package doc ([Excel.md](./references/activity-docs/Excel.md), [Mail.md](./references/activity-docs/Mail.md), etc.) for gotchas
+
+4. **Only if Flowchart/StateMachine**: read [_XAML-GUIDE.md](./references/activity-docs/_XAML-GUIDE.md) for ViewState layout
+
+**Stop here.** Don't read more files unless you hit a problem during validation. Additional references if needed: [_PATTERNS.md](./references/activity-docs/_PATTERNS.md) (VB.NET expressions), [common-pitfalls.md](./references/common-pitfalls.md) (gotchas), [_INVOKE-CODE.md](./references/activity-docs/_INVOKE-CODE.md) (InvokeCode details), [_REFRAMEWORK.md](./references/activity-docs/_REFRAMEWORK.md) (REFramework), `uip docsai ask "..."` (official docs), `WebSearch` (community).
+
+See [discovery-workflow.md](./references/discovery-workflow.md) for the full step-by-step procedure.
 
 ---
 
