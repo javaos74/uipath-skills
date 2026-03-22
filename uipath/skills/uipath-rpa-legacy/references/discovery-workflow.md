@@ -47,9 +47,11 @@ Mature project: prioritize local patterns. Greenfield: skip.
 
 ---
 
-## Step 4: Discover Activities (MANDATORY)
+## Step 4: Discover Activities (MANDATORY for non-built-in activities)
 
-**Run for every activity you plan to use.** Returns exact class names, argument signatures, types, **ready-to-use XAML snippet**, and **xmlns declaration**.
+**Skip find-activities for built-in activities** listed in [_BUILT-IN-ACTIVITIES.md](./activity-docs/_BUILT-IN-ACTIVITIES.md): If, Assign, Sequence, TryCatch, Flowchart, ForEach, While, Switch, Throw, Delay, Parallel, LogMessage, InvokeCode, InvokeWorkflowFile, ForEachRow, AddDataRow. Use the provided XAML snippets directly.
+
+**For all other activities**, run find-activities. Returns exact class names, argument signatures, types, **ready-to-use XAML snippet**, and **xmlns declaration**.
 
 ```bash
 uip rpa-legacy find-activities "{projectRoot}" --query "send mail" --format json

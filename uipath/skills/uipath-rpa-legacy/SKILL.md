@@ -53,7 +53,8 @@ No Studio needed. See [environment-setup.md](./references/environment-setup.md) 
 
 | Task Type | Must Read | Also Read If Needed |
 |-----------|-----------|-------------------|
-| **Any workflow** | [xaml-basics-and-rules.md](./references/xaml-basics-and-rules.md), run `find-activities` + `type-definition` | [common-pitfalls.md](./references/common-pitfalls.md) |
+| **WF4 control flow + UiPath core** | [_BUILT-IN-ACTIVITIES.md](./references/activity-docs/_BUILT-IN-ACTIVITIES.md) — **NO find-activities needed** | If, Assign, Sequence, TryCatch, ForEach, While, Switch, Throw, LogMessage, InvokeCode, ForEachRow, etc. |
+| **Any workflow** | [xaml-basics-and-rules.md](./references/xaml-basics-and-rules.md), run `find-activities` for non-built-in activities | [common-pitfalls.md](./references/common-pitfalls.md) |
 | Flowchart/StateMachine | + [_XAML-GUIDE.md](./references/activity-docs/_XAML-GUIDE.md) (ViewState layout) | |
 | Uses Excel/CSV | + [Excel.md](./references/activity-docs/Excel.md) | |
 | Uses Email | + [Mail.md](./references/activity-docs/Mail.md) | |
@@ -63,9 +64,10 @@ No Studio needed. See [environment-setup.md](./references/environment-setup.md) 
 | VB.NET expression help | [_PATTERNS.md](./references/activity-docs/_PATTERNS.md) | |
 | Stuck | `uip docsai ask "..."` → `WebSearch` → ask user | |
 
-**CLI tools (mandatory for every activity):**
-- `uip rpa-legacy find-activities "{projectRoot}" --query "..." --format json` — returns class names, arguments, **XAML snippet**, **xmlns**, **body pattern**. Use `XamlSnippet` as starting point.
-- `uip rpa-legacy type-definition "{projectRoot}" --type "TypeName" --format json` — exact enum values, type members
+**CLI tools (for non-built-in activities):**
+- **Built-in activities** (If, Assign, TryCatch, LogMessage, InvokeCode, ForEachRow, etc.): use XAML from [_BUILT-IN-ACTIVITIES.md](./references/activity-docs/_BUILT-IN-ACTIVITIES.md) directly — no CLI calls needed
+- **All other activities**: `uip rpa-legacy find-activities "{projectRoot}" --query "..." --format json` — returns class names, arguments, XAML snippet, xmlns, body pattern
+- **Enum/type inspection**: `uip rpa-legacy type-definition "{projectRoot}" --type "TypeName" --format json`
 
 See [discovery-workflow.md](./references/discovery-workflow.md) for detailed step-by-step procedure.
 
@@ -224,6 +226,7 @@ Full reference: [cli-reference.md](./references/cli-reference.md)
 
 | File | Content |
 |------|---------|
+| `_BUILT-IN-ACTIVITIES.md` | **Top 20 activities with complete XAML — no find-activities needed** |
 | `_INDEX.md` | Master index with adoption rankings |
 | `_PATTERNS.md` | VB.NET cheat sheet, DataTable ops, error handling |
 | `_XAML-GUIDE.md` | XAML internals, Flowchart/StateMachine layout guides |
