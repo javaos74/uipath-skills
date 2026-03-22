@@ -198,7 +198,7 @@ See [cli-reference.md](./references/cli-reference.md) for all options.
 
 | Command | Purpose |
 |---------|---------|
-| `uip rpa-legacy find-activities <path> --query "..." --format json` | Find activities, class names, arguments, **XAML snippet, xmlns** |
+| `uip rpa-legacy find-activities <path> --query "..." [--exact] --format json` | Find activities, class names, arguments, **XAML snippet, xmlns** |
 | `uip rpa-legacy type-definition <path> --type "..." --format json` | Inspect types, enum values, properties |
 | `uip rpa-legacy validate <file-or-project-path> --format json` | Validate single file or entire project |
 | `uip rpa-legacy analyze <path> --format json` | Run workflow analyzer rules (only when asked) |

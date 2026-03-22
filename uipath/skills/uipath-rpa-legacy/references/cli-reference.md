@@ -59,8 +59,11 @@ Searches for available activities in the project's installed NuGet dependencies.
 **Always use the returned `XamlSnippet` as your starting point** for activity XAML instead of constructing from scratch. The snippet has correct element names, namespaces, and property names for the installed package version.
 
 ```bash
-# Find email-related activities
-uip rpa-legacy find-activities "C:/Projects/MyLegacyProject" --query "send mail" --format json
+# Multi-word search (ranked by relevance)
+uip rpa-legacy find-activities "C:/Projects/MyLegacyProject" --query "Excel Read Range" --format json
+
+# Exact match when you know the name
+uip rpa-legacy find-activities "C:/Projects/MyLegacyProject" --query "ReadRange" --exact --format json
 
 # Find with type definitions (enums, classes)
 uip rpa-legacy find-activities "C:/Projects/MyLegacyProject" --query "invoke code" --include-type-definitions --format json
@@ -92,9 +95,13 @@ With `--include-type-definitions`, output includes `TypeDefinitions` array with 
 | `--tags <tags>` | Comma-separated category tags to filter by |
 | `-l, --limit <count>` | Maximum results to return (default: 50) |
 | `--include-type-definitions` | Include full type definitions for argument types (enums, classes, interfaces) |
+| `--exact` | Only return activities whose ClassName or DisplayName exactly matches the query (case-insensitive) |
 | `--trace-level <level>` | Logging verbosity |
 
-**Query tips:** Use short single-concept terms (`"ReadRange"`, `"SendMail"`). Multi-term queries (`"BuildDataTable AddDataRow"`) return empty — search each term separately. Overly specific queries (`"ReadRange portable"`) may also miss. Each call takes ~15-30s, so use good search terms to minimize calls.
+**Query tips:**
+- **Multi-word queries work** with relevance scoring: `"Excel Read Range"` splits into words, scores matches independently, with bonuses when all words match
+- **CamelCase boundaries detected**: `"SendHotkey"`, `"ExcelReadRange"` match correctly
+- **Use `--exact`** when you know the exact activity name — avoids irrelevant results (e.g., `--query "If" --exact` returns only the WF4 If activity, not 17 unrelated matches)
 
 ### type-definition
 
@@ -120,13 +127,26 @@ uip rpa-legacy type-definition "C:/Projects/MyLegacyProject" --type "System.Net.
 Searches all configured NuGet feeds for packages by name or description. Use when known packages don't cover a capability.
 
 ```bash
-uip rpa-legacy find-package --query "barcode" --limit 10 --format json
-uip rpa-legacy find-package --query "csv parser" --format json
+uip rpa-legacy find-package --query "UiPath.Excel" --limit 10 --format json
+uip rpa-legacy find-package --query "barcode" --format json
 ```
+
+**Output per package:**
+```json
+{
+  "Id": "UiPath.Excel.Activities",
+  "Version": "2.24.2",
+  "Description": "Excel automation activities",
+  "Authors": "UiPath",
+  "Source": "Official"
+}
+```
+
+Activity packages (tagged `UiPathActivities`) are returned first. Searches all enabled v3 feeds in parallel.
 
 | Parameter | Description |
 |-----------|-------------|
-| `--query <search>` | Search term to match against package name and description |
+| `--query <search>` | Search term to match against package name and description (required) |
 | `-l, --limit <count>` | Maximum results per feed (default: 20) |
 
 After finding a package, add it to `dependencies` in project.json. Then `find-activities` will index its activities.
