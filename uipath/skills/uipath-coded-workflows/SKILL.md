@@ -22,7 +22,17 @@ Full coding assistant for creating, editing, managing and running UiPath coded a
 ## Precondition: Project Context
 
 Before doing any work, check if `.claude/rules/project-context.md` exists in the project directory.
-If it does **NOT** exist:
+
+**If the file exists** → check for staleness:
+1. Read the first line of `.claude/rules/project-context.md` to extract the metadata comment: `<!-- discovery-metadata: cs=N xaml=N deps=N -->`
+2. Count current files: Glob `**/*.cs` (excluding `.local/` and `.codedworkflows/`) and `**/*.xaml` in the project directory
+3. Count current dependencies: read `project.json` and count keys in the `.dependencies` object
+4. Compare the current counts against the stored metadata values
+5. If **any count differs** → run the discovery flow below
+6. If all counts match → context is fresh, proceed with the skill workflow
+
+**If the file does NOT exist** → run the discovery flow below.
+**Discovery flow** (used for both missing and stale context):
 1. Trigger the `uipath-project-discovery-agent` and wait for it to complete
 2. The agent returns the generated context document as its response
 3. Write the returned content to **both**:
