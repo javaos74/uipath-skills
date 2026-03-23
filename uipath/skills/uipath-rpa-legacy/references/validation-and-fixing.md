@@ -1,4 +1,4 @@
-# Phase 3: Validate, Analyze & Fix Loop
+# Phase 3: Validate & Fix Loop
 
 Detailed procedures for validating legacy workflows, analyzing project quality, and fixing errors iteratively.
 
@@ -26,29 +26,7 @@ uip rpa-legacy validate "{projectRoot}" --treat-warnings-as-errors --format json
 
 ---
 
-## Step 3.2: Analyze (Only When Requested)
-
-Use `uip rpa-legacy analyze` to run workflow analyzer rules on the entire project. **Only run when the user explicitly asks for analysis** — it is NOT part of the standard validation loop.
-
-```bash
-# Analyze entire project
-uip rpa-legacy analyze "{projectRoot}" --format json
-
-# Skip naming rules
-uip rpa-legacy analyze "{projectRoot}" --ignored-rules "ST-NMG-001,ST-NMG-002" --format json
-```
-
-**Common analyzer rule categories:**
-- **ST-NMG-***: Naming conventions (variable naming, argument naming)
-- **ST-USG-***: Usage rules (unused variables, unused dependencies)
-- **ST-DBP-***: Design best practices (empty catch, hardcoded delays)
-- **ST-SEC-***: Security rules (credential handling)
-
-Use `--stop-on-rule-violation` for strict enforcement. Use `--ignored-rules` to skip rules that don't apply to the project's conventions.
-
----
-
-## Step 3.3: Categorize and Fix Errors
+## Step 3.2: Categorize and Fix Errors
 
 **Fix order:** Package → Structure → Type → Activity Properties → Logic. Always fix in this order — higher-category fixes often resolve lower-category errors automatically.
 
@@ -96,7 +74,7 @@ Use `--stop-on-rule-violation` for strict enforcement. Use `--ignored-rules` to 
 
 ---
 
-## Step 3.4: Iteration Loop
+## Step 3.3: Iteration Loop
 
 ```
 REPEAT:
@@ -117,7 +95,7 @@ UNTIL: 0 errors OR all remaining errors require user action
 
 ---
 
-## Step 3.5: Package (Optional)
+## Step 3.4: Package (Optional)
 
 If a deployable `.nupkg` artifact is needed, package the project after validation passes:
 
@@ -129,7 +107,7 @@ Not required for debugging — legacy RPA can be debugged directly without packa
 
 ---
 
-## Step 3.6: Smoke Test with Debug (Optional)
+## Step 3.5: Smoke Test with Debug (Optional)
 
 **Always validate before debugging** — don't debug a file with compilation errors.
 

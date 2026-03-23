@@ -153,13 +153,12 @@ After finding a package, add it to `dependencies` in project.json. Then `find-ac
 
 ---
 
-## Validation & Analysis Tools
+## Validation Tools
 
 | Action | How | Key Parameters |
 |--------|-----|----------------|
 | **Validate file** | `Bash`: `uip rpa-legacy validate <xaml-path> --format json` | Single file validation |
 | **Validate project** | `Bash`: `uip rpa-legacy validate <project-path> --format json` | Whole-project validation |
-| **Analyze project** | `Bash`: `uip rpa-legacy analyze <project-path> --format json` | Only when explicitly asked |
 
 ### validate
 
@@ -189,38 +188,6 @@ uip rpa-legacy validate "C:/Projects/MyLegacyProject" --result-path "C:/output/e
 | `--trace-level <level>` | Logging verbosity |
 
 **Workflow:** Use per-file validation during development (faster, focused). Use project-level validation as a final step before completing the task.
-
-### analyze
-
-Runs workflow analyzer rules on an entire RPA project and reports violations (unused dependencies, naming conventions, best practices).
-
-**Only run when explicitly requested by the user.** Not part of the standard validation loop.
-
-```bash
-# Analyze entire project
-uip rpa-legacy analyze "C:/Projects/MyLegacyProject" --format json
-
-# Strict mode: fail on any violation
-uip rpa-legacy analyze "C:/Projects/MyLegacyProject" --stop-on-rule-violation --format json
-
-# Skip specific rules
-uip rpa-legacy analyze "C:/Projects/MyLegacyProject" --ignored-rules "ST-NMG-001,ST-NMG-002" --format json
-
-# Use governance policies
-uip rpa-legacy analyze "C:/Projects/MyLegacyProject" --governance-file-path "C:/policies/governance.json" --format json
-```
-
-| Parameter | Description |
-|-----------|-------------|
-| `<project-path>` | Path to the RPA project or project.json (required, positional) |
-| `--analyzer-trace-level <level>` | Message types to output (Off\|Error\|Warning\|Info\|Verbose) |
-| `--stop-on-rule-violation` | Fail the command when a rule violation is detected |
-| `--treat-warnings-as-errors` | Treat warnings as errors during analysis |
-| `--result-path <path>` | Output file path for analysis results (JSON) |
-| `--governance-file-path <path>` | Path to governance policies file (from Automation Ops) |
-| `--ignored-rules <rules>` | Comma-separated list of rule IDs to skip |
-| `--trace-level <level>` | Legacy CLI logging level (default: Information) |
-| `--timeout <seconds>` | Timeout in seconds |
 
 ---
 

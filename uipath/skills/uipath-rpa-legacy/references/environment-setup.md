@@ -59,7 +59,7 @@ This opens a browser-based login flow. Authentication is typically needed only f
 - `build` commands that push packages to Orchestrator
 - Accessing Orchestrator resources (assets, queues) during `debug` execution
 
-For most local development tasks (validate, analyze, edit, find-activities), authentication is **not required**.
+For most local development tasks (validate, edit, find-activities), authentication is **not required**.
 
 ---
 
