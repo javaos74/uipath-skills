@@ -70,6 +70,38 @@ uip flow registry get <nodeType> --format json  # full schema for one node type
 
 > **Auth note**: Without `uip login`, registry shows OOTB nodes only. After login, tenant-specific connector nodes are also available.
 
+### Step 3b — Discover connector capabilities (when using connectors)
+
+**Skip this step if the flow only uses OOTB nodes (scripts, HTTP, branching).** When the flow uses Integration Service connectors (e.g., Slack, Salesforce, Outlook), query the IS APIs to understand what the connector can actually do **before** planning.
+
+```bash
+# What operations does this connector support?
+uip is activities list <connector-key> --format json
+
+# What data objects/resources does it expose?
+uip is resources list <connector-key> --format json
+
+# What fields does a specific resource need? (required vs optional, types)
+uip is resources describe <connector-key> <object-name> --format json
+uip is resources describe <connector-key> <object-name> --operation Create --format json
+```
+
+**Check for existing connections** (required for connector nodes to work at runtime):
+
+```bash
+# Does the user already have a connection for this connector?
+uip is connections list <connector-key> --format json
+
+# If a connection exists, verify it's active
+uip is connections ping <connection-id>
+```
+
+**If no connection exists**, you have two options:
+1. **Create one** (requires user interaction for OAuth): `uip is connections create <connector-key>`
+2. **Proceed without** — generate the flow with the connector node but inform the user they'll need to create a connection before running/debugging
+
+> **Why this matters**: The flow registry tells you *which* connector nodes exist, but not what operations they support or what fields are required. Without IS discovery, generated flows will have missing or incorrect `inputs.detail`, empty `outputs` blocks, and unresolvable `$vars` references — issues that `flow validate` does not catch.
+
 ### Step 4 — Plan the flow
 
 **Only for new flows or major restructuring** (adding multiple nodes, redesigning connections). Skip this step for small targeted edits.
@@ -82,6 +114,7 @@ Before editing the `.flow` file, create a plan and get user approval.
    - **Connections** -- how nodes connect (which output port to which input port)
    - **Inputs** -- what the flow needs to start (trigger type, input arguments)
    - **Outputs** -- what the flow produces (return values, side effects)
+   - **Connector details** -- for each connector node: the connector key, operation, required input fields (from IS discovery), and connection status
    - **Missing information** -- anything the user hasn't specified that you need to proceed, marked as `[REQUIRED: description]` (e.g. connector IDs, channel names, credentials)
 
 2. **Ask the user to review the plan before proceeding.** Do NOT move to Step 5 until the user confirms. If the user requests changes, revise the plan and ask again.
@@ -121,6 +154,8 @@ Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchest
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
 | **Wire nodes with edges** | [references/flow-file-format.md - Edges](references/flow-file-format.md) |
 | **Find the right node type** | Run `uip flow registry search <keyword>` |
+| **Discover connector capabilities** | Run `uip is activities list <connector-key>` and `uip is resources describe` |
+| **Check/create connections** | Run `uip is connections list <connector-key>` |
 | **Pack / publish / deploy** | [/uipath:uipath-platform](/uipath:uipath-platform) |
 
 ## Key Concepts
