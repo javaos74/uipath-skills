@@ -65,19 +65,21 @@ When the debugger pauses (at a breakpoint, after a step, or on an exception), `O
 
 | Field | Description |
 |-------|-------------|
-| `Category` | What this entry represents (see categories below) |
+| `Category` | The source process that emitted this entry (see categories below) |
 | `Type` | The .NET type (e.g., `String`, `DataTable`, `String[]`, `HttpResponseSummary`) |
 | `Name` | Property or variable name |
 | `Value` | Current value — can be a simple string, null, or complex JSON |
 
 #### Categories
 
+The `Category` field indicates which process produced the output entry:
+
 | Category | Meaning |
 |----------|---------|
-| `CurrentProperty` | Properties of the **current** activity (the one about to execute or where execution paused). Includes `Id`, configuration properties, and argument bindings |
-| `PreviousProperty` | Properties and results of the **previous** activity (the one that just completed). Includes `DisplayName`, input/output argument values, and configuration |
-| `Variable` | Current values of all in-scope variables. This is the primary way to inspect workflow state during debugging |
-| `Exception` | Exception details when execution pauses on an error. `$exceptionDetails` contains the full stack trace; `$exceptionActivityInfo` identifies which activity threw it |
+| `General` | General-purpose output from the workflow runtime |
+| `Debug` | Output from the debug engine (step events, breakpoint hits, exception notifications) |
+| `Compile` | Output from the compilation/build process |
+| `Tests` | Output from test execution |
 
 ### Errors Array
 
@@ -135,7 +137,7 @@ uip rpa run-file --file-path "GetStockPrices.xaml" --command ToggleBreakpoint --
 # 3. Start debugging — execution pauses at the breakpoint
 uip rpa run-file --file-path "GetStockPrices.xaml" --command StartDebugging --format json
 
-# 4. Inspect the state (variables, current/previous activity properties are in the output)
+# 4. Inspect the Output entries (variable values, activity properties, execution state)
 # Then step through or continue:
 uip rpa run-file --file-path "GetStockPrices.xaml" --command StepOver --format json
 
@@ -152,11 +154,10 @@ When `Continue` or a step command hits an exception, the debugger pauses and ret
 uip rpa run-file --file-path "MyWorkflow.xaml" --command StartDebugging --format json
 uip rpa run-file --file-path "MyWorkflow.xaml" --command Continue --format json
 
-# If the output contains Category "Exception", inspect:
-# - $exceptionDetails: full exception type, message, and stack trace
-# - $exceptionActivityInfo: which activity threw the error (Id, Name, TypeName)
-# - Variable values at the point of failure
-# - PreviousProperty values showing the activity's input configuration
+# If an exception occurs, the debugger pauses. Inspect the Output entries:
+# - Look for entries with error/exception details in the Name and Value fields
+# - Check LogEntries for error-level messages with stack traces
+# - Examine variable values at the point of failure
 
 # Then choose how to proceed:
 # Option A: Retry the failed activity (e.g., transient network error)
@@ -183,10 +184,10 @@ uip rpa run-file --file-path "MyWorkflow.xaml" --command StartDebugging --format
 # 3. Continue past the fixed area and inspect variable state
 uip rpa run-file --file-path "MyWorkflow.xaml" --command Continue --format json
 
-# 4. Check Output for:
-#    - Variable values are as expected (not null when they should have data)
-#    - No Exception category entries
-#    - LogEntries don't contain errors
+# 4. Check the response for:
+#    - Output entries show expected variable values
+#    - No error-level LogEntries
+#    - Errors array is empty or contains only warnings
 
 # 5. Stop
 uip rpa run-file --file-path "MyWorkflow.xaml" --command Stop --format json
@@ -212,19 +213,16 @@ uip rpa run-file --file-path "ProcessOrder.xaml" \
 
 When a debug step returns, focus on these elements in order:
 
-1. **LogEntries** — Check for error-level messages that indicate what went wrong
-2. **Exception category** — If present, read `$exceptionDetails` for the root cause and `$exceptionActivityInfo` for which activity failed
-3. **Variable category** — Inspect variable values to verify state is correct at this point in execution. Look for unexpected `null` values or wrong types
-4. **PreviousProperty** — Shows what the last activity did, including its output values (e.g., an HTTP response body, a deserialized object, etc.). The `DisplayName` property tells you which activity just executed
-5. **CurrentProperty** — Shows the activity that's about to execute next, including its `Id` and configured argument bindings
+1. **Errors array** — Check for any `ERROR`-level entries that indicate compilation or validation failures
+2. **LogEntries array** — Look for error-level log messages that reveal runtime failures, exception messages, and stack traces. The `Source` field tells you the origin (`Debug`, `General`, etc.) and `Level` indicates severity
+3. **Output array** — Inspect the `Name` and `Value` fields of each entry to understand the current state: variable values, activity properties, and execution context. The `Category` field (`General`, `Debug`, `Compile`, `Tests`) tells you which process emitted the entry
 
 ### Identifying the Root Cause from Debug Output
 
 A practical example — a workflow makes an HTTP request and tries to deserialize the response as JSON, but fails:
 
-- **PreviousProperty with `DisplayName: "HTTP Request - Get Stock Price"`** tells you the HTTP request completed
-- **Variable with `Name: "httpResponse"`** shows the response had `StatusCode: "TooManyRequests"` and `TextContent: "Too Many Requests\r\n"` — the API returned a 429, not JSON
-- **Exception with `$exceptionDetails`** shows `JsonReaderException: Unexpected character encountered while parsing value: T` — the deserializer tried to parse "Too Many Requests" as JSON
+- **LogEntries** contain an error-level message with `JsonReaderException: Unexpected character encountered while parsing value: T` — the deserializer tried to parse a non-JSON response
+- **Output entries** show the HTTP response variable has `StatusCode: "TooManyRequests"` and `TextContent: "Too Many Requests\r\n"` — the API returned a 429, not JSON
 - **Fix**: Add status code checking before deserialization, or add retry logic with backoff to the HTTP request
 
 ---
@@ -235,7 +233,7 @@ A practical example — a workflow makes an HTTP request and tries to deserializ
 - **Set breakpoints strategically** — place them just before the activity you suspect is failing, not at the very start. This avoids stepping through dozens of unrelated activities.
 - **Use `focus-activity` before `ToggleBreakpoint`** to target a specific activity by its IdRef. Without focusing first, the breakpoint is set on whatever activity or workflow is currently focused in Studio.
 - **Prefer `StepOver` for quick inspection** — it moves one activity at a time without descending into scopes. Use `StepInto` only when you need to examine what happens inside a loop iteration or nested sequence.
-- **Check variables after each step** — the Variable category in the output shows the current state of all in-scope variables. This is the most direct way to verify that each activity produced the expected result.
+- **Check variables after each step** — inspect the Output entries after each step to see the current state of in-scope variables. This is the most direct way to verify that each activity produced the expected result.
 - **Use `ContinueRetry` for transient errors** — if the exception is a network timeout or rate limit, retrying may succeed without any code changes.
 - **Use `ContinueIgnore` cautiously** — it skips the exception, which may leave variables in an unexpected state for downstream activities.
 - **Stop the session when done** — always issue a `Stop` command to cleanly end the debug session. If `Stop` doesn't respond, use `ForceSessionEnded` as a fallback.
