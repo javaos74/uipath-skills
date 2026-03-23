@@ -13,6 +13,15 @@ fail() {
   exit 2
 }
 
+is_windows() {
+  local os
+  os="$(uname -s 2>/dev/null || echo "Windows")"
+  case "$os" in
+    MINGW*|MSYS*|CYGWIN*|Windows*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 ensure_npm() {
   command -v npm &> /dev/null && return
 
@@ -119,5 +128,7 @@ ensure_uip_tool() {
 ensure_npm
 ensure_github_packages_registry
 ensure_npm_package @uipath/cli
-ensure_npm_package @uipath/servo
+if is_windows; then
+  ensure_npm_package @uipath/servo
+fi
 ensure_uip_tool @uipath/rpa-tool
