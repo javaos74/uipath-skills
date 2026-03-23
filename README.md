@@ -17,6 +17,9 @@ Comprehensive UiPath automation plugin for Claude Code — covering coded workfl
 # Development environment — authentication, Orchestrator, deployment, CLI tools, Integration Service
 /uipath:uipath-platform
 
+# Coded agents — scaffold, build, run, evaluate, and deploy Python agents
+/uipath:uipath-coded-agents
+
 # UI automation & testing — click, type, read, verify, screenshot desktop and browser UIs
 /uipath:uipath-servo
 ```
@@ -29,6 +32,7 @@ Comprehensive UiPath automation plugin for Claude Code — covering coded workfl
 | **RPA Workflows** | `/uipath:uipath-rpa-workflows` | Generate and edit RPA workflows (XAML) using a discovery-first approach with iterative error-driven refinement |
 | **Flow Projects** | `/uipath:uipath-flow` | Create, edit, validate, and debug UiPath Flow projects using the `uip` CLI and `.flow` file format |
 | **Development** | `/uipath:uipath-platform` | Environment setup, authentication, Orchestrator management, solution lifecycle, Integration Service, and CLI tooling |
+| **Coded Agents** | `/uipath:uipath-coded-agents` | End-to-end toolkit for UiPath coded agents: scaffold, build, run, evaluate, deploy (LangGraph, LlamaIndex, OpenAI Agents, Simple Function) |
 | **Servo** | `/uipath:uipath-servo` | Desktop and browser UI automation and testing — click, type, read, verify, screenshot, and extract UI elements |
 
 ## Coded Workflows
