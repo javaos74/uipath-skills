@@ -5,15 +5,15 @@ Domain knowledge packages (skills) for building, running, testing, and deploying
 ## Repository Structure
 
 ```
-skills/                          # All skills
+skills/                          # Core skills
   uipath-coded-workflows/        # C# coded automation workflows
   uipath-rpa-workflows/          # XAML RPA workflow generation
   uipath-flow/                   # JSON-based Flow projects
-  uipath-development/            # Auth, Orchestrator, deployment, CLI
+  uipath-platform/               # Auth, Orchestrator, deployment, CLI
   uipath-servo/                  # Desktop & browser UI automation/testing
-  community/                     # Community-built skills, reviewed by UiPath
-  experimental/                  # Experimental (confirm with user first)
-    uipath-coded-agents/         # End-to-end coded agents toolkit
+skills-community/                # Community-built skills, reviewed by UiPath
+skills-experimental/             # Experimental (confirm with user first)
+  uipath-coded-agents/           # End-to-end coded agents toolkit
 references/activity-docs/        # UiPath activity package documentation
 hooks/                           # Session hooks (ensure-uip.sh)
 .claude-plugin/                  # Claude Code plugin + marketplace registration
@@ -38,16 +38,16 @@ Each skill is a directory containing:
 | `uipath-coded-workflows` | Create, edit, build, and run C# coded automations |
 | `uipath-rpa-workflows` | Generate and edit XAML RPA workflows |
 | `uipath-flow` | Create and debug JSON-based Flow projects |
-| `uipath-development` | Authentication, Orchestrator, deployment, CLI tools, Integration Service |
+| `uipath-platform` | Authentication, Orchestrator, deployment, CLI tools, Integration Service |
 | `uipath-servo` | Desktop and browser UI automation and testing |
 
 ## Community Skills
 
-Skills in `skills/community/` are contributed by the UiPath community and reviewed by UiPath.
+Skills in `skills-community/` are contributed by the UiPath community and reviewed by UiPath.
 
 ## Experimental Skills
 
-Skills in `skills/experimental/` are under active development. **Always confirm with the user before using.**
+Skills in `skills-experimental/` are under active development. **Always confirm with the user before using.**
 
 | Skill | Description |
 |-------|-------------|

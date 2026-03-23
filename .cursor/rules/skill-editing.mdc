@@ -13,4 +13,4 @@ When creating or editing skills:
 3. Reference documents go in `references/` subdirectory
 4. Templates and static resources go in `assets/` subdirectory
 5. Executable scripts go in `scripts/` subdirectory
-6. Skills in `skills/experimental/` must include a warning about their experimental status
+6. Skills in `skills-experimental/` must include a warning about their experimental status

@@ -18,7 +18,7 @@ Use `IntegrationConnectorService` to call any Integration Service connector (Jir
 
 ## How It Works
 
-The skill resolves all metadata up-front using the `uipath-development` skill's Integration Service workflow (connector → connection → describe → execute). The coded workflow then receives the pre-resolved values and passes them to `IntegrationConnectorService.ExecuteAsync` — **no metadata lookup happens at runtime**.
+The skill resolves all metadata up-front using the `uipath-platform` skill's Integration Service workflow (connector → connection → describe → execute). The coded workflow then receives the pre-resolved values and passes them to `IntegrationConnectorService.ExecuteAsync` — **no metadata lookup happens at runtime**.
 
 ---
 
@@ -41,12 +41,12 @@ using UiPath.IntegrationService.Activities.Runtime.Models;
 
 ## Step-by-Step Workflow
 
-### Step 1 — Resolve metadata using the uipath-development skill
+### Step 1 — Resolve metadata using the uipath-platform skill
 
-Before writing the coded workflow, resolve the connector metadata using the `uipath-development` skill. The full CLI commands and output interpretation are covered in those reference files:
+Before writing the coded workflow, resolve the connector metadata using the `uipath-platform` skill. The full CLI commands and output interpretation are covered in those reference files:
 
-- **Find connector key and list connections:** [`uipath-development/references/integration-service/connectors.md`](../../uipath-development/references/integration-service/connectors.md) and [`connections.md`](../../uipath-development/references/integration-service/connections.md)
-- **Discover activities/resources and run describe:** [`activities.md`](../../uipath-development/references/integration-service/activities.md) and [`resources.md`](../../uipath-development/references/integration-service/resources.md)
+- **Find connector key and list connections:** [`uipath-platform/references/integration-service/connectors.md`](../../uipath-platform/references/integration-service/connectors.md) and [`connections.md`](../../uipath-platform/references/integration-service/connections.md)
+- **Discover activities/resources and run describe:** [`activities.md`](../../uipath-platform/references/integration-service/activities.md) and [`resources.md`](../../uipath-platform/references/integration-service/resources.md)
 
 The describe response tells you:
 
@@ -254,7 +254,7 @@ Common errors and fixes:
 
 ## Full Example — Jira
 
-All values below come from running the uipath-development skill describe commands first.
+All values below come from running the uipath-platform skill describe commands first.
 
 ```csharp
 using UiPath.CodedWorkflows;

@@ -48,7 +48,7 @@ The repository contains skills for building and managing UiPath automation proje
 | **uipath-coded-workflows** | Create, edit, build, and run UiPath coded automations (.cs) with activity references for 20+ packages |
 | **uipath-rpa-workflows** | Generate and edit RPA workflows (XAML) in UiPath Studio Desktop with discovery-first approach |
 | **uipath-flow** | Create, validate, and debug UiPath Flow projects using the `.flow` JSON format and `uip` CLI |
-| **uipath-development** | Authentication, Orchestrator management, solution lifecycle, Integration Service, and CLI tools |
+| **uipath-platform** | Authentication, Orchestrator management, solution lifecycle, Integration Service, and CLI tools |
 | **uipath-servo** | Desktop and browser UI automation and testing — click, type, read, verify, screenshot, and extract UI elements |
 
 ## Multi-Tool Support
