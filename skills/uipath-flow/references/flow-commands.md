@@ -114,83 +114,9 @@ uip flow registry get <nodeType> --format json
 
 The `Data.Node` object from `registry get` is what you paste into your `.flow` file's `definitions` array.
 
-## uip is — Integration Service Commands
+## Integration Service commands
 
-These commands discover connector capabilities and manage connections. **Requires `uip login`.**
-
-Use these **before planning** any flow that uses connector nodes, to understand what operations and fields are available.
-
-### uip is activities list
-
-List operations available for a connector.
-
-```bash
-uip is activities list <connector-key> --format json
-uip is activities list <connector-key> --triggers --format json   # trigger activities only
-```
-
-Returns: Name, DisplayName, Description, ObjectName, MethodName, Operation, IsCurated.
-
-### uip is resources list
-
-List data objects/resources a connector exposes.
-
-```bash
-uip is resources list <connector-key> --format json
-uip is resources list <connector-key> --operation Create --format json   # filter by operation
-uip is resources list <connector-key> --connection-id <id> --format json # includes custom fields
-```
-
-Operations: List, Retrieve, Create, Update, Delete, Replace.
-
-### uip is resources describe
-
-Get field-level metadata for a specific resource and operation — required vs optional fields, types.
-
-```bash
-uip is resources describe <connector-key> <object-name> --format json
-uip is resources describe <connector-key> <object-name> --operation Create --format json
-uip is resources describe <connector-key> <object-name> --connection-id <id> --format json
-```
-
-Returns: requiredFields, optionalFields, responseFields, and cached metadata file path.
-
-### uip is connections list
-
-List existing connections for a connector (or all connectors).
-
-```bash
-uip is connections list --format json                          # all connections
-uip is connections list <connector-key> --format json          # for a specific connector
-uip is connections list <connector-key> --folder-key <key> --format json
-```
-
-Returns: Id, Name, ConnectorKey, State, Owner, IsDefault, Folder.
-
-### uip is connections create
-
-Create a new connection via OAuth flow (opens browser).
-
-```bash
-uip is connections create <connector-key>
-uip is connections create <connector-key> --no-browser   # print URL instead
-```
-
-### uip is connections ping
-
-Verify a connection is active and usable.
-
-```bash
-uip is connections ping <connection-id>
-```
-
-### uip is connections edit
-
-Re-authenticate an existing connection.
-
-```bash
-uip is connections edit <connection-id>
-```
+For `uip is` commands (connectors, connections, activities, resources, triggers), see the **[/uipath:uipath-platform](/uipath:uipath-platform)** skill — it has the complete IS command reference and agent workflow. Use IS discovery in **Step 4** of the flow authoring workflow when your flow uses connector nodes.
 
 ## Global options (all commands)
 

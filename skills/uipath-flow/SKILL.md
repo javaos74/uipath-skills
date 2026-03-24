@@ -72,35 +72,15 @@ uip flow registry get <nodeType> --format json  # full schema for one node type
 
 ### Step 4 — Discover connector capabilities (when using connectors)
 
-**Skip this step if the flow only uses OOTB nodes (scripts, HTTP, branching).** When the flow uses Integration Service connectors (e.g., Slack, Salesforce, Outlook), query the IS APIs to understand what the connector can actually do **before** planning.
+**Skip this step if the flow only uses OOTB nodes (scripts, HTTP, branching).** When the flow uses Integration Service connectors (e.g., Slack, Salesforce, Outlook), you **must** discover what the connector can do before planning. The flow registry tells you *which* connector nodes exist, but not what operations they support or what fields are required. Without IS discovery, generated flows will have missing or incorrect `inputs.detail`, empty `outputs` blocks, and unresolvable `$vars` references — issues that `flow validate` does not catch.
 
-```bash
-# What operations does this connector support?
-uip is activities list <connector-key> --format json
+**Use the [/uipath:uipath-platform](/uipath:uipath-platform) skill for all IS operations.** It has the complete Integration Service reference including the agent workflow (connector → connection → ping → discover → resolve references → execute), field metadata, error recovery, and connection management. The key commands you'll need:
 
-# What data objects/resources does it expose?
-uip is resources list <connector-key> --format json
+- `uip is activities list <connector-key>` — what operations the connector supports
+- `uip is resources list/describe <connector-key>` — what data objects and fields are available
+- `uip is connections list/ping/create <connector-key>` — check or create authenticated connections
 
-# What fields does a specific resource need? (required vs optional, types)
-uip is resources describe <connector-key> <object-name> --format json
-uip is resources describe <connector-key> <object-name> --operation Create --format json
-```
-
-**Check for existing connections** (required for connector nodes to work at runtime):
-
-```bash
-# Does the user already have a connection for this connector?
-uip is connections list <connector-key> --format json
-
-# If a connection exists, verify it's active
-uip is connections ping <connection-id>
-```
-
-**If no connection exists**, you have two options:
-1. **Create one** (requires user interaction for OAuth): `uip is connections create <connector-key>`
-2. **Proceed without** — generate the flow with the connector node but inform the user they'll need to create a connection before running/debugging
-
-> **Why this matters**: The flow registry tells you *which* connector nodes exist, but not what operations they support or what fields are required. Without IS discovery, generated flows will have missing or incorrect `inputs.detail`, empty `outputs` blocks, and unresolvable `$vars` references — issues that `flow validate` does not catch.
+Gather this information **before** moving to the planning step. For each connector node in the flow, you should know: which operation to use, what fields are required, and whether a connection exists.
 
 ### Step 5 — Plan the flow (interactive)
 
@@ -191,8 +171,8 @@ Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchest
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
 | **Wire nodes with edges** | [references/flow-file-format.md - Edges](references/flow-file-format.md) |
 | **Find the right node type** | Run `uip flow registry search <keyword>` |
-| **Discover connector capabilities** | Run `uip is activities list <connector-key>` and `uip is resources describe` |
-| **Check/create connections** | Run `uip is connections list <connector-key>` |
+| **Discover connector capabilities** | Step 4 + [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
+| **Check/create connections** | [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
 | **Pack / publish / deploy** | [/uipath:uipath-platform](/uipath:uipath-platform) |
 
 ## Key Concepts
@@ -226,6 +206,6 @@ Always use `--format json` for programmatic use. The `--localstorage-file` warni
 ## References
 
 - **[.flow File Format](references/flow-file-format.md)** — Full JSON schema, node/edge structure, common node types, ports, and examples
-- **[CLI Command Reference](references/flow-commands.md)** — All `uip flow` and `uip is` subcommands with parameters
+- **[CLI Command Reference](references/flow-commands.md)** — All `uip flow` subcommands with parameters
 - **[Plan Template](references/plan-template.html)** — HTML template for flow plan visualization (mermaid diagram + node details)
 - **[Pack / Publish / Deploy](/uipath:uipath-platform)** — Packaging and Orchestrator deployment (uipath-platform skill)
