@@ -84,7 +84,7 @@ Gather this information **before** moving to the planning step. For each connect
 
 ### Step 5 — Plan the flow (interactive)
 
-**Only for new flows or major restructuring.** Skip for small targeted edits.
+**Required when creating a new flow or adding multiple nodes.** Only skip this step for small targeted edits to an *existing* flow (e.g., changing a script body, renaming a node, tweaking one connection). When in doubt, plan.
 
 Generate a plan as a **self-contained HTML file** with a mermaid diagram and structured details. This lets the user (and PMs) visually review the flow topology before any code is written.
 
