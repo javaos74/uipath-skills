@@ -14,9 +14,6 @@ uip rpa-legacy validate "{projectRoot}/Main.xaml" --format json
 
 # Validate entire project (use as FINAL step before completing)
 uip rpa-legacy validate "{projectRoot}" --format json
-
-# Strict mode
-uip rpa-legacy validate "{projectRoot}" --treat-warnings-as-errors --format json
 ```
 
 **Workflow:**

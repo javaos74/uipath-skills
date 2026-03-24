@@ -173,9 +173,6 @@ uip rpa-legacy validate "C:/Projects/MyLegacyProject/Main.xaml" --format json
 # Validate entire project (use before completing — final check)
 uip rpa-legacy validate "C:/Projects/MyLegacyProject" --format json
 
-# Strict mode: treat warnings as errors
-uip rpa-legacy validate "C:/Projects/MyLegacyProject" --treat-warnings-as-errors --format json
-
 # Save results to file
 uip rpa-legacy validate "C:/Projects/MyLegacyProject" --result-path "C:/output/errors.json"
 ```
@@ -183,7 +180,6 @@ uip rpa-legacy validate "C:/Projects/MyLegacyProject" --result-path "C:/output/e
 | Parameter | Description |
 |-----------|-------------|
 | `<path>` | XAML file, project.json, or project folder (required, positional) |
-| `--treat-warnings-as-errors` | Treat warnings as errors |
 | `--result-path <path>` | Write validation results to a JSON file instead of stdout |
 | `--trace-level <level>` | Logging verbosity |
 
