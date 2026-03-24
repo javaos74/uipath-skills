@@ -2,8 +2,6 @@
 
 Common pitfalls that cause validation errors or runtime failures.
 
-
-
 ## Container/Scope Requirements
 
 These activities **must** be placed inside a specific parent scope:
