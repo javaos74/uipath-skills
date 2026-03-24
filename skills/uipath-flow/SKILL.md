@@ -90,7 +90,9 @@ Generate a plan as a **self-contained HTML file** with a mermaid diagram and str
 
 #### 5a. Write the plan file
 
-Read [references/plan-template.html](references/plan-template.html) and write `flow-plan.html` in the project directory by **copying the template and replacing the `{{PLACEHOLDER}}` markers** with actual content. Do not rewrite the HTML from scratch — preserve the Tailwind config, styles, and structure exactly. The HTML comment examples in the template show the expected format for each section.
+Read [references/plan-template.html](references/plan-template.html) **once** and write `flow-plan.html` in the project directory by **copying the template and replacing the `{{PLACEHOLDER}}` markers** with actual content. Do not rewrite the HTML from scratch — preserve the Tailwind config, styles, and structure exactly. The HTML comment examples in the template show the expected format for each section.
+
+> **Token efficiency:** Only read the template when generating a new plan. For subsequent updates (Step 5c), edit `flow-plan.html` directly — do not re-read the template.
 
 The plan must include:
 
