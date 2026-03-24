@@ -139,6 +139,8 @@ Ensure Studio Desktop is running, connected, and targeting the correct project. 
 
 **Quick check:** Find `project.json` to establish `{projectRoot}`, run `uip rpa list-instances --format json` to verify Studio, and `uip rpa open-project` if needed.
 
+**Expression language for new projects:** Prefer `VisualBasic` for Windows target framework projects.
+
 ---
 
 ## Phase 1: Discovery
