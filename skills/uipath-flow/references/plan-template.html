@@ -62,7 +62,8 @@
                 subgraph Ingestion
                     A[Read Emails] -\-> B[Parse Body]
                 end
-            - Use direction TB (top-bottom) for vertical flows, LR for horizontal
+            - Prefer direction TB (top-bottom) — it uses page width better and is more readable
+            - Use LR (left-right) only for very linear flows with few branches
             - Node shapes: [rectangle], {diamond/decision}, ([rounded]), [[subroutine]]
             - Edge labels: A -\->|"label"| B
             - Style subgraphs: style Ingestion fill:#fff7f5,stroke:#FA4616
@@ -192,7 +193,7 @@
 
     </div>
 
-    <script>mermaid.initialize({ startOnLoad: true, theme: "default", flowchart: { useMaxWidth: true, htmlLabels: true } });</script>
+    <script>mermaid.initialize({ startOnLoad: true, theme: "default", flowchart: { useMaxWidth: false, htmlLabels: true } });</script>
 </body>
 
 </html>
