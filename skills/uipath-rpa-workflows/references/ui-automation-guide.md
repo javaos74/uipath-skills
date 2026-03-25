@@ -28,9 +28,33 @@ The Object Repository stores reusable screen and element definitions in the `.ob
 
 ---
 
-## Selector & Target Configuration Sub-Skills
+## Configuring Targets (Primary Approach)
 
-For creating, fixing, and configuring selectors and targets, use the CLI commands directly:
+**Always use the `uia-configure-target` skill** to create or find targets in the Object Repository. This skill handles the full flow: snapshot capture, element discovery, selector generation, selector improvement, and OR registration.
+
+The UIA activity-docs version folder contains the skill files. Discover them by globbing:
+```
+Glob: pattern="**/*.md" path="../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/"
+```
+These are **reference docs to read and follow** — they are NOT invocable as slash commands via the Skill tool. Read the relevant `.md` file and follow its steps using the `uip rpa` CLI commands directly.
+
+To configure a target, read and follow the `uia-configure-target` skill:
+- **Window + element:** `--window <description> --element <description>`
+- **Window only:** `--window <description>`
+
+The skill will search the Object Repository for existing matches before creating new entries, generate selectors from the live application tree, and return the XAML snippet to use directly.
+
+### Applying Targets to XAML
+
+`uia-configure-target` returns the ready-to-use XAML for the target. Use the returned snippet directly in your workflow — do not manually construct target elements.
+
+When an element is reused across multiple activities, use the same returned snippet for each one.
+
+---
+
+## Low-Level Indication Tools (Alternative)
+
+If you cannot use `uia-configure-target` (e.g., the skill docs are unavailable), you can fall back to the raw indication CLI commands. These require user interaction (clicking on the target element) and produce less robust selectors:
 
 ```bash
 # Indicate a screen (creates App automatically if none exists in .objects/)
@@ -39,12 +63,6 @@ uip rpa indicate-application --name "<ScreenName>" --project-dir "<PROJECT_DIR>"
 # Indicate an element on a screen (use --parent-id from the indicate-application result)
 uip rpa indicate-element --name "<ElementName>" --parent-id "<screen-reference>" --activity-class-name "<ActivityType>" --project-dir "<PROJECT_DIR>" --format json
 ```
-
-> **Extra references:** The UIA activity-docs version folder may contain additional guides for selector creation, target configuration, CV targeting, and selector improvement. Discover them by globbing:
-> ```
-> Glob: pattern="**/*.md" path="../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/"
-> ```
-> These are **reference docs to read and follow** — they are NOT invocable as slash commands via the Skill tool. Read the relevant `.md` file and follow its instructions manually using the CLI commands.
 
 ---
 

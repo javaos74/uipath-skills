@@ -395,6 +395,14 @@ When the workflow involves Integration Service connectors (dynamic activities), 
 ### Guidelines for both CREATE and EDIT:
 Apply Core Principles: consult activity docs first, read relevant [reference files](./references/) for XAML structure and patterns, start minimal and iterate.
 
+### UI Automation Workflows — Target Configuration Gate
+
+**Before writing any XAML that contains UI activities** (Click, TypeInto, GetText, etc.), every UI element target must be configured through the `uia-configure-target` skill flow. This means: for each distinct element the workflow interacts with, read and follow the `uia-configure-target` skill steps (found in the UIA activity-docs). The skill handles snapshot capture, element discovery, selector generation, selector improvement, and Object Repository registration. All steps must complete — do not stop after getting a raw selector.
+
+**Do NOT manually call low-level `uip rpa uia` CLI commands** (`snapshot capture`, `snapshot filter`, `selector-intelligence get-default-selector`) to build selectors outside of the skill flow. These are internal tools used *by* the skill — calling them directly skips selector improvement and OR registration, producing fragile selectors that aren't tracked in the project.
+
+**Do NOT launch the target application before running `uia-configure-target`.** The skill's first steps (CREATE-1 + CREATE-2) capture the top-level window tree and search for the app. Only if the app is not found in the window list should you launch it — and then re-run the capture. Launching preemptively creates duplicate instances and risks targeting the wrong window.
+
 ### For CREATE Requests
 
 **Strategy:** Generate minimal working version, expect to iterate. Take it one activity at a time. Build incrementally and validate frequently.
@@ -520,6 +528,7 @@ For CLI error diagnosis and recovery patterns (IPC failures, auth errors, packag
 
 **Never** (items not already covered by Core Principles):
 - Generate large, complex workflows in one go — build incrementally, one activity at a time
+- Manually craft UI selectors by calling low-level `uip rpa uia` CLI commands (`snapshot capture`, `snapshot filter`, `selector-intelligence get-default-selector`) outside of the `uia-configure-target` skill flow — this skips selector improvement and OR registration
 - Assume a create/edit succeeded without validating with `uip rpa get-errors`
 - Stop the iteration loop before correctly rendering all activities
 - Guess properties, types, inputs/outputs, or configurations without checking activity docs, or `get-default-activity-xaml`, or the examples repository, or the appropriate reference files
@@ -546,6 +555,11 @@ Before handover, verify:
 - [ ] Local project explored for existing patterns and conventions
 - [ ] Service/provider disambiguation resolved — auto-selected or prompted only when ambiguous (Step 1.5)
 - [ ] For connector workflows: connections verified with `uip is connections list`
+
+**UI Automation Targets (if applicable):**
+- [ ] Every UI element target configured through the `uia-configure-target` skill flow (not raw CLI commands)
+- [ ] Selectors improved (selector improvement step completed, not just raw `get-default-selector` output)
+- [ ] All targets registered in the Object Repository (screens and elements created via OR commands)
 
 **XAML Content Quality:**
 - [ ] VB.NET or C# syntax matches project language (checked existing workflows)
