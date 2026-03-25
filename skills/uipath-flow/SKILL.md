@@ -86,6 +86,8 @@ Gather this information **before** moving to the planning step. For each connect
 
 **Required when creating a new flow or adding multiple nodes.** Only skip this step for small targeted edits to an *existing* flow (e.g., changing a script body, renaming a node, tweaking one connection). When in doubt, plan.
 
+**Before planning, read [references/flow-planning-guide.md](references/flow-planning-guide.md)** for the complete node catalog, node selection heuristics (when to use Decision vs Switch, Loop vs ForEach, connector vs HTTP, End vs Terminate), expression/variable syntax, wiring rules, and common flow patterns.
+
 Generate a plan as a **self-contained HTML file** with a mermaid diagram and structured details. This lets the user (and PMs) visually review the flow topology before any code is written.
 
 #### 5a. Write the plan file
@@ -167,7 +169,10 @@ Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchest
 
 | I need to... | Read these |
 |---|---|
-| **Generate a flow plan** | Step 5 + [references/plan-template.html](references/plan-template.html) |
+| **Generate a flow plan** | [references/flow-planning-guide.md](references/flow-planning-guide.md) + Step 5 + [references/plan-template.html](references/plan-template.html) |
+| **Choose the right node type** | [references/flow-planning-guide.md — Node Selection Guide](references/flow-planning-guide.md#node-selection-guide) |
+| **Understand expressions and $vars** | [references/flow-planning-guide.md — Expressions](references/flow-planning-guide.md#expressions-and-variables) |
+| **Know validation rules** | [references/flow-planning-guide.md — Validation Rules](references/flow-planning-guide.md#validation-rules) |
 | **Understand the .flow JSON format** | [references/flow-file-format.md](references/flow-file-format.md) |
 | **Know all CLI commands** | [references/flow-commands.md](references/flow-commands.md) |
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
@@ -207,7 +212,8 @@ Always use `--format json` for programmatic use. The `--localstorage-file` warni
 
 ## References
 
-- **[.flow File Format](references/flow-file-format.md)** — Full JSON schema, node/edge structure, common node types, ports, and examples
+- **[Flow Planning Guide](references/flow-planning-guide.md)** — Complete node catalog, expression system, wiring rules, node selection heuristics, validation rules, and common patterns. **Read this first when planning a new flow.**
+- **[.flow File Format](references/flow-file-format.md)** — JSON schema, node/edge structure, definition requirements, and minimal working example
 - **[CLI Command Reference](references/flow-commands.md)** — All `uip flow` subcommands with parameters
 - **[Plan Template](references/plan-template.html)** — HTML template for flow plan visualization (mermaid diagram + node details)
 - **[Pack / Publish / Deploy](/uipath:uipath-platform)** — Packaging and Orchestrator deployment (uipath-platform skill)
