@@ -21,7 +21,7 @@ Comprehensive guide for creating, editing, validating, and debugging UiPath Flow
 
 ## Quick Start
 
-These steps are for **creating a new flow from scratch**. For existing projects, skip to the relevant step. For small targeted edits (changing a script body, renaming a node, tweaking a port), skip straight to Step 5.
+These steps are for **creating a new flow from scratch**. For existing projects, skip to the relevant step. For small targeted edits (changing a script body, renaming a node, tweaking a port), skip straight to Step 6.
 
 ### Step 0 — Resolve the `uip` binary
 
@@ -70,39 +70,90 @@ uip flow registry get <nodeType> --format json  # full schema for one node type
 
 > **Auth note**: Without `uip login`, registry shows OOTB nodes only. After login, tenant-specific connector nodes are also available.
 
-### Step 4 — Plan the flow
+### Step 4 — Discover connector capabilities (when using connectors)
 
-**Only for new flows or major restructuring** (adding multiple nodes, redesigning connections). Skip this step for small targeted edits.
+**Skip this step if the flow only uses OOTB nodes (scripts, HTTP, branching).** When the flow uses Integration Service connectors (e.g., Slack, Salesforce, Outlook), you **must** discover what the connector can do before planning. The flow registry tells you *which* connector nodes exist, but not what operations they support or what fields are required. Without IS discovery, generated flows will have missing or incorrect `inputs.detail`, empty `outputs` blocks, and unresolvable `$vars` references — issues that `flow validate` does not catch.
 
-Before editing the `.flow` file, create a plan and get user approval.
+**Use the [/uipath:uipath-platform](/uipath:uipath-platform) skill for all IS operations.** It has the complete Integration Service reference including the agent workflow (connector → connection → ping → discover → resolve references → execute), field metadata, error recovery, and connection management. The key commands you'll need:
 
-1. **Output the plan directly in chat** with:
-   - **Goal** -- one-line summary of what the flow does
-   - **Nodes** -- numbered list of each step, its node type, and what it does
-   - **Connections** -- how nodes connect (which output port to which input port)
-   - **Inputs** -- what the flow needs to start (trigger type, input arguments)
-   - **Outputs** -- what the flow produces (return values, side effects)
-   - **Missing information** -- anything the user hasn't specified that you need to proceed, marked as `[REQUIRED: description]` (e.g. connector IDs, channel names, credentials)
+- `uip is activities list <connector-key>` — what operations the connector supports
+- `uip is resources list/describe <connector-key>` — what data objects and fields are available
+- `uip is connections list/ping/create <connector-key>` — check or create authenticated connections
 
-2. **Ask the user to review the plan before proceeding.** Do NOT move to Step 5 until the user confirms. If the user requests changes, revise the plan and ask again.
+Gather this information **before** moving to the planning step. For each connector node in the flow, you should know: which operation to use, what fields are required, and whether a connection exists.
 
-### Step 5 — Edit the `.flow` file
+### Step 5 — Plan the flow (interactive)
+
+**Required when creating a new flow or adding multiple nodes.** Only skip this step for small targeted edits to an *existing* flow (e.g., changing a script body, renaming a node, tweaking one connection). When in doubt, plan.
+
+Generate a plan as a **self-contained HTML file** with a mermaid diagram and structured details. This lets the user (and PMs) visually review the flow topology before any code is written.
+
+#### 5a. Write the plan file
+
+Read [references/plan-template.html](references/plan-template.html) **once** and write `flow-plan.html` in the project directory by **copying the template and replacing the `{{PLACEHOLDER}}` markers** with actual content. Do not rewrite the HTML from scratch — preserve the Tailwind config, styles, and structure exactly. The HTML comment examples in the template show the expected format for each section.
+
+> **Token efficiency:** Only read the template when generating a new plan. For subsequent updates (Step 5c), edit `flow-plan.html` directly — do not re-read the template.
+
+The plan must include:
+
+1. **Summary** — 2-3 sentences describing what the flow does end-to-end
+2. **Mermaid diagram** — visual flowchart showing all nodes, edges, and branching logic. Use `subgraph` blocks to group related sections (e.g., "Data Ingestion", "Processing", "Notification"). For flows with 20+ nodes, subgraphs are essential for readability.
+3. **Node table** — every node with: ID, display name, node type, and what it does
+4. **Connector details** — for each connector node: connector key, operation, required input fields (from Step 4 IS discovery), and connection status (found/missing)
+5. **Inputs & Outputs** — what the flow needs to start and what it produces
+6. **Open questions** — anything the user hasn't specified, marked as `[REQUIRED: ...]`
+
+#### 5b. Open the plan for review
+
+```bash
+open flow-plan.html    # macOS — opens in default browser
+```
+
+In chat, output a **short summary only** (goal + key nodes + any open questions). Tell the user to review the full plan and diagram in the browser.
+
+#### 5c. Iterate until approved
+
+**Do NOT proceed to Step 6 until the user explicitly approves the plan.** The iteration loop:
+
+1. User reviews the plan in browser and gives feedback in chat (e.g., "move the Slack notification before the filter", "add an error handler after the API call", "use Salesforce instead of HubSpot")
+2. Update `flow-plan.html` with the changes
+3. Tell the user to refresh the browser page
+4. Summarize what changed in chat
+5. Repeat until the user says the plan is approved
+
+### Step 6 — Build the flow
 
 Edit `flow_files/<ProjectName>.flow` only. Never edit `content/<ProjectName>.bpmn` — it is auto-generated.
 
+Build the flow by editing the `.flow` JSON directly. For each node:
+1. Get the full node schema: `uip flow registry get <nodeType> --format json`
+2. Copy the `Data.Node` object into the `definitions` array
+3. Add the node instance to the `nodes` array with correct inputs (use field info from Step 4 IS discovery)
+4. Add edges to the `edges` array with correct `sourcePort` and `targetPort`
+
 See [references/flow-file-format.md](references/flow-file-format.md) for the full JSON schema, node/edge structure, and definition requirements.
 
-### Step 6 — Validate locally
+### Step 7 — Validate loop
+
+Run validation and fix errors iteratively until the flow is clean.
 
 ```bash
 uip flow validate flow_files/<ProjectName>.flow --format json
 ```
 
-Validates JSON structure and cross-references (edges point to existing nodes, every node type has a `definitions` entry). No auth required, runs instantly.
+**Validation loop:**
+1. Run `uip flow validate`
+2. If valid → done, move to Step 8
+3. If errors → read the error messages, fix the `.flow` file
+4. Go to 1
 
-If validation fails, read the errors, fix the `.flow` file, and re-validate. Repeat until validation passes.
+Common error categories:
+- **Missing targetPort** — every edge needs a `targetPort` string
+- **Missing definition** — every `type:typeVersion` in nodes needs a matching `definitions` entry
+- **Invalid node/edge references** — `sourceNodeId`/`targetNodeId` must reference existing node `id`s
+- **Duplicate IDs** — node and edge `id`s must be unique
 
-### Step 7 — Debug (cloud) — only when explicitly requested
+### Step 8 — Debug (cloud) — only when explicitly requested
 
 ```bash
 uip flow debug flow_files/<ProjectName>.flow
@@ -116,11 +167,14 @@ Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchest
 
 | I need to... | Read these |
 |---|---|
+| **Generate a flow plan** | Step 5 + [references/plan-template.html](references/plan-template.html) |
 | **Understand the .flow JSON format** | [references/flow-file-format.md](references/flow-file-format.md) |
 | **Know all CLI commands** | [references/flow-commands.md](references/flow-commands.md) |
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
 | **Wire nodes with edges** | [references/flow-file-format.md - Edges](references/flow-file-format.md) |
 | **Find the right node type** | Run `uip flow registry search <keyword>` |
+| **Discover connector capabilities** | Step 4 + [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
+| **Check/create connections** | [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
 | **Pack / publish / deploy** | [/uipath:uipath-platform](/uipath:uipath-platform) |
 
 ## Key Concepts
@@ -155,4 +209,5 @@ Always use `--format json` for programmatic use. The `--localstorage-file` warni
 
 - **[.flow File Format](references/flow-file-format.md)** — Full JSON schema, node/edge structure, common node types, ports, and examples
 - **[CLI Command Reference](references/flow-commands.md)** — All `uip flow` subcommands with parameters
+- **[Plan Template](references/plan-template.html)** — HTML template for flow plan visualization (mermaid diagram + node details)
 - **[Pack / Publish / Deploy](/uipath:uipath-platform)** — Packaging and Orchestrator deployment (uipath-platform skill)
