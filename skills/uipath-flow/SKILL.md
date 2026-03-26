@@ -99,36 +99,17 @@ uip is connections list "<connector-key>" --format json
 uip is connections ping "<connection-id>" --format json
 ```
 
-Once you have the connection ID, write it into **`content/bindings_v2.json`**. Add one `Connection` resource per unique connector:
+Once you have the connection ID, bind it using the CLI. Run once per unique connector:
 
-```json
-{
-  "version": "2.0",
-  "resources": [
-    {
-      "resource": "Connection",
-      "key": "<connection-id>",
-      "id": "Connection<connection-id>",
-      "value": {
-        "ConnectionId": {
-          "defaultValue": "<connection-id>",
-          "isExpression": false,
-          "displayName": "<connector-key> connection"
-        }
-      },
-      "metadata": {
-        "ActivityName": "<activity-display-name>",
-        "BindingsVersion": "2.2",
-        "DisplayLabel": "<connector-key> connection",
-        "UseConnectionService": "true",
-        "Connector": "<connector-key>"
-      }
-    }
-  ]
-}
+```bash
+uip flow bindings upsert <flowFile> \
+  --connector <connector-key> \
+  --connection-id <connection-id>
 ```
 
-If a flow uses multiple connectors (e.g., Jira + Slack), add one `Connection` resource per connector to the `resources` array. See [references/flow-file-format.md — Bindings](references/flow-file-format.md) for the full schema and multi-connector examples.
+This atomically updates `bindings_v2.json`, `*.bindings.flow`, and `*.connectors.flow`. Safe to re-run — it upserts in place. Use `--display-name <label>` to set a human-readable label (defaults to `"<connector-key> connection"`).
+
+If a flow uses multiple connectors (e.g., Jira + Slack), run once per connector. See [references/flow-file-format.md — Bindings](references/flow-file-format.md) for the full schema and multi-connector examples.
 
 #### 4b. Get enriched node definitions with connection
 
@@ -324,37 +305,96 @@ In chat, output a **short summary only** (goal + key nodes + any open questions)
 
 ### Step 6 — Build the flow
 
-Edit `flow_files/<ProjectName>.flow` and `content/bindings_v2.json`. Never edit `content/<ProjectName>.bpmn` — it is auto-generated.
+Never edit the `<ProjectName>.flow`, `content/<ProjectName>.bpmn`, or `bindings_v2.json` directly. These files are manipulated through flow CLI commands. Always use `uip flow` commands to make changes, and let the CLI handle file updates. Direct edits will be overwritten or cause validation errors.
 
-#### 6a. Build the .flow file
+#### 6a. Split the .flow file
 
-For each node:
-1. Get the full node schema: `uip flow registry get <nodeType> --format json`
-2. Copy the `Data.Node` object into the `definitions` array
-3. Add the node instance to the `nodes` array with correct inputs (use resolved field values from Step 4c)
-4. Add edges to the `edges` array with correct `sourcePort` and `targetPort`
+Use the `uip flow split` command to split the monolithic `.flow` file into separate files for nodes, edges, and definitions. This makes it easier to manage and edit. The flow CLI commands expect this split structure for incremental updates.
 
-For connector nodes, the node `inputs` should use **resolved IDs** from Step 4c, not display names:
-```json
-"inputs": {
-  "fields.project.key": "ENGCE",
-  "fields.issuetype.id": "10004",
-  "fields.assignee.id": "5f4abc..."
-}
+```bash
+uip flow split <ProjectName>.flow
 ```
 
-#### 6b. Write bindings_v2.json
+#### 6b. Build the .flow file
 
-If the flow uses connector nodes, update `content/bindings_v2.json` with the Connection resources gathered in Step 4a. This file is what the runtime uses to resolve `<bindings.{connector-key} connection>` placeholders in node model context.
+For each node:
 
-See [references/flow-file-format.md — Bindings](references/flow-file-format.md) for the full schema and multi-connector examples.
+**1. Fetch the node definition** into the `.definitions.flow` split file:
+```bash
+uip flow definitions upsert <flowFile> <nodeType>
+```
+Safe to re-run — inserts or updates in place.
+
+**2. Add the node instance** with its inputs (use resolved field values from Step 4c):
+```bash
+uip flow nodes add <flowFile> --type <nodeType> --id <nodeId> --inputs '<json>'
+```
+
+For connector nodes, `<json>` uses **resolved IDs** from Step 4c, not display names:
+```bash
+uip flow nodes add MyFlow.flow \
+  --type uipath.connector.uipath-atlassian-jira.create-issue \
+  --id create-issue \
+  --inputs '{"fields.project.key":"ENGCE","fields.issuetype.id":"10004","fields.assignee.id":"5f4abc..."}'
+```
+
+Pass `--inputs -` to pipe JSON from a previous command:
+```bash
+echo '{"script":"return {}"}' | uip flow nodes add MyFlow.flow \
+  --type uipath.script --id my-script --inputs -
+```
+
+To inspect a node's current inputs after adding:
+```bash
+uip flow nodes get <flowFile> <nodeId> --format json
+```
+
+To update inputs on an existing node:
+```bash
+uip flow nodes edit <flowFile> <nodeId> --inputs '<updated-json>'
+```
+
+**3. Wire edges** between nodes (every edge requires a `targetPort`):
+```bash
+uip flow edges add <flowFile> "<edgeId>: <sourceNodeId>:<sourcePort> -> <targetNodeId>:<targetPort>"
+```
+
+After all nodes are added, remove any stale definitions:
+```bash
+uip flow definitions trimunused <flowFile>
+```
+
+#### 6c. Bind connector connections
+
+If the flow uses connector nodes, bind each connection using the CLI (same command as Step 4a):
+
+```bash
+uip flow bindings upsert <flowFile> \
+  --connector <connector-key> \
+  --connection-id <connection-id>
+```
+
+To remove a binding (e.g., when swapping connectors):
+```bash
+uip flow bindings remove <flowFile> --connector <connector-key>
+```
+
+This file is what the runtime uses to resolve `<bindings.{connector-key} connection>` placeholders in node model context. See [references/flow-file-format.md — Bindings](references/flow-file-format.md) for the full schema and multi-connector examples.
+
+#### 6d. Recombine the .flow file
+
+After all nodes, edges, definitions, and bindings are updated, use `uip flow combine` to merge them back into a single `.flow` file.
+
+```bash
+uip flow combine <ProjectName>.flow
+```
 
 ### Step 7 — Validate loop
 
 Run validation and fix errors iteratively until the flow is clean.
 
 ```bash
-uip flow validate flow_files/<ProjectName>.flow --format json
+uip flow validate <ProjectName>.flow --format json
 ```
 
 **Validation loop:**
@@ -372,7 +412,7 @@ Common error categories:
 ### Step 8 — Debug (cloud) — only when explicitly requested
 
 ```bash
-uip flow debug flow_files/<ProjectName>.flow
+uip flow debug <ProjectName>.flow
 ```
 
 Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchestrator, and streams results. Use `flow validate` first — cloud debug is slower and requires connectivity.
@@ -386,10 +426,13 @@ Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchest
 | **Generate a flow plan** | Step 5 + [references/plan-template.html](references/plan-template.html) |
 | **Understand the .flow JSON format** | [references/flow-file-format.md](references/flow-file-format.md) |
 | **Know all CLI commands** | [references/flow-commands.md](references/flow-commands.md) |
+| **Add a node definition to .definitions.flow** | Run `uip flow definitions upsert <flowFile> <nodeType>` |
+| **Remove unused definitions from .definitions.flow** | Run `uip flow definitions trimunused <flowFile>` |
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
 | **Wire nodes with edges** | [references/flow-file-format.md - Edges](references/flow-file-format.md) |
 | **Find the right node type** | Run `uip flow registry search <keyword>` |
-| **Bind connector connections** | Step 4a + [references/flow-file-format.md — Bindings](references/flow-file-format.md) |
+| **Bind connector connections** | Run `uip flow bindings upsert <flowFile> --connector <key> --connection-id <id>` |
+| **Remove a connector binding** | Run `uip flow bindings remove <flowFile> --connector <key>` |
 | **Get enriched connector metadata** | Step 4b — `registry get --connection-id` |
 | **Resolve reference fields** | Step 4c + [/uipath:uipath-platform — Integration Service — Resources](/uipath:uipath-platform) |
 | **Discover connector capabilities** | Step 4 + [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
@@ -410,8 +453,8 @@ Always `validate` locally before `debug`. Validation is instant; debug is a clou
 ### .flow file — critical rules
 
 1. **`targetPort` is required on every edge** — `validate` rejects edges without it with `[error] [edges.N.targetPort] expected string, received undefined`
-2. **Every node type needs a `definitions` entry** — copy from `uip flow registry get <nodeType>` output
-3. **Edit `flow_files/*.flow` only** — `content/*.bpmn` is auto-generated and will be overwritten
+2. **Every node type needs a `definitions` entry** — run `uip flow definitions upsert <flowFile> <nodeType>` to populate it automatically
+3. **Edit `<ProjectName>.flow` only** — `content/*.bpmn` is auto-generated and will be overwritten
 4. **Script node returns an object** — `return { key: value }` not a scalar
 
 ### CLI output format
