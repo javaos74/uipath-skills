@@ -78,9 +78,9 @@ Execute custom JavaScript code. Use for data transformation, computation, format
 | | |
 |--|--|
 | **Input port** | `input` |
-| **Output ports** | `success`, `error` |
+| **Output ports** | `success` |
 | **Required inputs** | `script` (string, non-empty) |
-| **Output variables** | `result` (the return value), `error` (error object if failed) |
+| **Output variables** | `output` (the return value), `error` (error object if failed) |
 
 **Script rules:**
 - Must `return` an object: `return { key: value }` (not a bare scalar)
@@ -94,9 +94,9 @@ Make REST API calls. Supports branching on response status, retries, and authent
 | | |
 |--|--|
 | **Input port** | `input` |
-| **Output ports** | Dynamic branch ports (`branch-{id}`) + `default` + `error` |
+| **Output ports** | Dynamic branch ports (`branch-{id}`) + `default` |
 | **Required inputs** | `method`, `url` |
-| **Output variables** | `response` (`{ body, statusCode, headers }`), `error` |
+| **Output variables** | `output` (`{ body, statusCode, headers }`), `error` |
 
 **Key inputs:**
 - `method` — GET, POST, PUT, PATCH, DELETE (default: GET)
@@ -110,7 +110,7 @@ Make REST API calls. Supports branching on response status, retries, and authent
 - `authenticationType` — `manual` or from a connector connection
 - `application`, `connection` — For IS-authenticated requests
 
-**Dynamic ports:** Each entry in `branches` creates a `branch-{item.id}` output port. If no branch condition matches, flow goes to `default`. Error handling uses the `error` port.
+**Dynamic ports:** Each entry in `branches` creates a `branch-{item.id}` output port. If no branch condition matches, flow goes to `default`.
 
 #### Transform (`core.action.transform`)
 
@@ -119,7 +119,7 @@ Map, filter, or group-by data in a collection. Sub-variants: `core.action.transf
 | | |
 |--|--|
 | **Input port** | `input` |
-| **Output ports** | `success`, `error` |
+| **Output ports** | `output` |
 | **Required inputs** | `collection` (non-empty), `operations` (non-empty array) |
 
 ### Control Flow
@@ -137,7 +137,7 @@ If/else branching. Evaluates a boolean JavaScript expression and routes to `true
 **Expression examples:**
 - `$vars.fetchData.output.status === "approved"`
 - `$vars.rollDice.output.roll > 3`
-- `$vars.httpCall.response.statusCode === 200 && $vars.httpCall.response.body.count > 0`
+- `$vars.httpCall.output.statusCode === 200 && $vars.httpCall.output.body.count > 0`
 
 Optional: `trueLabel` and `falseLabel` to customize branch display names.
 
@@ -171,28 +171,6 @@ Iterate over a collection. Supports sequential and parallel execution. Has aggre
 **External output:** `output` — Aggregated results from all iterations.
 
 Optional: `parallel: true` to execute all iterations concurrently.
-
-#### For Each (`core.logic.foreach`)
-
-Simpler iteration — execute body once per item in a collection.
-
-| | |
-|--|--|
-| **Input port** | `input` |
-| **Output ports** | `body` (executes per item), `completed` (after all items) |
-
-**When to use Loop vs ForEach:** Use Loop when you need aggregated output or parallel execution. Use ForEach for simple sequential side-effects (send a notification per item, update a record per item).
-
-#### While (`core.logic.while`)
-
-Repeat while a condition is true. Condition evaluated before each iteration.
-
-| | |
-|--|--|
-| **Input port** | `input` |
-| **Output ports** | `body` (while condition true), `exit` (when condition false) |
-
-**When to use While:** Polling patterns (check until ready), retry loops with custom logic, processing until a condition changes.
 
 #### Merge (`core.logic.merge`)
 
@@ -231,8 +209,7 @@ Immediately stop entire workflow execution (like throwing an exception). Use for
 
 | Node Type | Description |
 |-----------|-------------|
-| `core.mock.blank` | Empty placeholder node (input → output). Use during planning to represent "TBD" steps. |
-| `core.mock.node` | Mock node with error handling support. Use for prototyping. |
+| `core.logic.mock` | Placeholder node (input → output). Use during planning to represent "TBD" steps or for prototyping. |
 
 ### Connector Nodes
 
@@ -274,13 +251,13 @@ Nodes communicate data through the `$vars` variable system. Every node's output 
 $vars.rollDice.output.roll
 
 // Access HTTP response body
-$vars.fetchData.response.body
+$vars.fetchData.output.body
 
 // Access HTTP status code
-$vars.fetchData.response.statusCode
+$vars.fetchData.output.statusCode
 
 // Access HTTP response headers
-$vars.fetchData.response.headers
+$vars.fetchData.output.headers
 
 // Access error information
 $vars.someNode.error.message
@@ -364,9 +341,7 @@ Use **Script** (`core.action.script`). Write JavaScript, return an object.
 - **Branch on HTTP response:** Use HTTP Request's built-in `branches` config (creates dynamic output ports per condition)
 
 ### "I need to iterate over a collection"
-- **Simple side-effects per item:** Use **ForEach** (`core.logic.foreach`)
-- **Need aggregated output or parallel execution:** Use **Loop** (`core.logic.loop`)
-- **Repeat until a condition changes:** Use **While** (`core.logic.while`)
+Use **Loop** (`core.logic.loop`). Supports both sequential and parallel execution, with aggregated output after all iterations complete.
 
 ### "I need to run things in parallel"
 Wire multiple outputs from one node to different downstream nodes. Use **Merge** (`core.logic.merge`) to synchronize before continuing.
@@ -377,12 +352,12 @@ Wire multiple outputs from one node to different downstream nodes. Use **Merge**
 - A flow can have multiple End nodes (one per terminal path)
 
 ### "I need error handling"
-Nodes with an `error` output port (Script, HTTP, Loop, Mock) can route errors to a handler. Wire the `error` port to a Script node that logs/formats the error, then to Terminate or a recovery path.
+Nodes expose error information via `$vars.nodeId.error` (with `code`, `message`, `detail` fields). Use a Decision node after an action to check for errors and branch to a handler or Terminate.
 
 ### "The flow needs something I can't build with flow nodes"
 When a flow requires capabilities outside the flow skill's scope — an RPA process for desktop automation, a coded workflow for complex logic, a custom agent — **stop and point, don't chain skills.**
 
-1. Add a `core.mock.blank` placeholder node in the plan where the external component goes
+1. Add a `core.logic.mock` placeholder node in the plan where the external component goes
 2. Tell the user what's needed and which skill to use:
    - Desktop/browser automation → `/uipath:uipath-rpa-workflows`
    - Coded workflow (C#) → `/uipath:uipath-coded-workflows`
@@ -423,7 +398,7 @@ Some nodes enforce connection rules via `constraints` in their handle configurat
 Some nodes create ports based on their configuration:
 - **HTTP Request** — One port per `branches` entry: `branch-{id}`
 - **Switch** — One port per `cases` entry: `case-{id}`
-- **Loop** — `output` port for iteration body, `success` for completion
+- **Loop** — `success` port fires after completion, `output` port carries aggregated results
 
 When wiring to dynamic ports, the port ID must match the configured item's `id`.
 
@@ -435,7 +410,7 @@ When wiring to dynamic ports, the port ID must match the configured item's `id`.
 ```
 Trigger → Action A → Action B → Action C → End
 ```
-Simple sequential processing. Each node's success port connects to the next node's input.
+Simple sequential processing. Each node's output port (`success` for Script, `default` for HTTP, `output` for Transform) connects to the next node's `input`.
 
 ### Conditional Branch
 ```
@@ -455,11 +430,11 @@ Wire one node's output to multiple downstream nodes. Use Merge to wait for all b
 
 ### Error Handling
 ```
-Trigger → HTTP Request ──success──→ Process → End
-               │
-               └──error──→ Log Error → Terminate
+Trigger → HTTP Request ──default──→ Decision($vars.httpCall.error) ──true──→ Log Error → Terminate
+                                        │
+                                        └──false──→ Process → End
 ```
-Use the `error` output port to catch failures. Route to a handler, then Terminate or retry.
+Check `$vars.nodeId.error` after action nodes. Use a Decision to branch on error presence, then route to a handler or Terminate.
 
 ### Loop with Aggregation
 ```
@@ -470,10 +445,3 @@ Trigger → Get Items → Loop(collection=$vars.getItems.output.items) ──bod
 ```
 Loop over a collection. Body executes per item. After all iterations, `success` port fires with aggregated output.
 
-### Polling with While
-```
-Trigger → While(condition) ──body──→ Check Status → [feeds back]
-                │
-                └──exit──→ Status Ready → Process → End
-```
-Repeat until a condition changes. Useful for waiting on async operations.

@@ -93,8 +93,6 @@ Copy the object at `Data.Node` into your `definitions` array. Do not write defin
 | `core.logic.decision` | If/else branch | `bpmn:InclusiveGateway` | `expression` |
 | `core.logic.switch` | Multi-way branch | `bpmn:ExclusiveGateway` | `cases` |
 | `core.logic.loop` | Iterate collection | `bpmn:SubProcess` | `collection`, `parallel` |
-| `core.logic.foreach` | For-each iteration | `bpmn:SubProcess` | — |
-| `core.logic.while` | While-loop | `bpmn:SubProcess` | — |
 | `core.logic.merge` | Sync parallel paths | `bpmn:ParallelGateway` | — |
 | `core.control.end` | Graceful end | `bpmn:EndEvent` | — |
 | `core.logic.terminate` | Abort workflow | `bpmn:EndEvent` | — |
@@ -112,14 +110,12 @@ uip flow registry search <keyword>
 | Node type | Source ports (outgoing) | Target ports (incoming) |
 |-----------|------------------------|------------------------|
 | `core.trigger.manual` | `output` | — |
-| `core.action.script` | `success`, `error` | `input` |
-| `core.action.http` | `branch-{id}` (dynamic), `default`, `error` | `input` |
-| `core.action.transform` | `success`, `error` | `input` |
+| `core.action.script` | `success` | `input` |
+| `core.action.http` | `branch-{id}` (dynamic), `default` | `input` |
+| `core.action.transform` | `output` | `input` |
 | `core.logic.decision` | `true`, `false` | `input` |
 | `core.logic.switch` | `case-{id}` (dynamic), `default` | `input` |
 | `core.logic.loop` | `success`, `output` | `input`, `loopBack` |
-| `core.logic.foreach` | `body`, `completed` | `input` |
-| `core.logic.while` | `body`, `exit` | `input` |
 | `core.logic.merge` | `output` | `input` |
 | `core.control.end` | — | `input` |
 | `core.logic.terminate` | — | `input` |
