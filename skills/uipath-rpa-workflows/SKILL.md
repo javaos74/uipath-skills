@@ -494,6 +494,19 @@ uip rpa get-errors --file-path "Workflows/MyWorkflow.xaml" --skip-validation --f
 - Verify expression syntax matches project language (VB.NET vs C#)
 - Use `uip rpa run-file` for runtime validation if static checks pass
 
+**6. Runtime Selector Failures (UI Automation)** — "UI element not found", "UI element is invalid", element not on screen
+These surface at runtime via `uip rpa run-file`, not during static validation. They occur when a selector was captured against one app state but the DOM changed by the time the activity executes (e.g., switching from round-trip to one-way re-renders the form, invalidating selectors for subsequent elements).
+
+When a workflow fails at runtime with a selector error:
+1. **The app is already in the right state.** The workflow executed up to the failing activity, so the app's current DOM reflects the state that activity needs to target.
+2. **Read the failing activity's current selector** from the XAML (the `FullSelectorArgument` or OR reference's selector).
+3. **Read the window selector** from the ApplicationCard's TargetApp (the OR reference's scope selector, or the inline `ScopeSelectorArgument`).
+4. **Run the `uia-improve-selector` skill in recover mode** by spawning a subagent with the Agent tool. The prompt must include: the `uia-improve-selector` SKILL.md path (find it under the UIA activity-docs skills folder), the project folder, `--mode recover`, `--window <windowSelector>`, and `--partial <failingPartialSelector>`. The subagent reads the skill, re-analyzes the live DOM in its current state, and returns a corrected selector.
+5. **Update the OR element** with the recovered selector, or update the inline selector in the XAML.
+6. **Re-run the workflow** to verify the fix and catch the next failure, if any.
+
+Repeat until the workflow completes successfully. Each failure advances the app to the next problematic state, making recovery self-correcting.
+
 **When stuck on one error:** consider deferring to the user if it's a minor configuration detail (e.g., fill in a connection, update a placeholder value). Just inform the user about what needs to be updated. If failing to resolve an activity altogether, consider using code activities as a last resort (find `InvokeCode.md` under the latest version folder in `../../references/activity-docs/UiPath.System.Activities/`).
 
 For detailed procedures (package resolution, JIT types, focus-activity debugging, iteration loop, smoke testing), see **[references/validation-and-fixing.md](./references/validation-and-fixing.md)**.
