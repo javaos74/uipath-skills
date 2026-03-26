@@ -252,9 +252,13 @@ Common error categories:
 
 ```bash
 uip flow debug flow_files/<ProjectName>.flow
+uip flow debug flow_files/<ProjectName>.flow --keep    # keep the project in Studio Web after debug
+uip flow debug flow_files/<ProjectName>.flow --inputs '{"param": "value"}'  # pass input parameters
 ```
 
 Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchestrator, and streams results. Always `validate` first — debug is a cloud round-trip with real side effects (see Critical Rule #9).
+
+By default, debug cleans up the Studio Web project after the run. Use `--keep` to persist the project in Studio Web — this is currently the only way to make a flow-skill-built project visible in Studio Web (the solution deploy pipeline does not yet support flow projects).
 
 ## Anti-Patterns
 
