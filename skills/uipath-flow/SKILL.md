@@ -19,6 +19,19 @@ Comprehensive guide for creating, editing, validating, and debugging UiPath Flow
 - User asks about the **`.flow` JSON format**, nodes, edges, definitions, or ports
 - User asks **how to implement logic** in a Flow (scripts, HTTP calls, branching, etc.)
 
+## Critical Rules
+
+1. **ALWAYS query the registry before building.** Run `uip flow registry pull` then `uip flow registry get <nodeType> --format json` for every node type you plan to use. Copy the `Data.Node` object into `definitions` verbatim — do not guess node schemas, port names, or input fields from memory.
+2. **ALWAYS discover connector capabilities via IS before planning.** For every connector node, run `uip is activities list <connector-key>` and `uip is resources describe <connector-key> <resource>` to learn the exact operations, required fields, and field types. Without this, `inputs.detail` will be wrong and `$vars` references will be unresolvable — errors that `flow validate` does not catch.
+3. **ALWAYS check for existing connections** before using a connector node. Run `uip is connections list <connector-key>` — if no connection exists, tell the user before proceeding.
+4. **ALWAYS use `--format json`** on all `uip` commands when parsing output programmatically.
+5. **Edit `flow_files/*.flow` only** — `content/*.bpmn` is auto-generated and will be overwritten.
+6. **`targetPort` is required on every edge** — `validate` rejects edges without it.
+7. **Every node type needs a `definitions` entry** — copy from `uip flow registry get <nodeType>` output. Never hand-write definitions.
+8. **Script nodes must `return` an object** — `return { key: value }`, not a bare scalar.
+9. **Do NOT run `flow debug` without explicit user consent** — debug executes the flow for real (sends emails, posts messages, calls APIs).
+10. **Validate after every change** — run `uip flow validate` after each edit to the `.flow` file. Do not batch multiple edits before validating.
+
 ## Quick Start
 
 These steps are for **creating a new flow from scratch**. For existing projects, skip to the relevant step. For small targeted edits (changing a script body, renaming a node, tweaking a port), skip straight to Step 6.
@@ -161,9 +174,18 @@ Common error categories:
 uip flow debug flow_files/<ProjectName>.flow
 ```
 
-Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchestrator, and streams results. Use `flow validate` first — cloud debug is slower and requires connectivity.
+Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchestrator, and streams results. Always `validate` first — debug is a cloud round-trip with real side effects (see Critical Rule #9).
 
-**Do NOT run `flow debug` automatically.** Debug executes the flow for real — it will send emails, post Slack messages, call APIs, write to databases, etc. Only run debug when the user explicitly asks to debug or test the flow. After validation succeeds, tell the user the flow is ready and ask if they want to debug it.
+## Anti-Patterns
+
+- **Never guess node schemas** — always `uip flow registry get` first. Guessed port names or input fields cause silent wiring failures.
+- **Never skip IS discovery for connector nodes** — the registry tells you a node exists; only IS tells you what operations and fields it supports. Skipping this is the #1 cause of broken connector nodes.
+- **Never edit `content/*.bpmn`** — it is auto-generated from the `.flow` file and will be overwritten.
+- **Never run `flow debug` as a validation step** — debug executes the flow with real side effects. Use `flow validate` for checking correctness.
+- **Never skip the planning step for multi-node flows** — jumping straight to building produces flows that need major rework.
+- **Never chain skills automatically** — if the flow needs an RPA process, coded workflow, or agent, insert a `core.logic.mock` placeholder and tell the user which skill to use. Do not invoke other skills.
+- **Never hand-write `definitions` entries** — always copy from registry output. Hand-written definitions have wrong port schemas and cause validation failures.
+- **Never batch multiple edits before validating** — validate after each change to catch errors early.
 
 ## Task Navigation
 
@@ -192,13 +214,6 @@ Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchest
 
 Always `validate` locally before `debug`. Validation is instant; debug is a cloud round-trip.
 
-### .flow file — critical rules
-
-1. **`targetPort` is required on every edge** — `validate` rejects edges without it with `[error] [edges.N.targetPort] expected string, received undefined`
-2. **Every node type needs a `definitions` entry** — copy from `uip flow registry get <nodeType>` output
-3. **Edit `flow_files/*.flow` only** — `content/*.bpmn` is auto-generated and will be overwritten
-4. **Script node returns an object** — `return { key: value }` not a scalar
-
 ### CLI output format
 
 All `uip` commands return structured JSON:
@@ -208,6 +223,17 @@ All `uip` commands return structured JSON:
 ```
 
 Always use `--format json` for programmatic use. The `--localstorage-file` warning in some environments is benign.
+
+## Completion Output
+
+When you finish building or editing a flow, report to the user:
+
+1. **File path** of the `.flow` file created or edited
+2. **What was built** — summary of nodes added, edges wired, and logic implemented
+3. **Validation status** — whether `flow validate` passes (or remaining errors if unresolvable)
+4. **Mock placeholders** — list any `core.logic.mock` nodes that need to be replaced, and which skill to use
+5. **Missing connections** — any connector nodes that need IS connections the user must create
+6. **Next step** — ask if the user wants to debug the flow (do not run debug automatically)
 
 ## References
 
