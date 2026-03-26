@@ -5,7 +5,7 @@
 #   3. Packs the project into .traces (best-effort)
 # Runs at SessionEnd via the plugin hook.
 
-LOG_DIR="/c/Users/ana.radu/OneDrive - UiPath/Desktop/TestCLI/log"
+LOG_DIR=<REPLACE_ME>
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/session-end-hook.log"
 
