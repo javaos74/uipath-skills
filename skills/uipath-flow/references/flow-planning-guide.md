@@ -15,8 +15,6 @@ Use this decision order — prefer higher tiers:
 3. **Standalone HTTP Request node** (`core.action.http`) — Use for one-off API calls to services without connectors, or during prototyping when you need quick iteration. You handle auth manually (headers, tokens).
 4. **RPA workflow node** — Use only when the target system has no API at all (legacy desktop apps, terminal-based systems, browser flows that can't be done via API). RPA requires robot infrastructure and is orders of magnitude slower than API-based approaches.
 
-**Why this order matters:** Telemetry shows HTTP Request is used far more than connectors, but connectors are the better long-term choice — they're reusable, maintainable, and handle auth lifecycle. Prefer connectors when they exist; fall back to HTTP when they don't.
-
 ### Agent Nodes vs Workflow Logic
 
 | Use an Agent node when... | Use Script/Decision/Switch when... |
@@ -29,32 +27,6 @@ Use this decision order — prefer higher tiers:
 **Anti-pattern:** Don't use an agent node for tasks that can be done with a Decision + Script. Agents are slower, more expensive (LLM tokens), and less predictable. Use them where their flexibility is actually needed.
 
 **Hybrid pattern:** Use workflow nodes for the deterministic parts (fetch data, transform, route) and agent nodes for the ambiguous parts (classify intent, draft response, extract entities). The flow orchestrates; the agent reasons.
-
-**Prevalence in real flows:** Analysis of 30 production use cases shows OOTB + Connector nodes in ~100% of flows, Agent nodes in ~81%, Human-in-the-loop in ~50%, Document Understanding in ~13%, RPA in ~6%. Most flows are connector-heavy with selective agent use.
-
-### Script Node vs HTTP Node
-
-These are complementary, not alternatives:
-
-- **Script** — Pure computation on data you already have. Transform, validate, filter, format, calculate. Cannot make external calls. 30-second timeout.
-- **HTTP** — External system calls. Retrieve or send data to APIs. Can branch on response. Has retry and timeout support.
-
-**Common pattern:** HTTP (fetch data) → Script (transform/filter it) → HTTP (send result somewhere) or Decision (branch on it).
-
-### When to Use Transform vs Script for Data
-
-- **Transform node** (`core.action.transform`) — Use for standard map/filter/group-by operations on collections. Declarative configuration, no code needed. Prefer this when your operation fits the transform model.
-- **Script node** — Use when the transformation is custom logic that doesn't fit map/filter/group-by (e.g., complex restructuring, multi-step computation, string manipulation, conditional field extraction).
-
-### Subflow Extraction
-
-| Keep flat | Extract to subflow |
-|---|---|
-| Logic is used once | Same logic appears in 2+ places |
-| Flow has < 15 nodes | Flow has 20+ nodes and needs visual grouping |
-| All logic is linear or simple branching | A section has distinct input/output boundaries |
-
-**Default:** Keep it flat. Only extract when there's clear reuse or the flow is too large to read. Premature extraction adds complexity without benefit.
 
 ---
 
@@ -83,9 +55,12 @@ Execute custom JavaScript code. Use for data transformation, computation, format
 | **Output variables** | `output` (the return value), `error` (error object if failed) |
 
 **Script rules:**
+- JavaScript only (not TypeScript, not Python)
 - Must `return` an object: `return { key: value }` (not a bare scalar)
-- Access upstream data via `$vars.nodeId.output` (see [Expressions](#expressions-and-variables))
-- Example: `return { total: $vars.fetchData.output.items.length };`
+- `$vars` is available as a global — use it directly: `return { upper: $vars.input1.toUpperCase() }`
+- Cannot make HTTP calls or access external systems (use HTTP node for that)
+- 30-second execution timeout
+- Limits: ~10k characters inbound script, ~1MB outbound payload
 
 #### HTTP Request (`core.action.http`)
 
@@ -285,51 +260,12 @@ Expressions are JavaScript-like and used in:
 "Hello {{ $vars.getName.output.firstName }}"
 ```
 
-### Workflow Variables
-
-Declared in the `variables` section of the .flow file:
-
-```json
-{
-  "variables": {
-    "globals": [
-      {
-        "id": "inputParam",
-        "direction": "in",
-        "type": "string",
-        "defaultValue": "hello"
-      },
-      {
-        "id": "outputResult",
-        "direction": "out",
-        "type": "object"
-      }
-    ],
-    "nodes": [
-      {
-        "id": "rollResult",
-        "type": "number",
-        "binding": {
-          "nodeId": "rollDice",
-          "outputId": "output"
-        }
-      }
-    ]
-  }
-}
-```
-
-- **`direction: "in"`** — Flow input parameter, accessible as `$vars.inputParam`
-- **`direction: "out"`** — Flow output, must be mapped in every End node
-- **`direction: "inout"`** — Both input and output
-- **Node variables** — Bind to a specific node's output for use in `$vars`
-
 ---
 
 ## Node Selection Guide
 
 ### "I need to run custom logic"
-Use **Script** (`core.action.script`). Write JavaScript, return an object.
+Use **Script** (`core.action.script`). Write JavaScript, return an object. Common pattern: HTTP (fetch) → Script (transform) → HTTP (send) or Decision (branch).
 
 ### "I need to call an external API"
 - **First choice:** Check if a **connector node** exists for the service (`uip flow registry search slack --filter "category=connector"`). Connectors handle auth, pagination, and error formatting automatically.
@@ -339,6 +275,10 @@ Use **Script** (`core.action.script`). Write JavaScript, return an object.
 - **Two paths:** Use **Decision** (`core.logic.decision`)
 - **Three or more paths:** Use **Switch** (`core.logic.switch`)
 - **Branch on HTTP response:** Use HTTP Request's built-in `branches` config (creates dynamic output ports per condition)
+
+### "I need to transform data"
+- **Standard map/filter/group-by on collections:** Use **Transform** (`core.action.transform`) — declarative, no code needed.
+- **Custom logic:** Use **Script** (`core.action.script`).
 
 ### "I need to iterate over a collection"
 Use **Loop** (`core.logic.loop`). Supports both sequential and parallel execution, with aggregated output after all iterations complete.
