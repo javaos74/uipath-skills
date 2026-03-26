@@ -311,7 +311,7 @@ Declared in the `variables` section of the .flow file:
         "type": "number",
         "binding": {
           "nodeId": "rollDice",
-          "outputId": "result"
+          "outputId": "output"
         }
       }
     ]
@@ -436,12 +436,4 @@ Trigger → HTTP Request ──default──→ Decision($vars.httpCall.error) �
 ```
 Check `$vars.nodeId.error` after action nodes. Use a Decision to branch on error presence, then route to a handler or Terminate.
 
-### Loop with Aggregation
-```
-Trigger → Get Items → Loop(collection=$vars.getItems.output.items) ──body──→ Process Item
-                         │                                                        │
-                         │                                          (loopBack) ←──┘
-                         └──success──→ Use Aggregated Output → End
-```
-Loop over a collection. Body executes per item. After all iterations, `success` port fires with aggregated output.
 
