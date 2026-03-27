@@ -10,7 +10,9 @@ Follow these steps in order when the user asks to interact with an external serv
 - Step 4: Discover Capabilities
 - Step 4T: Trigger Metadata (if trigger workflow)
 - Step 5: Resolve Reference Fields
+- Step 5a: Validate Required Fields
 - Step 6: Execute
+- Error Self-Healing
 - Happy-Path Example (CRUD)
 - Happy-Path Example (Triggers)
 
@@ -20,11 +22,12 @@ Copy and track progress:
 
 ```
 - [ ] Step 1: Find connector (get Key)
-- [ ] Step 2: Find connection (get Id)
+- [ ] Step 2: Find connection (get Id — present options, recommend default)
 - [ ] Step 3: Ping connection (confirm Enabled)
 - [ ] Step 4: Discover capabilities (activities first, then resources)
 - [ ] Step 4T: (Triggers only) Get trigger objects → get trigger metadata
 - [ ] Step 5: Resolve reference fields (if any)
+- [ ] Step 5a: Validate all required fields have values
 - [ ] Step 6: Execute operation
 ```
 
@@ -45,10 +48,11 @@ uip is connectors list --filter "<vendor>" --format json
 uip is connections list "<connector-key>" --format json
 ```
 
-- **Native**: Pick default enabled connection (`IsDefault: Yes`, `State: Enabled`).
-- **HTTP fallback**: Match connection by vendor **Name** (case-insensitive substring).
-- **Multiple**: Present options to the user.
+- **Always present options** to the user. Recommend the default enabled connection (`IsDefault: Yes`, `State: Enabled`) but let the user confirm or choose another.
+- **HTTP fallback**: Match connection by vendor **Name** (case-insensitive substring). Present matches to user.
 - **None**: Ask user to create via `is connections create "<connector-key>"`.
+
+> **Do NOT auto-select a connection silently.** Even if there is exactly one default enabled connection, present it to the user: "I found connection **<name>** (default, enabled). Should I use this one?"
 
 See [connections.md — Selecting a Connection](connections.md#selecting-a-connection) for full selection logic.
 
@@ -86,16 +90,25 @@ uip is resources list "<connector-key>" \
 **4c. Describe the target resource** — get field metadata for the matched object:
 
 ```bash
+# All operations + all fields
 uip is resources describe "<connector-key>" "<object>" \
-  --connection-id "<id>" --operation <operation> --format json
+  --connection-id "<id>" --format json
+
+# Filter to a single operation (reduces output size)
+uip is resources describe "<connector-key>" "<object>" \
+  --connection-id "<id>" --operation <Create|List|Retrieve|Update|Delete|Replace> --format json
 ```
+
+The describe command fetches JSON Schema from the IS API (`Accept: application/schema+json`) and returns a compact summary with operations (method, parameters, path) and fields (name, type, required, enums, $ref). Results are cached locally — subsequent calls for the same object are instant.
+
+> **Use `--operation`** to filter to the operation you need (e.g., `--operation Create`). This keeps output focused and saves tokens.
 
 | Describe outcome | Action |
 |---|---|
-| Returns `requiredFields` / `optionalFields` | Use field metadata. Proceed to Step 5. |
-| Returns empty `availableOperations` or "Operation not found" | **Metadata gap** — do not retry with `--refresh`. Skip describe, proceed to Step 5 with inferred fields. See [resources.md — Describe Failures](resources.md#describe-failures). |
+| Returns `operations` + `fields` | Use field metadata. Proceed to Step 5. |
+| Returns error or empty | **Metadata gap** — skip describe, proceed to Step 5 with inferred fields. See [resources.md — Describe Failures](resources.md#describe-failures). |
 
-See [resources.md](resources.md) for why `--connection-id` and `--operation` are critical.
+**Always pass `--connection-id`** for connection-specific metadata including custom fields.
 
 ## Step 4T: Trigger Metadata (if user needs trigger/event configuration)
 
@@ -141,7 +154,13 @@ See [triggers.md](triggers.md) for full trigger domain reference and response fi
 
 **When describe was unavailable (metadata gap):** Infer references from the user's request — fields ending in `Id` (e.g., `PromotionId`) typically reference the object with the matching base name (`Promotion`). List that object to resolve the ID before executing.
 
-See [resources.md — Reference Fields](resources.md#reference-fields-critical) and [resources.md — Inferring References Without Describe](resources.md#inferring-references-without-describe).
+See [reference-resolution.md — Reference Fields](reference-resolution.md#reference-fields-critical) and [reference-resolution.md — Field Dependency Chains](reference-resolution.md#field-dependency-chains).
+
+## Step 5a: Validate Required Fields
+
+After resolving references, **check every required field** against what the user provided. This is a hard gate — do NOT execute until all required fields have values. If any are missing, ask the user.
+
+See [reference-resolution.md — Validate Required Fields Before Executing](reference-resolution.md#validate-required-fields-before-executing).
 
 ## Step 6: Execute
 
@@ -151,6 +170,38 @@ uip is resources execute <verb> "<connector-key>" "<object>" \
 ```
 
 See [resources.md — Execute Operations](resources.md#execute-operations) for the verb table and options.
+
+---
+
+## Error Self-Healing
+
+When Step 6 returns a `Failure` result, follow this loop instead of retrying blindly or giving up. The CLI returns the HTTP status in `Message` and the raw vendor error body in `Instructions` — read `Instructions` for the actual error.
+
+### Self-Healing Loop
+
+```
+Execute → Success? → Done
+  ↓ Failure
+Step 6a: Read the Instructions field — it contains the raw vendor error response
+  ↓
+Step 6b: Diagnose and discover
+  - Field not found → run `is resources describe --operation <op>` to get valid field names
+  - Invalid value → run `is resources execute list` on the referenced object to get valid values
+  - Auth error → run `is connections edit <id>` to re-authenticate, then ping again
+  - Scope error → inform user, connection needs broader permissions
+  ↓
+Step 6c: Correct and retry (max 2 retries)
+  - Apply the specific fix from 6b
+  - Re-execute with the corrected query/body
+  - If still failing after 2 retries → present the error, attempted fixes, and suggested manual fix to the user
+```
+
+### Rules
+
+1. **Max 2 semantic retries** — each retry must address a specific diagnosed issue. Not blind retries.
+2. **Never retry the same query unchanged** — if you can't identify what to fix, escalate to the user.
+3. **Discover before guessing** — use `describe` and `list` to find correct field names and values. Do not hallucinate.
+4. **Escalate with context** — when presenting to the user, show: original query, error message, what was tried, and the suggested manual fix.
 
 ---
 
