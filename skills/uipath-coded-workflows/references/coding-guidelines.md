@@ -81,11 +81,11 @@ using System.Text.RegularExpressions;  // regex
 ### API Discovery
 - **ALWAYS search for existing .cs files BEFORE generating new code** — Learn from existing patterns
 - Read at least 5 existing workflow files (or all if fewer) to understand project conventions
-- **When writing UI automation code** — follow the **Finding Descriptors** hierarchy (see ui-automation.md) in strict order. Do NOT write any UI code until descriptors are resolved:
+- **When writing UI automation code** — follow the **Finding Descriptors** hierarchy (see [ui-automation-guide.md](ui-automation-guide.md)) in strict order. Do NOT write any UI code until descriptors are resolved:
   1. Read `ObjectRepository.cs` — use existing descriptors if present
   2. Inspect UILibrary/descriptor NuGet packages in `project.json` (e.g. `*.Descriptors`, `*.UILibrary`) using `uip rpa inspect-package`. The tool checks the local NuGet cache automatically. If the package is still not found, read `.metadata` files manually at `~/.nuget/packages/<package-name>/<version>/contentFiles/any/any/.objects/` to discover App/Screen/Element hierarchy
-  3. If descriptors are still missing — use `indicate-application` / `indicate-element` to capture them. `indicate-application` can be called without `--parent-id` or `--parent-name` — when no App exists in `.objects/`, it creates one automatically. No need to ask the user to manually create an App in Studio
-  4. UITask (ScreenPlay) is ONLY for when indicated selectors are genuinely brittle/unreliable — NEVER as a first approach
+  3. If descriptors are still missing — use the `uia-configure-target` skill flow (found in the UIA activity-docs) to create targets. This handles snapshot capture, element discovery, selector generation, selector improvement, and OR registration. Do NOT manually call low-level `uip rpa uia` CLI commands outside of the skill flow. Fallback: `indicate-application` / `indicate-element` if the skill docs are unavailable
+  4. UITask (ScreenPlay) is ONLY for when selectors are genuinely brittle/unreliable — NEVER as a first approach
   5. NEVER bypass Object Repository by constructing `TargetAppModel` with raw URL/BrowserType
 - Use `uip rpa inspect-package` for API discovery when documentation is unclear
 
@@ -146,9 +146,11 @@ C) <user-driven approach>
 
 - Never hardcode UI selectors — use Object Repository descriptors
 - Never write UI code referencing descriptors without first reading `ObjectRepository.cs`
-- Never skip the indicate step when a descriptor is missing — use `indicate-application` / `indicate-element`
+- Never manually craft UI selectors by calling low-level `uip rpa uia` CLI commands (`snapshot capture`, `snapshot filter`, `selector-intelligence get-default-selector`) outside of the `uia-configure-target` skill flow — this skips selector improvement and OR registration
+- Never skip the target configuration step when a descriptor is missing — use the `uia-configure-target` skill flow (fallback: `indicate-application` / `indicate-element`)
 - Never use UITask (ScreenPlay) as the primary approach — resolve descriptors via Finding Descriptors hierarchy first (Critical Rule #15)
-- Never skip indicating elements because it "seems tedious" — indicate ALL missing elements
+- Never skip configuring targets because it "seems tedious" — configure ALL missing elements
+- Never launch the target application before running `uia-configure-target` — the skill captures the window tree first; only launch if the app is not found
 - Never construct `TargetAppModel` with raw URL/BrowserType to bypass Object Repository
 - Never skip checking UILibrary/descriptor NuGet packages in `project.json`
 - Never use an element descriptor on the wrong screen handle — each `UiTargetApp` is bound to its screen. Wrong handle gives `"Target name 'X' is not part of the current screen."`
