@@ -139,6 +139,8 @@ Ensure Studio Desktop is running, connected, and targeting the correct project. 
 
 **Quick check:** Find `project.json` to establish `{projectRoot}`, run `uip rpa list-instances --format json` to verify Studio, and `uip rpa open-project` if needed.
 
+**Expression language for new projects:** Prefer `VisualBasic` for Windows target framework projects.
+
 ---
 
 ## Phase 1: Discovery
@@ -338,13 +340,13 @@ Use when activity docs, `find-activities`, `get-default-activity-xaml`, and doma
 
 ```bash
 # Search by service tags (AND logic — all tags must match)
-uip rpa list-workflow-examples --tags '["web"]' --limit 10 --format json
+uip rpa list-workflow-examples --tags web --limit 10 --format json
 
 # Multiple tags narrow down results (AND logic — all tags must match)
-uip rpa list-workflow-examples --tags '["jira", "confluence"]' --limit 10 --format json
+uip rpa list-workflow-examples --tags jira,confluence --limit 10 --format json
 
 # Use prefix to filter by category
-uip rpa list-workflow-examples --tags '["gmail"]' --prefix "email-communication/" --limit 15 --format json
+uip rpa list-workflow-examples --tags gmail --prefix "email-communication/" --limit 15 --format json
 
 # Once you identify relevant examples from the list operation, retrieve XAML content:
 uip rpa get-workflow-example --key "email-communication/add-new-gmail-emails-to-keap-as-contacts.xaml"

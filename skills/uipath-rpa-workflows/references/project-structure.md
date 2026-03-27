@@ -58,7 +58,7 @@ MyProject/
       "privateWorkflows": []
     }
   },
-  "expressionLanguage": "CSharp",
+  "expressionLanguage": "VisualBasic",
   "entryPoints": [
     {
       "filePath": "Main.xaml",
@@ -81,7 +81,7 @@ MyProject/
 | `name` | Project name (used in package output) |
 | `main` | Entry point workflow file (relative path) |
 | `dependencies` | NuGet package dependencies with version constraints |
-| `expressionLanguage` | `CSharp` or `VisualBasic` — determines expression syntax in XAML |
+| `expressionLanguage` | `CSharp` or `VisualBasic` — determines expression syntax in XAML. Prefer `VisualBasic` for Windows target framework projects |
 | `designOptions.outputType` | `Process`, `Library`, or `Tests` |
 | `targetFramework` | `Windows` (.NET 6 Windows, default — best compatibility) or `Portable` (cross-platform .NET 6+ — for serverless/Studio Web) |
 

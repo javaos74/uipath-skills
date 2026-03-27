@@ -38,7 +38,7 @@ Located at `{projectRoot}/.local/docs/packages/{PackageId}/`. See [Step 1.2](../
 | **Search for activities** | `Bash`: `uip rpa find-activities --query "..." [--tags "..."] [--limit N] --format json` | `--query` (required), `--tags`, `--limit` (default 10) |
 | **Get default activity XAML (non-dynamic)** | `Bash`: `uip rpa get-default-activity-xaml --activity-class-name "..."` | `--activity-class-name` (fully qualified) |
 | **Get default activity XAML (dynamic)** | `Bash`: `uip rpa get-default-activity-xaml --activity-type-id "..." [--connection-id "..."]` | `--activity-type-id`, `--connection-id` (optional) |
-| **List workflow examples** | `Bash`: `uip rpa list-workflow-examples --tags '["service1","service2"]' [--prefix "..."] [--limit N] --format json` | `--tags` (JSON array, required), `--prefix` (optional), `--limit` (default 10) |
+| **List workflow examples** | `Bash`: `uip rpa list-workflow-examples --tags service1,service2 [--prefix "..."] [--limit N] --format json` | `--tags` (comma-separated, required), `--prefix` (optional), `--limit` (default 10) |
 | **Get workflow example** | `Bash`: `uip rpa get-workflow-example --key "path/to/example.xaml"` | `--key` (blob path from list results) |
 | **Create new workflow file** | `Write` tool — create a new `.xaml` file with full XAML content | File path, XAML content |
 | **Edit existing workflow** | `Edit` tool — exact string replacement in `.xaml` files | File path, old_string, new_string |
@@ -69,12 +69,12 @@ Use these when building UI Automation workflows to capture selectors into the Ob
 
 | Action | How | Key Parameters |
 |--------|-----|----------------|
-| **Indicate application/screen** | `Bash`: `uip rpa indicate-application [--name "..."] [--parent-id "..." \| --parent-name "..."] [--activity-class-name "..."]` | `--name` (screen name in Object Repository), `--parent-id`/`--parent-name` (application ref) |
-| **Indicate UI element** | `Bash`: `uip rpa indicate-element --name "..." --activity-class-name "..." [--parent-id "..." \| --parent-name "..."]` | `--name` (required), `--activity-class-name` (required, e.g. `UiPath.UIAutomation.Activities.TypeInto`), `--parent-id`/`--parent-name` (screen ref) |
+| **Indicate application/screen** | `Bash`: `uip rpa indicate-application [--name "..."] [--parent-id "..." \| --parent-name "..."] [--description "..."] [--activity-class-name "..."]` | `--name` (screen name in Object Repository), `--parent-id`/`--parent-name` (application ref), `--description` (optional, describes the screen for documentation) |
+| **Indicate UI element** | `Bash`: `uip rpa indicate-element --name "..." --activity-class-name "..." [--parent-id "..." \| --parent-name "..."] [--description "..."]` | `--name` (required), `--activity-class-name` (required, e.g. `UiPath.UIAutomation.Activities.TypeInto`), `--parent-id`/`--parent-name` (screen ref), `--description` (optional, describes the element for documentation) |
 
 **UI Automation indication workflow:**
-1. First indicate the application/screen: `uip rpa indicate-application --name "MyApp"` — the user points at the application window
-2. Then indicate individual elements within that screen: `uip rpa indicate-element --name "SubmitButton" --activity-class-name "UiPath.UIAutomation.Activities.ClickX" --parent-name "MyApp"` — the user points at the element
+1. First indicate the application/screen: `uip rpa indicate-application --name "MyApp" --description "Main application window"` — the user points at the application window
+2. Then indicate individual elements within that screen: `uip rpa indicate-element --name "SubmitButton" --activity-class-name "UiPath.UIAutomation.Activities.ClickX" --parent-name "MyApp" --description "Submit button on the login form"` — the user points at the element
 3. The indicated elements are stored in the Object Repository (`.objects/`) and can be referenced in XAML via their `ObjectRepositoryReference`
 4. Read the resulting `.objects/` metadata to get the element IDs for use in workflow XAML
 

@@ -114,6 +114,10 @@ uip flow registry get <nodeType> --format json
 
 The `Data.Node` object from `registry get` is what you paste into your `.flow` file's `definitions` array.
 
+## Integration Service commands
+
+For `uip is` commands (connectors, connections, activities, resources, triggers), see the **[/uipath:uipath-platform](/uipath:uipath-platform)** skill — it has the complete IS command reference and agent workflow. Use IS discovery in **Step 4** of the flow authoring workflow when your flow uses connector nodes.
+
 ## Global options (all commands)
 
 | Option | Description |
