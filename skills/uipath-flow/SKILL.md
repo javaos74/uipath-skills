@@ -21,10 +21,10 @@ Comprehensive guide for creating, editing, validating, and debugging UiPath Flow
 
 ## Critical Rules
 
-1. **ALWAYS query the registry before building.** Run `uip flow registry pull` then `uip flow registry get <nodeType> --format json` for every node type you plan to use. Copy the `Data.Node` object into `definitions` verbatim — do not guess node schemas, port names, or input fields from memory.
+1. **ALWAYS query the registry before building.** Run `uip flow registry pull` then `uip flow registry get <nodeType> --output json` for every node type you plan to use. Copy the `Data.Node` object into `definitions` verbatim — do not guess node schemas, port names, or input fields from memory.
 2. **ALWAYS discover connector capabilities via IS before planning.** For every connector node, run `uip is activities list <connector-key>` and `uip is resources describe <connector-key> <resource>` to learn the exact operations, required fields, and field types. Without this, `inputs.detail` will be wrong and `$vars` references will be unresolvable — errors that `flow validate` does not catch.
 3. **ALWAYS check for existing connections** before using a connector node. Run `uip is connections list <connector-key>` — if no connection exists, tell the user before proceeding.
-4. **ALWAYS use `--format json`** on all `uip` commands when parsing output programmatically.
+4. **ALWAYS use `--output json`** on all `uip` commands when parsing output programmatically.
 5. **Edit `flow_files/*.flow` only** — `content/*.bpmn` is auto-generated and will be overwritten.
 6. **`targetPort` is required on every edge** — `validate` rejects edges without it.
 7. **Every node type needs a `definitions` entry** — copy from `uip flow registry get <nodeType>` output. Never hand-write definitions.
@@ -42,7 +42,7 @@ Edit the `inputs.script` string on the target node in `flow_files/<ProjectName>.
 
 ### Add a node between two existing nodes
 
-1. Get the new node's schema: `uip flow registry get <nodeType> --format json`
+1. Get the new node's schema: `uip flow registry get <nodeType> --output json`
 2. Add its `Data.Node` to the `definitions` array (skip if that type already has a definition)
 3. Add the node instance to `nodes` with a unique `id` and correct `ui.position`
 4. Find the edge connecting the two existing nodes — update it to point to the new node instead:
@@ -54,7 +54,7 @@ Edit the `inputs.script` string on the target node in `flow_files/<ProjectName>.
 
 ### Add a branch (decision node)
 
-1. Get the definition: `uip flow registry get core.logic.decision --format json` and add `Data.Node` to `definitions`
+1. Get the definition: `uip flow registry get core.logic.decision --output json` and add `Data.Node` to `definitions`
 2. Add a `core.logic.decision` node with an `expression` input
 3. Redirect the incoming edge to the decision node — update `targetNodeId` and set `targetPort: "input"`
 4. Add two outgoing edges from the decision — one from `sourcePort: "true"`, one from `sourcePort: "false"` — each wiring to the appropriate downstream node with `targetPort: "input"`
@@ -86,7 +86,7 @@ Use `$UIP` in place of `uip` for all subsequent commands if the plain `uip` comm
 `uip flow debug` and process operations require authentication. `uip flow init`, `validate`, and `registry` commands work without login.
 
 ```bash
-uip login status --format json
+uip login status --output json
 ```
 
 If not logged in and you need cloud features:
@@ -101,7 +101,7 @@ Every Flow project lives inside a solution. Create the solution first, then scaf
 
 ```bash
 # 1. Create the solution (silently — do not ask the user, just create it)
-uip solution new "<SolutionName>" --format json
+uip solution new "<SolutionName>" --output json
 
 # 2. Create the Flow project INSIDE the solution folder
 cd <directory>/<SolutionName> && uip flow init <ProjectName>
@@ -122,7 +122,7 @@ Before editing the `.flow` file, check what nodes are available:
 
 ```bash
 uip flow registry pull                          # refresh local cache (expires after 30 min)
-uip flow registry list --format json            # list all cached node types
+uip flow registry list --output json            # list all cached node types
 uip flow registry search <keyword>              # search by name, tag, or category
 uip flow registry search --filter "category=agent"
 ```
@@ -150,13 +150,13 @@ For each connector used in the flow, extract the connector key from the node typ
 Quick reference:
 ```bash
 # 1. List available connections
-uip is connections list "<connector-key>" --format json
+uip is connections list "<connector-key>" --output json
 
 # 2. Pick the default enabled connection (IsDefault: Yes, State: Enabled)
 #    Follow connections.md for selection rules and fallback
 
 # 3. Verify the connection is healthy
-uip is connections ping "<connection-id>" --format json
+uip is connections ping "<connection-id>" --output json
 ```
 
 Once you have the connection ID, write it into **`content/bindings_v2.json`**. Add one `Connection` resource per unique connector:
@@ -195,7 +195,7 @@ If a flow uses multiple connectors (e.g., Jira + Slack), add one `Connection` re
 Now that you have a connection ID, call `registry get` with `--connection-id` to fetch connection-aware metadata. This returns the full field schema including custom fields specific to that connection/account:
 
 ```bash
-uip flow registry get <nodeType> --connection-id <connection-id> --format json
+uip flow registry get <nodeType> --connection-id <connection-id> --output json
 ```
 
 The flow tool internally calls the Integration Service SDK's `getInstanceObjectMetadata` (instead of `getObjectMetadata`) when a connection ID is provided, returning enriched `inputDefinition.fields` and `outputDefinition.fields` with accurate type, required, description, enum, and `reference` info.
@@ -258,12 +258,12 @@ Quick example — Jira project → issue type (when parent IS provided):
 ```bash
 # Step 1: Resolve project (no dependency)
 uip is resources execute list "uipath-atlassian-jira" "project" \
-  --connection-id "<id>" --format json
+  --connection-id "<id>" --output json
 # → { "key": "ENGCE", "id": "10845" }
 
 # Step 2: Resolve issue types scoped to that project
 uip is resources execute list "uipath-atlassian-jira" "project/ENGCE/issuetypes" \
-  --connection-id "<id>" --format json
+  --connection-id "<id>" --output json
 # → { "id": "10004", "name": "Bug" }  ← only issue types for ENGCE
 ```
 
@@ -274,7 +274,7 @@ For fields with no parent dependency, resolve directly:
 ```bash
 # Resolve Slack channel "#test-slack" to its channel ID
 uip is resources execute list "uipath-salesforce-slack" "curated_channels?types=public_channel,private_channel" \
-  --connection-id "<id>" --format json
+  --connection-id "<id>" --output json
 # → { "id": "C1234567890", "name": "test-slack" }
 ```
 
@@ -289,7 +289,7 @@ uip is resources execute list "uipath-salesforce-slack" "curated_channels?types=
 uip is resources execute list "<connector-key>" "<resource>" \
   --connection-id "<id>" \
   --page 1 --page-size 100 \
-  --format json
+  --output json
 ```
 
 **Pagination response headers** (available in the response):
@@ -300,12 +300,12 @@ uip is resources execute list "<connector-key>" "<resource>" \
 ```bash
 # First page
 uip is resources execute list "<connector-key>" "<resource>" \
-  --connection-id "<id>" --page-size 100 --format json
+  --connection-id "<id>" --page-size 100 --output json
 # → Check response: elements-has-more=true, elements-next-page-token="abc123"
 
 # Next page (pass the token)
 uip is resources execute list "<connector-key>" "<resource>" \
-  --connection-id "<id>" --page-size 100 --next-page "abc123" --format json
+  --connection-id "<id>" --page-size 100 --next-page "abc123" --output json
 # → Continue until elements-has-more=false or target item is found
 ```
 
@@ -385,7 +385,7 @@ Edit `flow_files/<ProjectName>.flow` and `content/bindings_v2.json`. Never edit 
 #### 6a. Build the .flow file
 
 For each node:
-1. Get the full node schema: `uip flow registry get <nodeType> --format json`
+1. Get the full node schema: `uip flow registry get <nodeType> --output json`
 2. Copy the `Data.Node` object into the `definitions` array
 3. Add the node instance to the `nodes` array with correct inputs (use resolved field values from Step 4c)
 4. Add edges to the `edges` array with correct `sourcePort` and `targetPort`
@@ -410,7 +410,7 @@ See [references/flow-file-format.md — Bindings](references/flow-file-format.md
 Run validation and fix errors iteratively until the flow is clean.
 
 ```bash
-uip flow validate flow_files/<ProjectName>.flow --format json
+uip flow validate flow_files/<ProjectName>.flow --output json
 ```
 
 **Validation loop:**
@@ -487,7 +487,7 @@ All `uip` commands return structured JSON:
 { "Result": "Failure", "Message": "...", "Instructions": "Found N error(s): ..." }
 ```
 
-Always use `--format json` for programmatic use. The `--localstorage-file` warning in some environments is benign.
+Always use `--output json` for programmatic use. The `--localstorage-file` warning in some environments is benign.
 
 ## Completion Output
 
