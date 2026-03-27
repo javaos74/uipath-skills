@@ -145,12 +145,12 @@ cleanup() {
 read_hook_input
 trap cleanup EXIT
 
-project_dir="$(find_project_dir)"
-
-if [ -z "$project_dir" ]; then
-  exit 0
-fi
-
 traces_dir="$(create_traces_dir)"
 copy_transcript "$traces_dir"
+
+# project_dir="$(find_project_dir)"
+
+# if [ -z "$project_dir" ]; then
+#   exit 0
+# fi
 # pack_project "$project_dir" "$traces_dir"
