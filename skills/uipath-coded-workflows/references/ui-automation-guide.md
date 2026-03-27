@@ -15,7 +15,7 @@ Quick reference for UI automation in coded workflows using the `uiAutomation` se
 
 1. **Open** or **Attach** to an application screen — returns a `UiTargetApp` handle.
 2. Use the `UiTargetApp` handle to perform element interactions (Click, TypeInto, GetText, etc.).
-3. Call `app.Close()` explicitly when done — **never use `using var`** with `Open()`/`Attach()`. The `using` pattern calls `Dispose()` on any exit (including exceptions), which closes the application and prevents runtime recovery from selector failures.
+3. The `UiTargetApp` is `IDisposable` — use `using` blocks or dispose manually.
 
 ## Screen Handle Affinity (Critical)
 
@@ -122,17 +122,49 @@ Using an element descriptor on the wrong screen handle causes `"Target name 'X' 
 
 ---
 
+## Running UI Automation Workflows
+
+**Always use `--command StartDebugging`** (not `StartExecution`) when running workflows with UI automation. A debug session pauses on error instead of tearing down the application, leaving the UI state available for inspection.
+
+**Every debug run** must follow this procedure to prevent stale windows from accumulating or being reused in a dirty state:
+
+1. **Record the window baseline:**
+   ```bash
+   servo targets
+   ```
+   Note which windows (w-refs and titles) are already present.
+2. **Run the workflow:**
+   ```bash
+   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command StartDebugging --format json
+   ```
+3. **When done** (success or failure) — **stop the debug session:**
+   ```bash
+   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command Stop --format json
+   ```
+4. **List windows again:**
+   ```bash
+   servo targets
+   ```
+5. **Diff before vs after.** Any window present now that was NOT in the baseline was opened by the workflow. Close it:
+   ```bash
+   servo window <w-ref> Close
+   ```
+
+Skipping steps 4–5 causes the next run's `Open(IfNotOpen)` to reuse a stale window in whatever state it was left in, or — if the selector doesn't match — to spawn a duplicate instance.
+
+---
+
 ## Runtime Selector Failures
 
-"UI element not found", "UI element is invalid", element not on screen — these surface at runtime (via `uip rpa run-file` or Studio execution), not during static validation. They occur when a selector was captured against one app state but the DOM changed by the time the activity executes.
+"UI element not found", "UI element is invalid", element not on screen — these surface at runtime, not during static validation. They occur when a selector was captured against one app state but the DOM changed by the time the activity executes.
 
 When a workflow fails at runtime with a selector error:
-1. **The app is already in the right state.** The workflow executed up to the failing activity, so the app's current DOM reflects the state that activity needs to target.
+1. **The app is already in the right state.** The debug session paused at the failing activity, so the app's current DOM reflects the state that activity needs to target.
 2. **Identify the failing element** — read the error to find which descriptor/element failed.
 3. **Read the window selector** — from the `ObjectRepository.cs` or OR `.metadata` files, find the screen's selector that scopes the failing element.
 4. **Run the `uia-improve-selector` skill in recover mode** by spawning a subagent with the Agent tool. The prompt must include: the `uia-improve-selector` SKILL.md path (find it under the UIA activity-docs skills folder), the project folder, `--mode recover`, `--window <windowSelector>`, and `--partial <failingPartialSelector>`. The subagent reads the skill, re-analyzes the live DOM in its current state, and returns a corrected selector.
 5. **Update the OR element** with the recovered selector.
-6. **Re-run the workflow** to verify the fix and catch the next failure, if any.
+6. **Clean up and re-run** — follow the "Running UI Automation Workflows" procedure above (stop, diff, close leaked windows, re-run).
 
 Repeat until the workflow completes successfully. Each failure advances the app to the next problematic state, making recovery self-correcting.
 

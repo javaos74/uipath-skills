@@ -45,7 +45,7 @@ Located at `{projectRoot}/.local/docs/packages/{PackageId}/`. See [Step 1.2](../
 | **Get errors** | `Bash`: `uip rpa get-errors [--file-path "..."] [--skip-validation] --format json` | `--file-path` (relative to project dir), `--skip-validation` (use cached errors) |
 | **Get JIT type definitions** | `Read` tool on `{projectRoot}/.project/JitCustomTypesSchema.json` | File path |
 | **Install/update packages** | `Bash`: `uip rpa install-or-update-packages --packages '[{"id":"..."}]'` | `--packages` (JSON array; `version` optional — omit to auto-resolve latest) |
-| **Run workflow** | `Bash`: `uip rpa run-file --file-path "..." [--input-arguments '...'] [--log-level ...]` | `--file-path` (required), `--input-arguments` (JSON), `--log-level` |
+| **Run workflow** | `Bash`: `uip rpa run-file --file-path "..." [--command StartExecution] [--input-arguments '...'] [--log-level ...]` | `--file-path` (required), `--command` (`StartExecution` default, `StartDebugging` for UI automation — pauses on error, keeps app open for selector repair), `--input-arguments` (JSON), `--log-level` |
 
 ## Project Lifecycle Tools
 

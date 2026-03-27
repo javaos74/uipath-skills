@@ -150,15 +150,20 @@ uip rpa validate --file-path "<WORKFLOW_NAME>" --project-dir "<PROJECT_DIR>" --f
 
 ### run-file
 
-Run a workflow file using Studio.
+Run or debug a workflow file using Studio.
 
 ```bash
+# Run (default — closes app on completion or error):
 uip rpa run-file --file-path "<WORKFLOW_NAME>" --project-dir "<PROJECT_DIR>" --format json
+
+# Debug (pauses on error — keeps app open for inspection/repair):
+uip rpa run-file --file-path "<WORKFLOW_NAME>" --project-dir "<PROJECT_DIR>" --command StartDebugging --format json
 ```
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `--file-path` | Yes | Path to the `.cs` workflow file to run |
+| `--command` | No | `StartExecution` (default) or `StartDebugging`. **Use `StartDebugging` for UI automation workflows** — it pauses on error instead of tearing down the app, preserving the UI state for selector repair. Other debug commands: `Stop`, `StepInto`, `StepOver`, `StepOut`, `Continue`, `Break`, `ToggleBreakpoint`. |
 
 **Example response:**
 ```json
