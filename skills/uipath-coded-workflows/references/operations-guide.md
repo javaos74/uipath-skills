@@ -378,9 +378,9 @@ namespace MyProjectName
 
 ---
 
-## Indicate UI Elements (Object Repository)
+## Configure UI Targets (Object Repository)
 
-**This operation applies when writing UI automation code** (any workflow that uses `uiAutomation.*` calls). UI automation uses **Object Repository descriptors** (`Descriptors.App.Screen.Element`) — if required elements are missing, use `indicate-application` / `indicate-element` to let the user visually capture them.
+**This operation applies when writing UI automation code** (any workflow that uses `uiAutomation.*` calls). UI automation uses **Object Repository descriptors** (`Descriptors.App.Screen.Element`) — if required elements are missing, configure them through the `uia-configure-target` skill flow.
 
 **When to use:**
 - The workflow needs a UI element that doesn't exist in `ObjectRepository.cs`
@@ -389,20 +389,19 @@ namespace MyProjectName
 **Quick steps:**
 1. Read `<PROJECT_DIR>\.local\.codedworkflows\ObjectRepository.cs` — check what descriptors already exist
 2. Identify missing screens/elements by comparing against what the workflow needs
-3. For each missing screen: run `indicate-application` (from the project directory)
-4. For each missing element: run `indicate-element` with the screen reference as `--parent-id`
-5. Re-read `ObjectRepository.cs` — Studio regenerates it after each indication
-6. Write code using the actual descriptor paths from the updated file
+3. For each missing target: read and follow the `uia-configure-target` skill (found in the UIA activity-docs). The skill handles snapshot capture, element discovery, selector generation, selector improvement, and OR registration
+4. Re-read `ObjectRepository.cs` — Studio regenerates it after target configuration
+5. Write code using the actual descriptor paths from the updated file
 
-**Workflow order:** Indicate ALL missing screens and elements FIRST, then write the workflow code using real descriptor paths.
+**Workflow order:** Configure ALL missing targets FIRST, then write the workflow code using real descriptor paths.
 
-📖 **Full procedure with examples** (`.objects/` discovery, AppVersion references, `--parent-id` vs `--parent-name`, CLI flags, end-to-end examples): [ui-automation.md § Finding Descriptors](ui-automation/ui-automation.md)
+📖 **Target configuration and selector recovery:** [ui-automation-guide.md](ui-automation-guide.md)
 📖 **CLI command reference** (`indicate-application`, `indicate-element` parameters and responses): [uip-guide.md](uip-guide.md)
 
 **Key reminders:**
-- Run indicate commands **from the project directory** (cwd must contain `project.json`)
-- CLI flags are **kebab-case**: `--parent-id`, `--parent-name` (NOT `--parentId`)
-- Always indicate screens BEFORE their child elements
+- Do NOT manually call low-level `uip rpa uia` CLI commands outside of the `uia-configure-target` skill flow
+- Do NOT launch the target application before running the skill — it captures the window tree first
+- Fallback: use `indicate-application` / `indicate-element` if the skill docs are unavailable
 - Add `using <ProjectNamespace>.ObjectRepository;` to any file referencing `Descriptors.*`
 
 ---

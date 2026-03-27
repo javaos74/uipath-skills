@@ -98,13 +98,13 @@ See [references/operations-guide.md § Initialize a New Project](references/oper
     4. Only then proceed to run the workflow or report success to the user
     5. If after 5 fix attempts errors persist, stop and present the remaining errors to the user — they may require domain knowledge, missing dependencies, or environment-specific fixes you cannot resolve autonomously
     Note: `get-errors` returns the cached error state without re-analyzing — use `validate` instead when files have been changed outside Studio.
-15. **NEVER use UITask (ScreenPlay) as the primary UI automation approach.** For ANY workflow using `uiAutomation.*`, follow the Finding Descriptors hierarchy in the UI Automation coded API reference (discover the latest version folder under `../../references/activity-docs/UiPath.UIAutomation.Activities/`): (1) Check Object Repository, (2) Check UILibrary NuGet packages, (3) Indicate missing elements via Studio, (4) UITask ONLY as last resort for brittle selectors. Do NOT skip steps or jump to UITask because indicating seems tedious.
+15. **NEVER use UITask (ScreenPlay) as the primary UI automation approach.** For ANY workflow using `uiAutomation.*`, follow the Finding Descriptors hierarchy in [ui-automation-guide.md](references/ui-automation-guide.md): (1) Check Object Repository, (2) Check UILibrary NuGet packages, (3) Configure missing targets through the `uia-configure-target` skill flow (found in the UIA activity-docs — NOT via raw CLI commands), (4) UITask ONLY as last resort for brittle selectors. Do NOT skip steps or jump to UITask because configuring targets seems tedious. Do NOT manually call low-level `uip rpa uia` CLI commands outside of the skill flow.
 
 ### UI Automation References
 
-For a quick overview of UI automation patterns, descriptor resolution, indication flow, and common pitfalls, see [ui-automation-guide.md](references/ui-automation-guide.md).
+For a quick overview of UI automation patterns, descriptor resolution, target configuration via `uia-configure-target`, runtime selector failure recovery, and common pitfalls, see [ui-automation-guide.md](references/ui-automation-guide.md).
 
-The UIA activity-docs version folder may contain additional guides (selector creation, target configuration, CV targeting, selector improvement). Discover them by globbing: `Glob: pattern="**/*.md" path="../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/"`. These are **reference docs to read and follow** — they are NOT invocable as slash commands. Read the relevant `.md` file and follow its steps using the `uip rpa` CLI commands directly.
+The UIA activity-docs version folder contains skill files (`uia-configure-target`, `uia-improve-selector`) and additional guides (selector creation, CV targeting). Discover them by globbing: `Glob: pattern="**/*.md" path="../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/"`. These are **reference docs to read and follow** — they are NOT invocable as slash commands. Read the relevant `.md` file and follow its steps using the `uip rpa` CLI commands directly.
 
 For full API details: `.local/docs/packages/UiPath.UIAutomation.Activities/` → fallback: `../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/coded/`.
 

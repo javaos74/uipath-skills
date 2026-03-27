@@ -63,9 +63,29 @@ using <ProjectNamespace>.ObjectRepository;
 
 Look in `project.json` → `dependencies` for packages matching `*.UILibrary`, `*.ObjectRepository`, `*.Descriptors`, or `*.UIAutomation`. Inspect with `uip rpa inspect-package`.
 
-### Step 3 — Indicate the element via Studio
+### Step 3 — Configure the target via `uia-configure-target` skill
 
-Use `uip rpa indicate-application` / `uip rpa indicate-element` CLI commands directly:
+**Always use the `uia-configure-target` skill** to create missing targets. This skill handles the full flow: snapshot capture, element discovery, selector generation, selector improvement, and OR registration. All steps must complete — do not stop after getting a raw selector.
+
+The UIA activity-docs version folder contains the skill files. Discover them by globbing:
+```
+Glob: pattern="**/*.md" path="../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/"
+```
+These are **reference docs to read and follow** — they are NOT invocable as slash commands via the Skill tool. Read the relevant `.md` file and follow its steps using the `uip rpa` CLI commands directly.
+
+To configure a target, read and follow the `uia-configure-target` skill:
+- **Window + element:** `--window <description> --element <description>`
+- **Window only:** `--window <description>`
+
+The skill will search the Object Repository for existing matches before creating new entries, generate selectors from the live application tree, and register everything in the OR. After completion, re-read `ObjectRepository.cs` to get the descriptor paths.
+
+**Do NOT manually call low-level `uip rpa uia` CLI commands** (`snapshot capture`, `snapshot filter`, `selector-intelligence get-default-selector`) to build selectors outside of the skill flow. These are internal tools used *by* the skill — calling them directly skips selector improvement and OR registration, producing fragile selectors that aren't tracked in the project.
+
+**Do NOT launch the target application before running `uia-configure-target`.** The skill's first steps capture the top-level window tree and search for the app. Only if the app is not found in the window list should you launch it — and then re-run the capture. Launching preemptively creates duplicate instances and risks targeting the wrong window.
+
+#### Fallback: Raw Indication Commands
+
+If you cannot use `uia-configure-target` (e.g., the skill docs are unavailable), you can fall back to the raw indication CLI commands. These require user interaction (clicking on the target element) and produce less robust selectors:
 
 ```bash
 # Indicate a screen (creates App automatically if none exists in .objects/)
@@ -76,12 +96,6 @@ uip rpa indicate-element --name "<ElementName>" --description "<ElementDescripti
 ```
 
 After indication, re-read `ObjectRepository.cs` to get the actual descriptor paths.
-
-> **Extra references:** The UIA activity-docs version folder may contain additional guides for selector creation, target configuration, CV targeting, and selector improvement. Discover them by globbing:
-> ```
-> Glob: pattern="**/*.md" path="../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/"
-> ```
-> These are **reference docs to read and follow** — they are NOT invocable as slash commands via the Skill tool. Read the relevant `.md` file and follow its instructions manually using the CLI commands.
 
 ### Step 4 — UITask / ScreenPlay (last resort only)
 
@@ -103,6 +117,22 @@ formScreen.TypeInto(Descriptors.MyApp.Form.Term, "12");  // Works reliably
 ### Screen Handle Mismatch
 
 Using an element descriptor on the wrong screen handle causes `"Target name 'X' is not part of the current screen."`. Always use the correct handle for each screen's elements.
+
+---
+
+## Runtime Selector Failures
+
+"UI element not found", "UI element is invalid", element not on screen — these surface at runtime (via `uip rpa run-file` or Studio execution), not during static validation. They occur when a selector was captured against one app state but the DOM changed by the time the activity executes.
+
+When a workflow fails at runtime with a selector error:
+1. **The app is already in the right state.** The workflow executed up to the failing activity, so the app's current DOM reflects the state that activity needs to target.
+2. **Identify the failing element** — read the error to find which descriptor/element failed.
+3. **Read the window selector** — from the `ObjectRepository.cs` or OR `.metadata` files, find the screen's selector that scopes the failing element.
+4. **Run the `uia-improve-selector` skill in recover mode** by spawning a subagent with the Agent tool. The prompt must include: the `uia-improve-selector` SKILL.md path (find it under the UIA activity-docs skills folder), the project folder, `--mode recover`, `--window <windowSelector>`, and `--partial <failingPartialSelector>`. The subagent reads the skill, re-analyzes the live DOM in its current state, and returns a corrected selector.
+5. **Update the OR element** with the recovered selector.
+6. **Re-run the workflow** to verify the fix and catch the next failure, if any.
+
+Repeat until the workflow completes successfully. Each failure advances the app to the next problematic state, making recovery self-correcting.
 
 ---
 
