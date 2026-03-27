@@ -78,20 +78,38 @@ Some resources return an error on describe. This is a **server-side metadata gap
 
 `uip is resources execute list` may not return all results in a single call. **Always check for pagination** when searching for a specific item or listing all items.
 
-### Connector pagination (elements-* headers)
+### Connector pagination
 
-Most IS connectors use the `elements-*` pagination protocol:
+Most IS connectors use the `elements-*` pagination protocol. The CLI returns pagination state nested inside `Data.Pagination`:
+
+- **`Data.Pagination.HasMore`**: `"true"` or `"false"` — indicates if more pages exist
+- **`Data.Pagination.NextPageToken`**: token to pass as `nextPage` query param for the next page
 
 ```bash
-# First page
+# First page (do not pass pageSize unless the user explicitly requests a specific page size)
 uip is resources execute list "<connector-key>" "<resource>" \
-  --connection-id "<id>" --page-size 100 --format json
-# → Check response: elements-has-more=true, elements-next-page-token="abc123"
+  --connection-id "<id>" --format json
+# → Check Data.Pagination.HasMore and Data.Pagination.NextPageToken in the JSON response
 
-# Next page (pass the token)
+# Subsequent pages (token encodes page and pageSize, so only nextPage is needed)
 uip is resources execute list "<connector-key>" "<resource>" \
-  --connection-id "<id>" --page-size 100 --next-page "abc123" --format json
-# → Continue until elements-has-more=false or target item is found
+  --connection-id "<id>" --query "nextPage=<NextPageToken>" --format json
+# → Continue until Data.Pagination.HasMore is "false" or target item is found
+```
+
+Example response:
+```json
+{
+  "Result": "Success",
+  "Code": "ExecuteOperation",
+  "Data": {
+    "items": [ ... ],
+    "Pagination": {
+      "HasMore": "true",
+      "NextPageToken": "eyJwYWdl..."
+    }
+  }
+}
 ```
 
 **Stop early:** If you find the target item in the current page, no need to fetch remaining pages.
