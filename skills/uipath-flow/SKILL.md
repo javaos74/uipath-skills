@@ -25,7 +25,7 @@ Comprehensive guide for creating, editing, validating, and debugging UiPath Flow
 2. **ALWAYS discover connector capabilities via IS before planning.** For every connector node, run `uip is activities list <connector-key>` and `uip is resources describe <connector-key> <resource>` to learn the exact operations, required fields, and field types. Without this, `inputs.detail` will be wrong and `$vars` references will be unresolvable — errors that `flow validate` does not catch.
 3. **ALWAYS check for existing connections** before using a connector node. Run `uip is connections list <connector-key>` — if no connection exists, tell the user before proceeding.
 4. **ALWAYS use `--format json`** on all `uip` commands when parsing output programmatically.
-5. **Edit `flow_files/*.flow` only** — `content/*.bpmn` is auto-generated and will be overwritten.
+5. **Edit `flow_files/*.flow` only** — `content/*.bpmn` and `entry-points.json` are auto-generated and will be overwritten. To declare flow inputs/outputs, add variables in the `.flow` file (see [references/flow-file-format.md](references/flow-file-format.md)).
 6. **`targetPort` is required on every edge** — `validate` rejects edges without it.
 7. **Every node type needs a `definitions` entry** — copy from `uip flow registry get <nodeType>` output. Never hand-write definitions.
 8. **Script nodes must `return` an object** — `return { key: value }`, not a bare scalar.
