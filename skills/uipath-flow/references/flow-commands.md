@@ -114,9 +114,51 @@ uip flow registry get <nodeType> --format json
 
 The `Data.Node` object from `registry get` is what you paste into your `.flow` file's `definitions` array.
 
-## Integration Service commands
+## Integration Service commands (for connector binding and reference resolution)
 
-For `uip is` commands (connectors, connections, activities, resources, triggers), see the **[/uipath:uipath-platform](/uipath:uipath-platform)** skill — it has the complete IS command reference and agent workflow. Use IS discovery in **Step 4** of the flow authoring workflow when your flow uses connector nodes.
+When a flow uses connector nodes, you need IS commands to fetch connections and resolve reference fields. These are used in **Steps 4a–4c** of the flow authoring workflow.
+
+### Connection commands (Step 4a — run before `registry get`)
+
+Fetch and verify connections **before** calling `registry get`. You need the connection ID to pass `--connection-id` for enriched metadata.
+
+```bash
+# List available connections for a connector
+uip is connections list "<connector-key>" --format json
+
+# Verify a connection is healthy before binding
+uip is connections ping "<connection-id>" --format json
+
+# Create a new connection (opens browser for OAuth)
+uip is connections create "<connector-key>"
+
+# Re-authenticate an existing connection
+uip is connections edit "<connection-id>"
+```
+
+### Enriched node metadata (Step 4b — registry get with connection)
+
+With the connection ID from Step 4a, call `registry get` with `--connection-id` to get connection-aware metadata. The flow tool internally calls `getInstanceObjectMetadata` (instead of `getObjectMetadata`) which returns custom fields specific to that connection/account:
+
+```bash
+uip flow registry get <nodeType> --connection-id <connection-id> --format json
+```
+
+### Reference resolution commands (Step 4c)
+
+When `registry get` returns fields with a `reference` object (e.g., `reference.objectName: "project"`), resolve the actual values using `uip is resources execute list`.
+
+**Read [/uipath:uipath-platform — Integration Service — resources.md § Reference Fields (CRITICAL)](/uipath:uipath-platform) for the full resolution workflow**, including: identifying reference fields, resolving via `execute list`, inferring references from naming conventions when describe fails, and read-only field recovery.
+
+```bash
+# List values for a referenced resource (e.g., issue types, projects, users)
+uip is resources execute list "<connector-key>" "<reference.objectName>" \
+  --connection-id "<id>" --format json
+
+# With query parameters
+uip is resources execute list "<connector-key>" "<object>" \
+  --connection-id "<id>" --query "projectKey=ENGCE" --format json
+```
 
 ## Global options (all commands)
 
