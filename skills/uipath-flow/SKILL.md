@@ -415,7 +415,7 @@ uip flow validate flow_files/<ProjectName>.flow --format json
 
 **Validation loop:**
 1. Run `uip flow validate`
-2. If valid → done, move to Step 8
+2. If valid → done, move to Step 8 (push to Studio Web)
 3. If errors → read the error messages, fix the `.flow` file
 4. Go to 1
 
@@ -425,13 +425,17 @@ Common error categories:
 - **Invalid node/edge references** — `sourceNodeId`/`targetNodeId` must reference existing node `id`s
 - **Duplicate IDs** — node and edge `id`s must be unique
 
-### Step 8 — Debug (cloud) — only when explicitly requested
+### Step 8 — Push to Studio Web
+
+After validation passes, push the project to Studio Web so the user can view and inspect the flow visually.
 
 ```bash
-uip flow debug flow_files/<ProjectName>.flow
+UIPCLI_LOG_LEVEL=info uip flow debug <ProjectName>/
 ```
 
-Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchestrator, and streams results. Always `validate` first — debug is a cloud round-trip with real side effects (see Critical Rule #9).
+This uploads the project to Studio Web and triggers a debug session in Orchestrator. The `UIPCLI_LOG_LEVEL=info` flag provides detailed progress output during the upload.
+
+> **Note:** This step requires `uip login`. The debug command has **real side effects** — it executes the flow (sends emails, posts messages, calls APIs). Always confirm with the user before running. See Critical Rule #9.
 
 ## Anti-Patterns
 

@@ -59,6 +59,10 @@ For publishing the package to Orchestrator, see [uipath-platform](/uipath:uipath
 Debug a Flow in the cloud via Studio Web + Orchestrator. **Requires `uip login`.**
 
 ```bash
+# Recommended: push to Studio Web with verbose logging
+UIPCLI_LOG_LEVEL=info uip flow debug <ProjectName>/
+
+# Other forms
 uip flow debug <path/to/file.flow>
 uip flow debug <path/to/file.flow> --format json
 uip flow debug <path/to/file.flow> --poll-interval 2000
