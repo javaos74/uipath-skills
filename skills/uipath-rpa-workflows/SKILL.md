@@ -395,6 +395,14 @@ When the workflow involves Integration Service connectors (dynamic activities), 
 ### Guidelines for both CREATE and EDIT:
 Apply Core Principles: consult activity docs first, read relevant [reference files](./references/) for XAML structure and patterns, start minimal and iterate.
 
+### UI Automation Workflows — Target Configuration Gate
+
+**Before writing any XAML that contains UI activities** (Click, TypeInto, GetText, etc.), every UI element target must be configured through the `uia-configure-target` skill flow. This means: for each distinct element the workflow interacts with, read and follow the `uia-configure-target` skill steps (found in the UIA activity-docs). The skill handles snapshot capture, element discovery, selector generation, selector improvement, and Object Repository registration. All steps must complete — do not stop after getting a raw selector.
+
+**Do NOT manually call low-level `uip rpa uia` CLI commands** (`snapshot capture`, `snapshot filter`, `selector-intelligence get-default-selector`) to build selectors outside of the skill flow. These are internal tools used *by* the skill — calling them directly skips selector improvement and OR registration, producing fragile selectors that aren't tracked in the project.
+
+**Do NOT launch the target application before running `uia-configure-target`.** The skill's first steps (CREATE-1 + CREATE-2) capture the top-level window tree and search for the app. Only if the app is not found in the window list should you launch it — and then re-run the capture. Launching preemptively creates duplicate instances and risks targeting the wrong window.
+
 ### For CREATE Requests
 
 **Strategy:** Generate minimal working version, expect to iterate. Take it one activity at a time. Build incrementally and validate frequently.
@@ -486,6 +494,19 @@ uip rpa get-errors --file-path "Workflows/MyWorkflow.xaml" --skip-validation --f
 - Verify expression syntax matches project language (VB.NET vs C#)
 - Use `uip rpa run-file` for runtime validation if static checks pass
 
+**6. Runtime Selector Failures (UI Automation)** — "UI element not found", "UI element is invalid", element not on screen
+These surface at runtime via `uip rpa run-file`, not during static validation. They occur when a selector was captured against one app state but the DOM changed by the time the activity executes (e.g., switching from round-trip to one-way re-renders the form, invalidating selectors for subsequent elements).
+
+When a workflow fails at runtime with a selector error:
+1. **The app is already in the right state.** The workflow executed up to the failing activity, so the app's current DOM reflects the state that activity needs to target.
+2. **Read the failing activity's current selector** from the XAML (the `FullSelectorArgument` or OR reference's selector).
+3. **Read the window selector** from the ApplicationCard's TargetApp (the OR reference's scope selector, or the inline `ScopeSelectorArgument`).
+4. **Run the `uia-improve-selector` skill in recover mode** by spawning a subagent with the Agent tool. The prompt must include: the `uia-improve-selector` SKILL.md path (find it under the UIA activity-docs skills folder), the project folder, `--mode recover`, `--window <windowSelector>`, and `--partial <failingPartialSelector>`. The subagent reads the skill, re-analyzes the live DOM in its current state, and returns a corrected selector.
+5. **Update the OR element** with the recovered selector, or update the inline selector in the XAML.
+6. **Re-run the workflow** to verify the fix and catch the next failure, if any.
+
+Repeat until the workflow completes successfully. Each failure advances the app to the next problematic state, making recovery self-correcting.
+
 **When stuck on one error:** consider deferring to the user if it's a minor configuration detail (e.g., fill in a connection, update a placeholder value). Just inform the user about what needs to be updated. If failing to resolve an activity altogether, consider using code activities as a last resort (find `InvokeCode.md` under the latest version folder in `../../references/activity-docs/UiPath.System.Activities/`).
 
 For detailed procedures (package resolution, JIT types, focus-activity debugging, iteration loop, smoke testing), see **[references/validation-and-fixing.md](./references/validation-and-fixing.md)**.
@@ -520,6 +541,7 @@ For CLI error diagnosis and recovery patterns (IPC failures, auth errors, packag
 
 **Never** (items not already covered by Core Principles):
 - Generate large, complex workflows in one go — build incrementally, one activity at a time
+- Manually craft UI selectors by calling low-level `uip rpa uia` CLI commands (`snapshot capture`, `snapshot filter`, `selector-intelligence get-default-selector`) outside of the `uia-configure-target` skill flow — this skips selector improvement and OR registration
 - Assume a create/edit succeeded without validating with `uip rpa get-errors`
 - Stop the iteration loop before correctly rendering all activities
 - Guess properties, types, inputs/outputs, or configurations without checking activity docs, or `get-default-activity-xaml`, or the examples repository, or the appropriate reference files
@@ -546,6 +568,11 @@ Before handover, verify:
 - [ ] Local project explored for existing patterns and conventions
 - [ ] Service/provider disambiguation resolved — auto-selected or prompted only when ambiguous (Step 1.5)
 - [ ] For connector workflows: connections verified with `uip is connections list`
+
+**UI Automation Targets (if applicable):**
+- [ ] Every UI element target configured through the `uia-configure-target` skill flow (not raw CLI commands)
+- [ ] Selectors improved (selector improvement step completed, not just raw `get-default-selector` output)
+- [ ] All targets registered in the Object Repository (screens and elements created via OR commands)
 
 **XAML Content Quality:**
 - [ ] VB.NET or C# syntax matches project language (checked existing workflows)
