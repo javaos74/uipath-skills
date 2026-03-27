@@ -59,24 +59,12 @@ For publishing the package to Orchestrator, see [uipath-platform](/uipath:uipath
 Debug a Flow in the cloud via Studio Web + Orchestrator. **Requires `uip login`.**
 
 ```bash
-# Push to Studio Web with verbose logging
 UIPCLI_LOG_LEVEL=info uip flow debug <ProjectName>/
-
-# With options
-uip flow debug <ProjectName>/ --poll-interval 2000
-uip flow debug <ProjectName>/ --folder-id <folderId>
 ```
 
-What it does:
-1. Converts `.flow` → BPMN XML
-2. Builds `.uis` solution package
-3. Uploads to Studio Web Import API
-4. Triggers a debug session in Orchestrator
-5. Polls for completion and streams element executions
+Uploads the project to Studio Web and triggers a debug session in Orchestrator. Always run `uip flow validate` first.
 
-Terminal statuses: `Completed`, `Faulted`, `Cancelled`, `Failed`
-
-> Always run `uip flow validate` first — debug is a cloud round-trip and takes longer.
+Run `uip flow debug --help` to discover additional options.
 
 ## uip flow process
 
@@ -84,11 +72,10 @@ Manage deployed Flow processes in Orchestrator. **Requires `uip login`.**
 
 ```bash
 uip flow process list --output json
-uip flow process list --folder-id <id> --output json
-uip flow process get <process-key> <feed-id> --output json
 uip flow process run <process-key> <folder-key> --output json
-uip flow process run <process-key> <folder-key> --input '{"key":"value"}' --output json
 ```
+
+Run `uip flow process --help` for all subcommands and options.
 
 ## uip flow job
 
@@ -104,76 +91,36 @@ uip flow job traces <job-key> --output json
 Manage the local node type cache. No auth required for OOTB nodes; login for tenant-specific connector nodes.
 
 ```bash
-# Refresh cache from registry (expires after 30 min)
-uip flow registry pull --output json
-uip flow registry pull --force --output json      # force refresh regardless of TTL
-
-# List all cached node types
-uip flow registry list --output json
-uip flow registry list --output yaml
-
-# Search by keyword (matches nodeType, category, tags, label)
-uip flow registry search <keyword> --output json
-uip flow registry search --filter "category=agent" --output json
-uip flow registry search <keyword> --filter "category=<cat>" --output json
-
-# Get full schema for a specific node type
-uip flow registry get <nodeType> --output json
-# e.g.: uip flow registry get core.action.script --output json
+uip flow registry pull                             # refresh local cache (expires after 30 min)
+uip flow registry list --output json               # list all cached node types
+uip flow registry search <keyword> --output json   # search by name, tag, or category
+uip flow registry get <nodeType> --output json     # get full schema for a node type
 ```
 
 The `Data.Node` object from `registry get` is what you paste into your `.flow` file's `definitions` array.
+
+Run `uip flow registry <subcommand> --help` for additional options (e.g., `--force`, `--filter`, `--connection-id`).
 
 ## Integration Service commands (for connector binding and reference resolution)
 
 When a flow uses connector nodes, you need IS commands to fetch connections and resolve reference fields. These are used in **Steps 4a–4c** of the flow authoring workflow.
 
-### Connection commands (Step 4a — run before `registry get`)
-
-Fetch and verify connections **before** calling `registry get`. You need the connection ID to pass `--connection-id` for enriched metadata.
-
 ```bash
-# List available connections for a connector
+# Connections
 uip is connections list "<connector-key>" --output json
-
-# Verify a connection is healthy before binding
 uip is connections ping "<connection-id>" --output json
-
-# Create a new connection (opens browser for OAuth)
 uip is connections create "<connector-key>"
 
-# Re-authenticate an existing connection
-uip is connections edit "<connection-id>"
-```
-
-### Enriched node metadata (Step 4b — registry get with connection)
-
-With the connection ID from Step 4a, call `registry get` with `--connection-id` to get connection-aware metadata. The flow tool internally calls `getInstanceObjectMetadata` (instead of `getObjectMetadata`) which returns custom fields specific to that connection/account:
-
-```bash
+# Enriched node metadata (pass connection for custom fields)
 uip flow registry get <nodeType> --connection-id <connection-id> --output json
-```
 
-### Reference resolution commands (Step 4c)
-
-When `registry get` returns fields with a `reference` object (e.g., `reference.objectName: "project"`), resolve the actual values using `uip is resources execute list`.
-
-**Read [/uipath:uipath-platform — Integration Service — resources.md § Reference Fields (CRITICAL)](/uipath:uipath-platform) for the full resolution workflow**, including: identifying reference fields, resolving via `execute list`, inferring references from naming conventions when describe fails, and read-only field recovery.
-
-```bash
-# List values for a referenced resource (e.g., issue types, projects, users)
-uip is resources execute list "<connector-key>" "<reference.objectName>" \
+# Reference resolution
+uip is resources execute list "<connector-key>" "<resource>" \
   --connection-id "<id>" --output json
-
-# With query parameters
-uip is resources execute list "<connector-key>" "<object>" \
-  --connection-id "<id>" --query "projectKey=ENGCE" --output json
 ```
+
+Run `uip is connections --help` or `uip is resources --help` for all options.
 
 ## Global options (all commands)
 
-| Option | Description |
-|--------|-------------|
-| `--output json\|yaml\|table` | Output format (default: table in TTY, json otherwise) |
-| `--verbose` | Enable debug logging |
-| `--help` | Show command help |
+All `uip` commands support `--output json|yaml|table` and `--help`. Run any command with `--help` to discover all available options.
