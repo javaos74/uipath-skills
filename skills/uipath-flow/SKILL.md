@@ -309,10 +309,10 @@ Common error categories:
 After validation passes, the user may want to test the flow end-to-end. **Do not run this without explicit user consent** — debug executes the flow for real (sends emails, posts messages, calls APIs). See Critical Rule #9.
 
 ```bash
-UIPCLI_LOG_LEVEL=info uip flow debug <ProjectName>/
+UIPCLI_LOG_LEVEL=info uip flow debug <path-to-project-dir>
 ```
 
-This uploads the project to Studio Web, triggers a debug session in Orchestrator, and streams results. The `UIPCLI_LOG_LEVEL=info` flag provides detailed progress output.
+The argument is the **project directory path** (the folder containing `project.uiproj`). Use `<ProjectName>/` from the solution dir, or `.` if already inside the project dir. This uploads the project to Studio Web, triggers a debug session in Orchestrator, and streams results.
 
 > **Note:** Requires `uip login`. Debug is for **testing that the flow runs correctly** — not for publishing or viewing. To publish, use Step 9 instead.
 

@@ -82,10 +82,10 @@ Uploads the solution to Studio Web where the user can visualize, inspect, edit, 
 Debug a Flow in the cloud via Studio Web + Orchestrator. **Requires `uip login`.**
 
 ```bash
-UIPCLI_LOG_LEVEL=info uip flow debug <ProjectName>/
+UIPCLI_LOG_LEVEL=info uip flow debug <path-to-project-dir>
 ```
 
-Uploads the project to Studio Web and triggers a debug session in Orchestrator. Always run `uip flow validate` first.
+The argument is the **project directory path** (the folder containing `project.uiproj`). Use `<ProjectName>/` from the solution dir, or `.` if already inside the project dir. Always run `uip flow validate` first.
 
 Run `uip flow debug --help` to discover additional options.
 
