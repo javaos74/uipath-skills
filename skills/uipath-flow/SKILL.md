@@ -436,18 +436,6 @@ For connector nodes, the node `inputs` should use **resolved IDs** from Step 4c,
 }
 ```
 
-#### Known limitation: connector node bindings
-
-`uip flow node add` for connector nodes does **not** create bindings (`BindingsCreated: 0` in output). Connector nodes have `<bindings.X>` placeholders in their `model.context` that must resolve to actual connection IDs at runtime. Without bindings, the flow validates but **fails at debug/runtime**.
-
-Until the CLI supports this, connector nodes require manual JSON edits after `node add`:
-
-1. **Add binding entries to the `.flow` `bindings` array** — each binding needs an `id` matching the placeholder name (e.g., `"uipath-salesforce-slack connection"` for `<bindings.uipath-salesforce-slack connection>`), with `resourceKey` and `default` set to the connection ID from `uip is connections list`.
-2. **Add entries to `bindings_v2.json`** — with the connection resource metadata (see Step 4a for the schema).
-3. **Set the full `inputs.detail` envelope** — connector nodes need more than user-facing fields. The `inputs.detail` must include: `connector`, `connectionId`, `connectionResourceId`, `connectionFolderKey`, `method`, `endpoint`, `bodyParameters` (containing the actual user fields), and `configuration`. Copy this structure from the `registry get` output's `form.componentProps.connectorDetail.configuration` field and a known working reference flow.
-
-**Recommendation:** If a reference flow with the same connector exists, copy its binding and `inputs.detail` structure rather than building from scratch.
-
 ### Step 7 — Validate loop
 
 Run validation and fix errors iteratively until the flow is clean.
