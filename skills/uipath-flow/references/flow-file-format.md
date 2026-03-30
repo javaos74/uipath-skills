@@ -77,7 +77,7 @@ The `.flow` file is a JSON document in `flow_files/<ProjectName>.flow`. It is th
 Every node type appearing in `nodes` must have a matching entry in `definitions`. Get the correct definition from:
 
 ```bash
-uip flow registry get core.action.script --format json
+uip flow registry get core.action.script --output json
 ```
 
 Copy the object at `Data.Node` into your `definitions` array. Do not write definitions by hand — always pull from the registry to ensure schema compliance.
@@ -101,7 +101,7 @@ For full details on each node (ports, inputs, outputs, when to use), see [flow-p
 
 Discover all available types:
 ```bash
-uip flow registry list --format json
+uip flow registry list --output json
 uip flow registry search <keyword>
 ```
 
@@ -122,7 +122,7 @@ uip flow registry search <keyword>
 
 Verify exact ports for any node type:
 ```bash
-uip flow registry get <nodeType> --format json
+uip flow registry get <nodeType> --output json
 # Look at Data.Node.handleConfiguration[].handles[].id
 ```
 
@@ -195,9 +195,9 @@ Replace `<uuid>` with any generated UUID (e.g. `crypto.randomUUID()` in Node.js,
 Run one command per node type used in `nodes`. Copy the `Data.Node` object from each response into the `definitions` array.
 
 ```bash
-uip flow registry get core.trigger.manual --format json
-uip flow registry get core.action.script --format json
-uip flow registry get core.logic.terminate --format json
+uip flow registry get core.trigger.manual --output json
+uip flow registry get core.action.script --output json
+uip flow registry get core.logic.terminate --output json
 ```
 
 The `definitions` array must contain exactly one entry per unique `type` used — not one per node instance. If two nodes share the same type, one definition covers both.
@@ -214,3 +214,151 @@ Flow input and output parameters are declared through **variables** in the `.flo
 - Downstream nodes reference inputs via `$vars.start.output.<paramName>`
 
 The packaging/debug step derives `entry-points.json` from these variable declarations.
+
+## Bindings — connector connection binding
+
+When a flow uses Integration Service connector nodes (e.g., Jira, Slack, Salesforce), the runtime needs to know **which authenticated connection** to use for each connector. This is configured in `content/bindings_v2.json`.
+
+### How connector nodes reference bindings
+
+Each connector node's `model.context` contains a `connection` entry with a placeholder:
+
+```json
+{ "name": "connection", "type": "string", "value": "<bindings.uipath-atlassian-jira connection>" }
+```
+
+At runtime, the engine resolves this placeholder by looking up `bindings_v2.json` for a `Connection` resource whose `metadata.Connector` matches `uipath-atlassian-jira`.
+
+### bindings_v2.json schema
+
+```json
+{
+  "version": "2.0",
+  "resources": []
+}
+```
+
+Each element in `resources` is a binding resource. For connector activities, the key resource type is **`Connection`**.
+
+### Connection resource
+
+| Field | Description |
+|-------|-------------|
+| `resource` | Always `"Connection"` |
+| `key` | The connection ID (UUID from `uip is connections list`) |
+| `id` | `"Connection" + <connection-id>` (concatenated, no separator) |
+| `value.ConnectionId.defaultValue` | The actual connection ID |
+| `value.ConnectionId.isExpression` | Always `false` |
+| `value.ConnectionId.displayName` | Human-readable label (e.g., `"uipath-atlassian-jira connection"`) |
+| `metadata.UseConnectionService` | Always `"true"` |
+| `metadata.Connector` | Connector key (e.g., `"uipath-atlassian-jira"`) — must match the node's `model.context.connectorKey` |
+| `metadata.ActivityName` | Display name of the activity using this connection |
+| `metadata.BindingsVersion` | Always `"2.2"` |
+| `metadata.DisplayLabel` | Same as `value.ConnectionId.displayName` |
+
+### Single connector example (Jira)
+
+```json
+{
+  "version": "2.0",
+  "resources": [
+    {
+      "resource": "Connection",
+      "key": "7622a703-5d85-4b55-849b-6c02315b9e6e",
+      "id": "Connection7622a703-5d85-4b55-849b-6c02315b9e6e",
+      "value": {
+        "ConnectionId": {
+          "defaultValue": "7622a703-5d85-4b55-849b-6c02315b9e6e",
+          "isExpression": false,
+          "displayName": "uipath-atlassian-jira connection"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Create Issue",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "uipath-atlassian-jira connection",
+        "UseConnectionService": "true",
+        "Connector": "uipath-atlassian-jira"
+      }
+    }
+  ]
+}
+```
+
+### Multi-connector example (Jira + Slack)
+
+When a flow uses multiple connectors, add one `Connection` resource per unique connector:
+
+```json
+{
+  "version": "2.0",
+  "resources": [
+    {
+      "resource": "Connection",
+      "key": "7622a703-5d85-4b55-849b-6c02315b9e6e",
+      "id": "Connection7622a703-5d85-4b55-849b-6c02315b9e6e",
+      "value": {
+        "ConnectionId": {
+          "defaultValue": "7622a703-5d85-4b55-849b-6c02315b9e6e",
+          "isExpression": false,
+          "displayName": "uipath-atlassian-jira connection"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Create Issue",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "uipath-atlassian-jira connection",
+        "UseConnectionService": "true",
+        "Connector": "uipath-atlassian-jira"
+      }
+    },
+    {
+      "resource": "Connection",
+      "key": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "id": "Connectiona1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "value": {
+        "ConnectionId": {
+          "defaultValue": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "isExpression": false,
+          "displayName": "uipath-salesforce-slack connection"
+        }
+      },
+      "metadata": {
+        "ActivityName": "Send Message to Channel",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "uipath-salesforce-slack connection",
+        "UseConnectionService": "true",
+        "Connector": "uipath-salesforce-slack"
+      }
+    }
+  ]
+}
+```
+
+### Other resource types
+
+Beyond `Connection`, `bindings_v2.json` can contain other resource types for trigger-based flows:
+
+| Resource type | When used | Key fields |
+|---------------|-----------|------------|
+| `EventTrigger` | Connector trigger nodes (e.g., "Issue Created") | `metadata.Operation`, `metadata.ObjectName` |
+| `Property` | Trigger filter parameters | `value.<param>.defaultValue`, `metadata.ParentResourceKey` |
+| `Queue` | Queue trigger bindings | Queue name and folder |
+| `TimeTrigger` | Scheduled triggers | Cron expression |
+
+For manual-trigger flows with connector activities, you only need `Connection` resources.
+
+### Workflow: fetching the connection ID
+
+```bash
+# 1. List connections for the connector
+uip is connections list "uipath-atlassian-jira" --output json
+# → Pick the one with IsDefault: Yes, State: Enabled
+
+# 2. Verify it's healthy
+uip is connections ping "<connection-id>" --output json
+
+# 3. Write into bindings_v2.json
+```
+
+> **Never hardcode connection IDs.** Always fetch them from IS at authoring time. Connection IDs are tenant-specific and change across environments.

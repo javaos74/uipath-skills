@@ -108,8 +108,8 @@ Never remove existing `xmlns` attributes from the root `<Activity>` element. Onl
 
 ### Respect Expression Language
 Always check the project's expression language before writing expressions:
-- **CSharp**: Use C# syntax (`+` for string concat, `==` for equality)
-- **VB**: Use VB syntax (`&` for string concat, `=` for equality)
+- **CSharp**: Use C# syntax (`+` for string concat, `==` for equality). Use `<CSharpValue>` for input expressions and `<CSharpReference>` for output bindings — **without a namespace prefix**. Do NOT use `[bracket]` shorthand — brackets create `VisualBasicValue` nodes, causing "multiple languages" validation errors.
+- **VB**: Use VB syntax (`&` for string concat, `=` for equality). Use `[bracket]` shorthand for expressions.
 
 Mixing expression languages causes build failures.
 

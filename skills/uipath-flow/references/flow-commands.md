@@ -1,17 +1,25 @@
 # uip flow — CLI Command Reference
 
-All commands output `{ "Result": "Success"|"Failure", "Code": "...", "Data": { ... } }`. Use `--format json` for programmatic use.
+All commands output `{ "Result": "Success"|"Failure", "Code": "...", "Data": { ... } }`. Use `--output json` for programmatic use.
 
 ## uip flow init
 
-Scaffold a new Flow project directory.
+Scaffold a new Flow project directory. **Always create a solution first** (see Quick Start Step 2 in SKILL.md).
 
 ```bash
-uip flow init <ProjectName>
-uip flow init <ProjectName> --format json
+# 1. Create solution first
+uip solution new "<SolutionName>" --output json
+
+# 2. Init the flow project inside the solution folder
+cd <directory>/<SolutionName> && uip flow init <ProjectName>
+
+# 3. Register the project with the solution
+uip solution project add \
+  <directory>/<SolutionName>/<ProjectName> \
+  <directory>/<SolutionName>/<SolutionName>.uipx
 ```
 
-Creates `<ProjectName>/` with `project.uiproj`, `flow_files/<ProjectName>.flow`, and `content/` files.
+Creates `<ProjectName>/` with `project.uiproj`, `flow_files/<ProjectName>.flow`, and `content/` files inside the solution directory.
 
 ## uip flow validate
 
@@ -19,8 +27,8 @@ Validate a `.flow` file locally — no auth, no network.
 
 ```bash
 uip flow validate <path/to/file.flow>
-uip flow validate <path/to/file.flow> --format json
-uip flow validate <path/to/file.flow> --verbose --format json
+uip flow validate <path/to/file.flow> --output json
+uip flow validate <path/to/file.flow> --verbose --output json
 ```
 
 Checks:
@@ -39,7 +47,7 @@ Pack a Flow project into a `.nupkg` for Orchestrator deployment.
 ```bash
 uip flow pack <ProjectDir> <OutputDir>
 uip flow pack <ProjectDir> <OutputDir> --version 2.0.0
-uip flow pack <ProjectDir> <OutputDir> --format json
+uip flow pack <ProjectDir> <OutputDir> --output json
 ```
 
 Requires `content/package-descriptor.json` and `content/operate.json` in the project. Output: `<Name>.flow.Flow.<version>.nupkg`.
@@ -51,8 +59,8 @@ Requires `content/package-descriptor.json` and `content/operate.json` in the pro
 Bundle a local solution directory into a `.uis` file for upload to Studio Web.
 
 ```bash
-uip solution bundle <solutionPath> --format json
-uip solution bundle <solutionPath> --output <outputDir> --name <name> --format json
+uip solution bundle <solutionPath>
+uip solution bundle <solutionPath> --output <outputDir> --name <name>
 ```
 
 The `<solutionPath>` must be a directory containing a `.uipx` file. Output: a `.uis` zip file.
@@ -62,7 +70,7 @@ The `<solutionPath>` must be a directory containing a `.uipx` file. Output: a `.
 Upload a `.uis` solution file to Studio Web. **Requires `uip login`.**
 
 ```bash
-uip solution upload <solutionFile.uis> --format json
+uip solution upload <solutionFile.uis> --output json
 ```
 
 Uploads the solution to Studio Web where the user can visualize, inspect, edit, and publish the flow from the browser.
@@ -74,42 +82,31 @@ Uploads the solution to Studio Web where the user can visualize, inspect, edit, 
 Debug a Flow in the cloud via Studio Web + Orchestrator. **Requires `uip login`.**
 
 ```bash
-uip flow debug <path/to/file.flow>
-uip flow debug <path/to/file.flow> --format json
-uip flow debug <path/to/file.flow> --poll-interval 2000
-uip flow debug <path/to/file.flow> --folder-id <folderId>
+UIPCLI_LOG_LEVEL=info uip flow debug <ProjectName>/
 ```
 
-What it does:
-1. Converts `.flow` → BPMN XML
-2. Builds `.uis` solution package
-3. Uploads to Studio Web Import API
-4. Triggers a debug session in Orchestrator
-5. Polls for completion and streams element executions
+Uploads the project to Studio Web and triggers a debug session in Orchestrator. Always run `uip flow validate` first.
 
-Terminal statuses: `Completed`, `Faulted`, `Cancelled`, `Failed`
-
-> Always run `uip flow validate` first — debug is a cloud round-trip and takes longer.
+Run `uip flow debug --help` to discover additional options.
 
 ## uip flow process
 
 Manage deployed Flow processes in Orchestrator. **Requires `uip login`.**
 
 ```bash
-uip flow process list --format json
-uip flow process list --folder-id <id> --format json
-uip flow process get <process-key> <feed-id> --format json
-uip flow process run <process-key> <folder-key> --format json
-uip flow process run <process-key> <folder-key> --input '{"key":"value"}' --format json
+uip flow process list --output json
+uip flow process run <process-key> <folder-key> --output json
 ```
+
+Run `uip flow process --help` for all subcommands and options.
 
 ## uip flow job
 
 Monitor Flow jobs. **Requires `uip login`.**
 
 ```bash
-uip flow job status <job-key> --format json
-uip flow job traces <job-key> --format json
+uip flow job status <job-key> --output json
+uip flow job traces <job-key> --output json
 ```
 
 ## uip flow registry
@@ -117,33 +114,36 @@ uip flow job traces <job-key> --format json
 Manage the local node type cache. No auth required for OOTB nodes; login for tenant-specific connector nodes.
 
 ```bash
-# Refresh cache from registry (expires after 30 min)
-uip flow registry pull --format json
-uip flow registry pull --force --format json      # force refresh regardless of TTL
-
-# List all cached node types
-uip flow registry list --format json
-uip flow registry list --format yaml
-
-# Search by keyword (matches nodeType, category, tags, label)
-uip flow registry search <keyword> --format json
-uip flow registry search agent --format json
-
-# Get full schema for a specific node type
-uip flow registry get <nodeType> --format json
-# e.g.: uip flow registry get core.action.script --format json
+uip flow registry pull                             # refresh local cache (expires after 30 min)
+uip flow registry list --output json               # list all cached node types
+uip flow registry search <keyword> --output json   # search by name, tag, or category
+uip flow registry get <nodeType> --output json     # get full schema for a node type
 ```
 
 The `Data.Node` object from `registry get` is what you paste into your `.flow` file's `definitions` array.
 
-## Integration Service commands
+Run `uip flow registry <subcommand> --help` for additional options (e.g., `--force`, `--filter`, `--connection-id`).
 
-For `uip is` commands (connectors, connections, activities, resources, triggers), see the **[/uipath:uipath-platform](/uipath:uipath-platform)** skill — it has the complete IS command reference and agent workflow. Use IS discovery in **Step 4** of the flow authoring workflow when your flow uses connector nodes.
+## Integration Service commands (for connector binding and reference resolution)
+
+When a flow uses connector nodes, you need IS commands to fetch connections and resolve reference fields. These are used in **Steps 4a–4c** of the flow authoring workflow.
+
+```bash
+# Connections
+uip is connections list "<connector-key>" --output json
+uip is connections ping "<connection-id>" --output json
+uip is connections create "<connector-key>"
+
+# Enriched node metadata (pass connection for custom fields)
+uip flow registry get <nodeType> --connection-id <connection-id> --output json
+
+# Reference resolution
+uip is resources execute list "<connector-key>" "<resource>" \
+  --connection-id "<id>" --output json
+```
+
+Run `uip is connections --help` or `uip is resources --help` for all options.
 
 ## Global options (all commands)
 
-| Option | Description |
-|--------|-------------|
-| `--format json\|yaml\|table` | Output format (default: table in TTY, json otherwise) |
-| `--verbose` | Enable debug logging |
-| `--help` | Show command help |
+All `uip` commands support `--output json|yaml|table` and `--help`. Run any command with `--help` to discover all available options.

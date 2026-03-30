@@ -21,10 +21,10 @@ Comprehensive guide for creating, editing, validating, and debugging UiPath Flow
 
 ## Critical Rules
 
-1. **Do NOT `registry get` built-in nodes.** The planning guide already documents all OOTB node types (script, HTTP, decision, switch, loop, merge, end, terminate, transform, mock) with their ports, inputs, and output variables. Only run `uip flow registry get <nodeType> --format json` for **connector nodes** and **unknown/new node types** not in the planning guide. When editing JSON directly, copy the `Data.Node` object into `definitions` verbatim — do not guess node schemas.
+1. **Do NOT `registry get` built-in nodes.** The planning guide already documents all OOTB node types (script, HTTP, decision, switch, loop, merge, end, terminate, transform, mock) with their ports, inputs, and output variables. Only run `uip flow registry get <nodeType> --output json` for **connector nodes** and **unknown/new node types** not in the planning guide. When editing JSON directly, copy the `Data.Node` object into `definitions` verbatim — do not guess node schemas.
 2. **ALWAYS discover connector capabilities via IS before planning.** For every connector node, run `uip is activities list <connector-key>` and `uip is resources describe <connector-key> <resource>` to learn the exact operations, required fields, and field types. Without this, `inputs.detail` will be wrong and `$vars` references will be unresolvable — errors that `flow validate` does not catch.
 3. **ALWAYS check for existing connections** before using a connector node. Run `uip is connections list <connector-key>` — if no connection exists, tell the user before proceeding.
-4. **ALWAYS use `--format json`** on all `uip` commands when parsing output programmatically.
+4. **ALWAYS use `--output json`** on all `uip` commands when parsing output programmatically.
 5. **Edit `flow_files/*.flow` only** — `content/*.bpmn` and `entry-points.json` are auto-generated and will be overwritten. To declare flow inputs/outputs, add variables in the `.flow` file (see [references/flow-file-format.md](references/flow-file-format.md)).
 6. **`targetPort` is required on every edge** — `validate` rejects edges without it.
 7. **Every node type needs a `definitions` entry** — copy from `uip flow registry get <nodeType>` output. Never hand-write definitions.
@@ -42,7 +42,7 @@ Edit the `inputs.script` string on the target node in `flow_files/<ProjectName>.
 
 ### Add a node between two existing nodes
 
-1. Get the new node's schema: `uip flow registry get <nodeType> --format json`
+1. Get the new node's schema: `uip flow registry get <nodeType> --output json`
 2. Add its `Data.Node` to the `definitions` array (skip if that type already has a definition)
 3. Add the node instance to `nodes` with a unique `id` and correct `ui.position`
 4. Find the edge connecting the two existing nodes — update it to point to the new node instead:
@@ -54,7 +54,7 @@ Edit the `inputs.script` string on the target node in `flow_files/<ProjectName>.
 
 ### Add a branch (decision node)
 
-1. Get the definition: `uip flow registry get core.logic.decision --format json` and add `Data.Node` to `definitions`
+1. Get the definition: `uip flow registry get core.logic.decision --output json` and add `Data.Node` to `definitions`
 2. Add a `core.logic.decision` node with an `expression` input
 3. Redirect the incoming edge to the decision node — update `targetNodeId` and set `targetPort: "input"`
 4. Add two outgoing edges from the decision — one from `sourcePort: "true"`, one from `sourcePort: "false"` — each wiring to the appropriate downstream node with `targetPort: "input"`
@@ -86,7 +86,7 @@ Use `$UIP` in place of `uip` for all subsequent commands if the plain `uip` comm
 `uip flow debug` and process operations require authentication. `uip flow init`, `validate`, and `registry` commands work without login.
 
 ```bash
-uip login status --format json
+uip login status --output json
 ```
 
 If not logged in and you need cloud features:
@@ -95,13 +95,36 @@ uip login                                          # interactive OAuth (opens br
 uip login --authority https://alpha.uipath.com     # non-production environments
 ```
 
-### Step 2 — Create a new Flow project
+### Step 2 — Create a solution and Flow project
+
+Every Flow project lives inside a solution. Check the current directory for existing `.uipx` files. If existing solutions are found, ask the user whether they want to use one of them or create a new solution. If no existing solutions are found, create a new one automatically.
+
+- If the user specifies an existing `.uipx` file path or solution name, use that (skip to Step 2b)
+- Otherwise, create a new solution (Step 2a)
+
+#### 2a. Create a new solution
 
 ```bash
-uip flow init <ProjectName>
+uip solution new "<SolutionName>" --output json
 ```
 
-This scaffolds a complete project. See [references/flow-file-format.md](references/flow-file-format.md) for the full project structure.
+> **Naming convention:** Use the same name for both the solution and the project unless the user specifies otherwise. If the user only provides a project name, use it as the solution name too.
+
+#### 2b. Create the Flow project inside the solution folder
+
+```bash
+cd <directory>/<SolutionName> && uip flow init <ProjectName>
+```
+
+#### 2c. Add the project to the solution
+
+```bash
+uip solution project add \
+  <directory>/<SolutionName>/<ProjectName> \
+  <directory>/<SolutionName>/<SolutionName>.uipx
+```
+
+This scaffolds a complete project inside a solution. See [references/flow-file-format.md](references/flow-file-format.md) for the full project structure.
 
 ### Step 3 — Discover available node types
 
@@ -109,38 +132,226 @@ Before editing the `.flow` file, check what nodes are available:
 
 ```bash
 uip flow registry pull                          # refresh local cache (expires after 30 min)
-uip flow registry list --format json            # list all cached node types
+uip flow registry list --output json            # list all cached node types
 uip flow registry search <keyword>              # search by name, tag, or category
 uip flow registry search agent
-uip flow registry get <nodeType> --format json  # full schema for one node type
 ```
 
 > **Auth note**: Without `uip login`, registry shows OOTB nodes only. After login, tenant-specific connector nodes are also available.
 
-### Step 4 — Discover connector capabilities (when using connectors)
+At this point you know **which connector node types** to use (e.g., `uipath.connector.uipath-atlassian-jira.create-issue`). Do **not** run `registry get` yet — you need a connection ID first to get enriched metadata. For OOTB nodes (scripts, HTTP, branching), you can call `registry get` immediately since they don't need a connection.
 
-**Skip this step if the flow only uses OOTB nodes (scripts, HTTP, branching).** When the flow uses Integration Service connectors (e.g., Slack, Salesforce, Outlook), you **must** discover what the connector can do before planning. The flow registry tells you *which* connector nodes exist, but not what operations they support or what fields are required. Without IS discovery, generated flows will have missing or incorrect `inputs.detail`, empty `outputs` blocks, and unresolvable `$vars` references — issues that `flow validate` does not catch.
+### Step 4 — Bind connections, fetch metadata, and resolve references (when using connectors)
 
-**Use the [/uipath:uipath-platform](/uipath:uipath-platform) skill for all IS operations.** It has the complete Integration Service reference including the agent workflow (connector → connection → ping → discover → resolve references → execute), field metadata, error recovery, and connection management. The key commands you'll need:
+**Skip this step if the flow only uses OOTB nodes.** When the flow uses Integration Service connectors (e.g., Jira, Slack, Salesforce), follow these sub-steps in order:
 
-- `uip is activities list <connector-key>` — what operations the connector supports
-- `uip is resources list/describe <connector-key>` — what data objects and fields are available
-- `uip is connections list/ping/create <connector-key>` — check or create authenticated connections
+#### 4a. Fetch and bind connections
 
-**If a connector key fails**, list all available connectors to find the correct key: `uip is connectors list --format json`. Connector keys are often prefixed (e.g., `uipath-<service>`).
+For each connector used in the flow, extract the connector key from the node type (`uipath.connector.<connector-key>.<activity-name>`) and fetch a connection. **If a connector key fails**, list all available connectors to find the correct key: `uip is connectors list --output json`. Connector keys are often prefixed (e.g., `uipath-<service>`).
 
-**Resolve reference fields.** After running `uip flow registry get` for a connector node, check `inputDefinition.fields` for any field with a `reference` object. These fields require IDs, not human-readable names. The `reference` tells you exactly how to resolve:
-- `reference.objectName` — the IS resource to query
-- `reference.lookupValue` — the field to use as the value (usually `"id"`)
+**Read [/uipath:uipath-platform — Integration Service — connections.md](/uipath:uipath-platform) for the full connection selection workflow**, including:
+- Native connector selection (default + enabled preference)
+- HTTP fallback connector matching (name-based substring match for `uipath-uipath-http`)
+- Multi-connection disambiguation (present options to user)
+- No-connection recovery (prompt user to create)
+- Ping verification (always ping before using — a connection can be `Enabled` but expired)
+- Re-authentication via `uip is connections edit`
 
-Example: a `channel` field with `reference: { objectName: "curated_channels?types=public_channel,private_channel", lookupValue: "id" }` means you must look up the channel ID:
+Quick reference:
 ```bash
-uip is resources execute list <connector-key> <reference.objectName> \
-  --connection-id <connection-id> --format json
-```
-Then use the `id` from results, not the display name.
+# 1. List available connections
+uip is connections list "<connector-key>" --output json
 
-Gather this information **before** moving to the planning step. For each connector node in the flow, you should know: which operation to use, what fields are required, what reference fields need ID resolution, and whether a connection exists.
+# 2. Pick the default enabled connection (IsDefault: Yes, State: Enabled)
+#    Follow connections.md for selection rules and fallback
+
+# 3. Verify the connection is healthy
+uip is connections ping "<connection-id>" --output json
+```
+
+Once you have the connection ID, write it into **`content/bindings_v2.json`**. Add one `Connection` resource per unique connector:
+
+```json
+{
+  "version": "2.0",
+  "resources": [
+    {
+      "resource": "Connection",
+      "key": "<connection-id>",
+      "id": "Connection<connection-id>",
+      "value": {
+        "ConnectionId": {
+          "defaultValue": "<connection-id>",
+          "isExpression": false,
+          "displayName": "<connector-key> connection"
+        }
+      },
+      "metadata": {
+        "ActivityName": "<activity-display-name>",
+        "BindingsVersion": "2.2",
+        "DisplayLabel": "<connector-key> connection",
+        "UseConnectionService": "true",
+        "Connector": "<connector-key>"
+      }
+    }
+  ]
+}
+```
+
+If a flow uses multiple connectors (e.g., Jira + Slack), add one `Connection` resource per connector to the `resources` array. See [references/flow-file-format.md — Bindings](references/flow-file-format.md) for the full schema and multi-connector examples.
+
+#### 4b. Get enriched node definitions with connection
+
+Now that you have a connection ID, call `registry get` with `--connection-id` to fetch connection-aware metadata. This returns the full field schema including custom fields specific to that connection/account:
+
+```bash
+uip flow registry get <nodeType> --connection-id <connection-id> --output json
+```
+
+The flow tool internally calls the Integration Service SDK's `getInstanceObjectMetadata` (instead of `getObjectMetadata`) when a connection ID is provided, returning enriched `inputDefinition.fields` and `outputDefinition.fields` with accurate type, required, description, enum, and `reference` info.
+
+> **Without `--connection-id`**, `registry get` still returns metadata but only standard/base fields — custom fields and connection-specific reference data may be missing.
+
+#### 4c. Resolve reference fields
+
+Check the `inputDefinition.fields` from the `registry get` response for any field that has a `reference` object. These fields require their values to be looked up from the connector's live data.
+
+**Read [/uipath:uipath-platform — Integration Service — resources.md](/uipath:uipath-platform) for the full reference resolution workflow**, including:
+- How to identify reference fields (`reference.objectName`, `reference.lookupValue`)
+- Resolving references via `uip is resources execute list`
+- Inferring references without describe (fields ending in `Id` → base name convention)
+- Describe failures and metadata gap recovery
+- Read-only field recovery on create
+- Pagination for large result sets
+
+**How to identify reference fields** — look for the `reference` property in the `registry get` response:
+
+```json
+{
+  "name": "fields.project.key",
+  "displayName": "Project",
+  "type": "string",
+  "required": true,
+  "reference": {
+    "objectName": "project",
+    "lookupValue": "key"
+  }
+}
+```
+
+This means the value for `fields.project.key` must be resolved by listing the `project` resource and using the `key` field from the results.
+
+#### Field dependency chains
+
+Some reference fields **depend on other fields** — e.g., Jira's `fields.issuetype.id` depends on `fields.project.key` (issue types are project-scoped). Resolving them in the wrong order returns duplicates across all projects.
+
+**CRITICAL: If a parent field value is NOT in the user's prompt, you MUST ask the user for it BEFORE attempting to resolve any child fields.** Do not resolve child fields without a scoped parent — the results will be wrong or ambiguous.
+
+**Resolution order:**
+1. Identify which reference fields have parent dependencies (e.g., issue type depends on project)
+2. Check if the user provided the parent field value in their prompt
+3. **If the parent value is missing → ASK the user.** Do not skip, guess, or resolve the child unscoped.
+4. Once you have the parent value, resolve the child field scoped to that parent
+
+**Read [/uipath:uipath-platform — Integration Service — resources.md § Field Dependency Chains](/uipath:uipath-platform) for the full pattern**, including how to detect dependencies, the correct resolution order, and scoped path substitution.
+
+**Example — user says "Create a Jira ticket with issue type Bug" (no project specified):**
+1. Metadata shows `fields.issuetype.id` depends on `fields.project.key`
+2. User did NOT provide a project → **ASK:** "Which Jira project should this be created in?"
+3. User responds "ENGCE"
+4. NOW resolve issue types scoped to ENGCE: `project/ENGCE/issuetypes`
+5. Match "Bug" → ID `1`
+
+**Do NOT resolve issue types globally without a project scope** — this returns issue types from ALL projects, leading to ambiguous or incorrect IDs.
+
+Quick example — Jira project → issue type (when parent IS provided):
+```bash
+# Step 1: Resolve project (no dependency)
+uip is resources execute list "uipath-atlassian-jira" "project" \
+  --connection-id "<id>" --output json
+# → { "key": "ENGCE", "id": "10845" }
+
+# Step 2: Resolve issue types scoped to that project
+uip is resources execute list "uipath-atlassian-jira" "project/ENGCE/issuetypes" \
+  --connection-id "<id>" --output json
+# → { "id": "10004", "name": "Bug" }  ← only issue types for ENGCE
+```
+
+#### Simple reference fields (no dependencies)
+
+For fields with no parent dependency, resolve directly:
+
+```bash
+# Resolve Slack channel "#test-slack" to its channel ID
+uip is resources execute list "uipath-salesforce-slack" "curated_channels?types=public_channel,private_channel" \
+  --connection-id "<id>" --output json
+# → { "id": "C1234567890", "name": "test-slack" }
+```
+
+**Present options to the user** when multiple matches exist. Use the resolved IDs (not display names) in the flow's node `inputs`.
+
+#### Pagination for resource resolution
+
+`uip is resources execute list` may not return all results in a single call (e.g., Slack channels, Jira users). **Always check for pagination** and fetch all pages when searching for a specific item.
+
+**Pagination parameters:**
+```bash
+uip is resources execute list "<connector-key>" "<resource>" \
+  --connection-id "<id>" \
+  --page 1 --page-size 100 \
+  --output json
+```
+
+**Pagination response headers** (available in the response):
+- `elements-has-more`: `true` or `false` — indicates if more pages exist
+- `elements-next-page-token`: opaque token to pass as `--next-page` for the next request
+
+**Pagination loop:**
+```bash
+# First page
+uip is resources execute list "<connector-key>" "<resource>" \
+  --connection-id "<id>" --page-size 100 --output json
+# → Check response: elements-has-more=true, elements-next-page-token="abc123"
+
+# Next page (pass the token)
+uip is resources execute list "<connector-key>" "<resource>" \
+  --connection-id "<id>" --page-size 100 --next-page "abc123" --output json
+# → Continue until elements-has-more=false or target item is found
+```
+
+**When to paginate:**
+- When searching for a specific item by name (e.g., Slack channel "test-slack") and it's not in the first page
+- When listing all items for user selection and the first page is incomplete
+
+**Stop early:** If you find the target item in the current page, no need to fetch remaining pages.
+
+> **Exception — HTTP connectors and http-request activities:** Connectors with key `uipath-uipath-http` and any connector's `*-http-request` activity do NOT use the `elements-*` pagination headers. These depend directly on vendor-specific pagination (e.g., `offset`/`limit` query params, `cursor` fields in the response body). Handle these on a case-by-case basis based on the vendor API docs.
+
+> **Fallback when resolution fails:** If `execute list` returns empty or errors, fall back to using the user-provided display name as-is. The connector runtime may still resolve it. Note this as a risk in the plan. See the **Inferring References Without Describe** section in [resources.md](/uipath:uipath-platform) for naming-convention-based inference as a secondary fallback.
+
+#### 4d. Validate required fields against user prompt
+
+After fetching node metadata (Steps 4b/4c), **check every required field** in `inputDefinition.fields` against what the user provided in their prompt. This is a hard gate — do NOT proceed to planning or building until all required fields have values.
+
+**Process:**
+1. Collect all fields where `required: true` from each connector node's `inputDefinition.fields`
+2. For each required field, check if the user's prompt contains a value for it
+3. If any required field is missing, **ask the user** before proceeding:
+   - List the missing fields with their `displayName` and `description`
+   - For reference fields, explain what kind of value is expected (e.g., "Which Jira project should this issue be created in?")
+   - Wait for the user's response before continuing
+4. Only after all required fields are accounted for, proceed to reference resolution and planning
+
+**Example — user says "Create a Jira ticket with issue type Bug":**
+- Required fields from metadata: `fields.project.key` (Project), `fields.issuetype.id` (Issue type)
+- User provided: issue type = Bug
+- User did NOT provide: project
+- **Ask:** "Which Jira project should this Bug be created in? (e.g., ENGCE, PROJ, etc.)"
+- Wait for response, then continue
+
+> **Do NOT guess or skip missing required fields.** A missing required field will cause a runtime error. It is always better to ask than to assume.
+
+After completing Steps 4a–4d, you should have for each connector node: a bound connection ID, enriched field metadata, and resolved values for all reference fields. Carry this information into the planning step.
 
 ### Step 5 — Plan the flow (interactive)
 
@@ -179,14 +390,14 @@ In chat, output a **short summary only** (goal + key nodes + any open questions)
 
 ### Step 6 — Build the flow
 
-Edit `flow_files/<ProjectName>.flow` only. Never edit `content/<ProjectName>.bpmn` — it is auto-generated.
+Edit `flow_files/<ProjectName>.flow` and `content/bindings_v2.json`. Never edit `content/<ProjectName>.bpmn` — it is auto-generated.
 
 **Prefer CLI commands for adding nodes and edges.** They handle definitions and port wiring automatically, eliminating the most common build errors. Fall back to direct JSON editing only for operations the CLI doesn't support yet (update, remove, rewire).
 
 #### Adding nodes
 
 ```bash
-uip flow node add flow_files/<ProjectName>.flow <nodeType> --format json \
+uip flow node add flow_files/<ProjectName>.flow <nodeType> --output json \
   --input '{"expression": "$vars.fetchData.output.statusCode === 200"}' \
   --label "Check Status" \
   --position 300,400
@@ -194,18 +405,18 @@ uip flow node add flow_files/<ProjectName>.flow <nodeType> --format json \
 
 The command automatically adds the node to the `nodes` array and its definition to `definitions`. Use `--input` to set node-specific inputs (script body, expression, URL, etc.).
 
-> **Shell quoting tip:** If `--input` JSON contains special characters (quotes, braces, `$vars`), write the JSON to a temp file and pass it: `cat /tmp/input.json | uip flow node add <file> <nodeType> --input "$(cat /tmp/input.json)" --format json`
+> **Shell quoting tip:** If `--input` JSON contains special characters (quotes, braces, `$vars`), write the JSON to a temp file and pass it: `cat /tmp/input.json | uip flow node add <file> <nodeType> --input "$(cat /tmp/input.json)" --output json`
 
 After adding nodes, list them to get the assigned IDs for wiring:
 
 ```bash
-uip flow node list flow_files/<ProjectName>.flow --format json
+uip flow node list flow_files/<ProjectName>.flow --output json
 ```
 
 #### Adding edges
 
 ```bash
-uip flow edge add flow_files/<ProjectName>.flow <sourceNodeId> <targetNodeId> --format json \
+uip flow edge add flow_files/<ProjectName>.flow <sourceNodeId> <targetNodeId> --output json \
   --source-port success \
   --target-port input
 ```
@@ -216,6 +427,15 @@ The command automatically adds `targetPort` and validates the edge structure.
 
 The CLI does not yet support: removing nodes, removing edges, updating existing node inputs (e.g., changing a script body), or rewiring existing edges. For these operations, edit the `.flow` JSON directly — see [references/flow-file-format.md](references/flow-file-format.md) and the Common Edits section above.
 
+For connector nodes, the node `inputs` should use **resolved IDs** from Step 4c, not display names:
+```json
+"inputs": {
+  "fields.project.key": "ENGCE",
+  "fields.issuetype.id": "10004",
+  "fields.assignee.id": "5f4abc..."
+}
+```
+
 #### Known limitation: connector node bindings
 
 `uip flow node add` for connector nodes does **not** create bindings (`BindingsCreated: 0` in output). Connector nodes have `<bindings.X>` placeholders in their `model.context` that must resolve to actual connection IDs at runtime. Without bindings, the flow validates but **fails at debug/runtime**.
@@ -223,7 +443,7 @@ The CLI does not yet support: removing nodes, removing edges, updating existing 
 Until the CLI supports this, connector nodes require manual JSON edits after `node add`:
 
 1. **Add binding entries to the `.flow` `bindings` array** — each binding needs an `id` matching the placeholder name (e.g., `"uipath-salesforce-slack connection"` for `<bindings.uipath-salesforce-slack connection>`), with `resourceKey` and `default` set to the connection ID from `uip is connections list`.
-2. **Add entries to `bindings_v2.json`** — with the connection resource metadata.
+2. **Add entries to `bindings_v2.json`** — with the connection resource metadata (see Step 4a for the schema).
 3. **Set the full `inputs.detail` envelope** — connector nodes need more than user-facing fields. The `inputs.detail` must include: `connector`, `connectionId`, `connectionResourceId`, `connectionFolderKey`, `method`, `endpoint`, `bodyParameters` (containing the actual user fields), and `configuration`. Copy this structure from the `registry get` output's `form.componentProps.connectorDetail.configuration` field and a known working reference flow.
 
 **Recommendation:** If a reference flow with the same connector exists, copy its binding and `inputs.detail` structure rather than building from scratch.
@@ -233,12 +453,12 @@ Until the CLI supports this, connector nodes require manual JSON edits after `no
 Run validation and fix errors iteratively until the flow is clean.
 
 ```bash
-uip flow validate flow_files/<ProjectName>.flow --format json
+uip flow validate flow_files/<ProjectName>.flow --output json
 ```
 
 **Validation loop:**
 1. Run `uip flow validate`
-2. If valid → done, move to Step 8
+2. If valid → done, move to Step 8 (push to Studio Web)
 3. If errors → read the error messages, fix the `.flow` file
 4. Go to 1
 
@@ -248,14 +468,17 @@ Common error categories:
 - **Invalid node/edge references** — `sourceNodeId`/`targetNodeId` must reference existing node `id`s
 - **Duplicate IDs** — node and edge `id`s must be unique
 
-### Step 8 — Debug (cloud) — only when explicitly requested
+### Step 8 — Push to Studio Web
+
+After validation passes, push the project to Studio Web so the user can view and inspect the flow visually.
 
 ```bash
-uip flow debug flow_files/<ProjectName>.flow
-uip flow debug flow_files/<ProjectName>.flow --inputs '{"param": "value"}'
+UIPCLI_LOG_LEVEL=info uip flow debug <ProjectName>/
 ```
 
-Requires `uip login`. Uploads to Studio Web, triggers a debug session in Orchestrator, and streams results. Always `validate` first — debug is a cloud round-trip with real side effects (see Critical Rule #9).
+This uploads the project to Studio Web and triggers a debug session in Orchestrator. The `UIPCLI_LOG_LEVEL=info` flag provides detailed progress output during the upload.
+
+> **Note:** This step requires `uip login`. The debug command has **real side effects** — it executes the flow (sends emails, posts messages, calls APIs). Always confirm with the user before running. See Critical Rule #9.
 
 Debug is for **testing the flow runs correctly** — not for publishing. It creates a temporary project in Studio Web that is cleaned up after the run.
 
@@ -265,10 +488,10 @@ Debug is for **testing the flow runs correctly** — not for publishing. It crea
 
 ```bash
 # Bundle the solution directory into a .uis file
-uip solution bundle <SolutionDir> --output . --format json
+uip solution bundle <SolutionDir> --output .
 
 # Upload the .uis to Studio Web
-uip solution upload <SolutionName>.uis --format json
+uip solution upload <SolutionName>.uis --output json
 ```
 
 The `bundle` command requires a solution directory containing a `.uipx` file. If the project was created with `uip flow init`, it lives inside a solution directory already. The `upload` command pushes it to Studio Web where the user can visualize, inspect, edit, and publish from the browser. Share the Studio Web URL with the user.
@@ -302,6 +525,9 @@ For Orchestrator deployment when explicitly requested, see [references/flow-comm
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
 | **Wire nodes with edges** | [references/flow-file-format.md - Edges](references/flow-file-format.md) |
 | **Find the right node type** | Run `uip flow registry search <keyword>` |
+| **Bind connector connections** | Step 4a + [references/flow-file-format.md — Bindings](references/flow-file-format.md) |
+| **Get enriched connector metadata** | Step 4b — `registry get --connection-id` |
+| **Resolve reference fields** | Step 4c + [/uipath:uipath-platform — Integration Service — Resources](/uipath:uipath-platform) |
 | **Discover connector capabilities** | Step 4 + [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
 | **Check/create connections** | [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
 | **Publish to Studio Web** | Step 9 (solution bundle + upload) |
@@ -326,7 +552,7 @@ All `uip` commands return structured JSON:
 { "Result": "Failure", "Message": "...", "Instructions": "Found N error(s): ..." }
 ```
 
-Always use `--format json` for programmatic use. The `--localstorage-file` warning in some environments is benign.
+Always use `--output json` for programmatic use. The `--localstorage-file` warning in some environments is benign.
 
 ## Completion Output
 

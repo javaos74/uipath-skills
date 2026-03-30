@@ -100,6 +100,55 @@ uip is resources execute create "uipath-zoho-desk" "tickets" \
 
 ---
 
+## Field Dependency Chains (Field Actions)
+
+Some reference fields **depend on other fields** — the child field's valid values are scoped by the parent field's selection. The connector's underlying metadata encodes this in `reference.path` using template variables like `{fields.project.key}`.
+
+### How to detect dependencies
+
+When two fields share the same `reference.objectName` (e.g., both reference `"project"`), or when a field's reference path contains `{otherField}`, they form a dependency chain. Resolve them **in order** — parent first, then child using the parent's resolved value.
+
+### Common pattern: Jira project → issue type
+
+The Jira `curated_create_issue` resource has this dependency:
+
+```
+fields.project.key  → reference.path: /project/search                          (no dependency)
+fields.issuetype.id → reference.path: /project/{fields.project.key}/issuetypes (depends on project.key)
+```
+
+**Wrong** — listing `issuetype` globally returns Bug types from ALL projects:
+```bash
+uip is resources execute list "uipath-atlassian-jira" "issuetype" \
+  --connection-id "<id>" --format json
+# → Bug (id=1), Bug (id=10004), Bug (id=12947), ... dozens of duplicates
+```
+
+**Correct** — resolve project first, then list issue types scoped to that project:
+```bash
+# Step 1: Resolve project
+uip is resources execute list "uipath-atlassian-jira" "project" \
+  --connection-id "<id>" --format json
+# → { "key": "ENGCE", "name": "Integration Service", "id": "10845" }
+
+# Step 2: Resolve issue types FOR that project (scoped path)
+uip is resources execute list "uipath-atlassian-jira" "project/ENGCE/issuetypes" \
+  --connection-id "<id>" --format json
+# → { "id": "10004", "name": "Bug" }  ← only issue types valid for ENGCE
+```
+
+### General rule
+
+When resolving reference fields:
+1. **Sort fields by dependency** — fields with no `{template}` in their reference path come first
+2. **Resolve parent fields** — list the parent resource, pick the value
+3. **Substitute into child path** — replace `{parentField}` in the child's reference path with the resolved value
+4. **Resolve child fields** — list the scoped resource using the substituted path
+
+This pattern applies across connectors (Jira, Salesforce, ServiceNow, Zoho, etc.) wherever child fields are scoped by parent selections.
+
+---
+
 ## Inferring References Without Describe
 
 When describe metadata is unavailable (see [Describe Failures](#describe-failures)), infer reference fields from naming conventions:
