@@ -11,11 +11,11 @@
    Note which windows (w-refs and titles) are already present.
 2. **Run the workflow:**
    ```bash
-   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command StartDebugging --format json
+   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command StartDebugging --output json --use-studio
    ```
 3. **When done** (success or failure) — **stop the debug session:**
    ```bash
-   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command Stop --format json
+   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command Stop --output json --use-studio
    ```
 4. **List windows again:**
    ```bash

@@ -48,10 +48,10 @@ The skill will search the Object Repository for existing matches before creating
 
 ```bash
 # 1. Indicate a screen (creates App automatically if none exists)
-uip rpa indicate-application --name "<ScreenName>" --description "<ScreenDescription>" --project-dir "<PROJECT_DIR>" --format json
+uip rpa indicate-application --name "<ScreenName>" --description "<ScreenDescription>" --project-dir "<PROJECT_DIR>" --output json --use-studio
 
 # 2. Indicate elements on that screen (use --parent-id from step 1 result's Data.reference)
-uip rpa indicate-element --name "<ElementName>" --activity-class-name "<TypeInto|Click|GetText|...>" --parent-id "<screen-reference>" --project-dir "<PROJECT_DIR>" --format json
+uip rpa indicate-element --name "<ElementName>" --activity-class-name "<TypeInto|Click|GetText|...>" --parent-id "<screen-reference>" --project-dir "<PROJECT_DIR>" --output json --use-studio
 
 # 3. Retrieve OR entries after indication
 uip rpa uia object-repository get-screen-xaml --reference-id "<screen-reference>"

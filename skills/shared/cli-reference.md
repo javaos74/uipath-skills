@@ -24,9 +24,9 @@ Every `uip rpa` invocation accepts these flags:
 | `--studio-dir <path>` | Path to Studio installation directory | Auto-detected (see below) |
 | `--timeout <seconds>` | Timeout in seconds for Studio resolution | `300` |
 | `--verbose` | Enable verbose/debug logging | Off |
-| `--format <format>` | Output format: `json`, `table`, `yaml`, `plain` | `table` |
+| `--output <format>` | Output format: `json`, `table`, `yaml`, `plain` | `table` |
 
-> **Always use `--format json`** when calling `uip rpa` commands programmatically. The `table` format pads columns and can produce extremely large output (100KB+). JSON is compact and machine-readable.
+> **Always use `--output json`** when calling `uip rpa` commands programmatically. The `table` format pads columns and can produce extremely large output (100KB+). JSON is compact and machine-readable.
 
 ### STUDIO_DIR Resolution
 
@@ -65,7 +65,7 @@ Located at `{projectRoot}/.local/docs/packages/{PackageId}/`.
 List running UiPath Studio instances and their IPC status.
 
 ```bash
-uip rpa list-instances --format json
+uip rpa list-instances --output json --use-studio
 ```
 
 No command-specific options.
@@ -80,7 +80,7 @@ Ensure a Studio instance is running. Resolution waterfall:
 3. Start a new instance via `--studio-dir` -- poll until available
 
 ```bash
-uip rpa start-studio --project-dir "<PROJECT_DIR>" --format json
+uip rpa start-studio --project-dir "<PROJECT_DIR>" --output json --use-studio
 ```
 
 ---
@@ -92,7 +92,7 @@ uip rpa start-studio --project-dir "<PROJECT_DIR>" --format json
 Create a new UiPath project from a template. Also available as `uip rpa new`.
 
 ```bash
-uip rpa create-project --name "<NAME>" --location "<PARENT_DIR>" --format json
+uip rpa create-project --name "<NAME>" --location "<PARENT_DIR>" --output json --use-studio
 ```
 
 | Parameter | Required | Default | Description |
@@ -111,7 +111,7 @@ uip rpa create-project --name "<NAME>" --location "<PARENT_DIR>" --format json
 Open an existing project in Studio. Only needed when explicitly loading a project that isn't already open (e.g. after `create-project`, or when switching projects). Most commands (`validate`, `run-file`) auto-resolve a Studio instance, so this is rarely required.
 
 ```bash
-uip rpa open-project --project-dir "<PROJECT_DIR>" --format json
+uip rpa open-project --project-dir "<PROJECT_DIR>" --output json --use-studio
 ```
 
 No command-specific options.
@@ -125,8 +125,8 @@ No command-specific options.
 Validate a file or the entire project. Forces Studio to re-analyze the code.
 
 ```bash
-uip rpa validate --project-dir "<PROJECT_DIR>" --format json
-uip rpa validate --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --format json
+uip rpa validate --project-dir "<PROJECT_DIR>" --output json --use-studio
+uip rpa validate --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --output json --use-studio
 ```
 
 | Parameter | Required | Default | Description |
@@ -143,10 +143,10 @@ Run or debug a workflow file using Studio.
 
 ```bash
 # Run (default -- closes app on completion or error):
-uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --format json
+uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --output json --use-studio
 
 # Debug (pauses on error -- keeps app open for inspection/repair):
-uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command StartDebugging --format json
+uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command StartDebugging --output json --use-studio
 ```
 
 | Parameter | Required | Description |
@@ -165,7 +165,7 @@ uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command St
 Return validation errors for a file or project. By default, forces Studio to re-validate before returning errors.
 
 ```bash
-uip rpa get-errors [--file-path "<FILE>"] [--skip-validation] --format json
+uip rpa get-errors [--file-path "<FILE>"] [--skip-validation] --output json --use-studio
 ```
 
 | Parameter | Required | Description |
@@ -182,7 +182,7 @@ uip rpa get-errors [--file-path "<FILE>"] [--skip-validation] --format json
 Install or update NuGet packages in the project.
 
 ```bash
-uip rpa install-or-update-packages --packages '[{"id": "UiPath.Excel.Activities"}]' --format json
+uip rpa install-or-update-packages --packages '[{"id": "UiPath.Excel.Activities"}]' --output json --use-studio
 ```
 
 | Parameter | Required | Description |
@@ -204,7 +204,7 @@ Omit `version` to automatically resolve the latest compatible version (preferred
 Get unautomated test case IDs from Test Manager.
 
 ```bash
-uip rpa get-manual-test-cases --project-dir "<PROJECT_DIR>" --format json
+uip rpa get-manual-test-cases --project-dir "<PROJECT_DIR>" --output json --use-studio
 ```
 
 No command-specific options.
@@ -216,7 +216,7 @@ No command-specific options.
 Get steps for specific test cases from Test Manager.
 
 ```bash
-uip rpa get-manual-test-steps --test-case-ids "id1,id2,id3" --project-dir "<PROJECT_DIR>" --format json
+uip rpa get-manual-test-steps --test-case-ids "id1,id2,id3" --project-dir "<PROJECT_DIR>" --output json --use-studio
 ```
 
 | Parameter | Required | Description |
@@ -227,20 +227,159 @@ uip rpa get-manual-test-steps --test-case-ids "id1,id2,id3" --project-dir "<PROJ
 
 ## Commands -- Integration Service (IS)
 
-| Command | Description | Key Parameters |
-|---------|-------------|----------------|
-| `uip is connectors list` | List available connectors | `--filter` (by name/key) |
-| `uip is connectors get <key>` | Get connector details | `connector-key` (required) |
-| `uip is connections list [key]` | List connections | `connector-key` (optional filter), `--connection-id`, `--folder-key` |
-| `uip is connections create <key>` | Create connection (OAuth) | `connector-key` (required), `--no-browser` |
-| `uip is connections ping <id>` | Ping/verify connection | `connection-id` (required) |
-| `uip is connections edit <id>` | Edit/re-auth connection | `connection-id` (required) |
-| `uip is activities list <key>` | List connector activities | `connector-key` (required) |
-| `uip is resources list <key>` | List connector resources | `--operation` (List/Retrieve/Create/Update/Delete/Replace) |
-| `uip is resources describe <key> <obj>` | Describe resource schema | `--operation` |
-| `uip is resources execute <op> <key> <obj>` | Execute resource CRUD | Operations: `create`, `list`, `get`, `update`, `replace`, `delete` |
+All IS commands support `--output json`. The CLI is self-documenting: `uip is --help`, `uip is connections --help`, etc.
 
-All IS commands support `--format json`. The CLI is self-documenting: `uip is --help`, `uip is connections --help`, etc.
+### connectors list
+
+List available connectors, optionally filtered by name or key.
+
+```bash
+uip is connectors list --output json
+uip is connectors list --filter "<NAME_OR_KEY>" --output json
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--filter` | No | Filter by connector name or key |
+
+---
+
+### connectors get
+
+Get details for a specific connector.
+
+```bash
+uip is connectors get <CONNECTOR_KEY> --output json
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connector-key>` | Yes | Connector key (positional) |
+
+---
+
+### connections list
+
+List connections, optionally filtered by connector.
+
+```bash
+uip is connections list --output json
+uip is connections list <CONNECTOR_KEY> --output json
+uip is connections list --connection-id "<ID>" --output json
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connector-key>` | No | Filter by connector key (positional) |
+| `--connection-id` | No | Filter by specific connection ID |
+| `--folder-key` | No | Filter by folder key |
+
+---
+
+### connections create
+
+Create a new connection via OAuth flow. Opens a browser for authentication.
+
+```bash
+uip is connections create <CONNECTOR_KEY>
+uip is connections create <CONNECTOR_KEY> --no-browser
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connector-key>` | Yes | Connector key (positional) |
+| `--no-browser` | No | Print the OAuth URL instead of opening a browser |
+
+---
+
+### connections ping
+
+Verify a connection is alive and authenticated.
+
+```bash
+uip is connections ping <CONNECTION_ID>
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connection-id>` | Yes | Connection ID (positional) |
+
+---
+
+### connections edit
+
+Re-authenticate or edit an existing connection. Opens OAuth flow.
+
+```bash
+uip is connections edit <CONNECTION_ID>
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connection-id>` | Yes | Connection ID (positional) |
+
+---
+
+### activities list
+
+List activities available for a connector.
+
+```bash
+uip is activities list <CONNECTOR_KEY> --output json
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connector-key>` | Yes | Connector key (positional) |
+
+---
+
+### resources list
+
+List resources available for a connector, optionally filtered by operation.
+
+```bash
+uip is resources list <CONNECTOR_KEY> --output json
+uip is resources list <CONNECTOR_KEY> --operation List --output json
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connector-key>` | Yes | Connector key (positional) |
+| `--operation` | No | Filter by operation: `List`, `Retrieve`, `Create`, `Update`, `Delete`, `Replace` |
+
+---
+
+### resources describe
+
+Get the schema for a specific resource object.
+
+```bash
+uip is resources describe <CONNECTOR_KEY> <OBJECT_NAME> --output json
+uip is resources describe <CONNECTOR_KEY> <OBJECT_NAME> --operation Create --output json
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<connector-key>` | Yes | Connector key (positional) |
+| `<object-name>` | Yes | Resource object name (positional) |
+| `--operation` | No | Schema for a specific operation |
+
+---
+
+### resources execute
+
+Execute a CRUD operation on a connector resource.
+
+```bash
+uip is resources execute <OPERATION> <CONNECTOR_KEY> <OBJECT_NAME> --output json
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `<operation>` | Yes | One of: `create`, `list`, `get`, `update`, `replace`, `delete` |
+| `<connector-key>` | Yes | Connector key (positional) |
+| `<object-name>` | Yes | Resource object name (positional) |
 
 ---
 

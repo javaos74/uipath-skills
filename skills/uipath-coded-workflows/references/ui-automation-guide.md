@@ -104,8 +104,8 @@ Using an element descriptor on the wrong screen handle causes `"Target name 'X' 
 
 See [../shared/uia-debug-workflow.md](../shared/uia-debug-workflow.md).
 
-   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command StartDebugging --format json
-   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command Stop --format json
+   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command StartDebugging --output json --use-studio
+   uip rpa run-file --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --command Stop --output json --use-studio
 ---
 
 ## Runtime Selector Failures

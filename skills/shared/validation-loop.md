@@ -16,7 +16,7 @@ After every file create or edit, validate the specific file until clean.
 
 ```
 REPEAT:
-  1. uip rpa validate --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --format json
+  1. uip rpa validate --file-path "<FILE>" --project-dir "<PROJECT_DIR>" --output json --use-studio
   2. IF 0 errors -> EXIT to Smoke Test
   3. Identify the highest-priority error
   4. Fix one thing (see rule above)
@@ -47,13 +47,13 @@ After reaching 0 validation errors, run the workflow to catch runtime errors (wr
 
 ```bash
 # Run with default arguments:
-uip rpa run-file --file-path "<FILE>" --format json
+uip rpa run-file --file-path "<FILE>" --output json --use-studio
 
 # Run with input arguments:
-uip rpa run-file --file-path "<FILE>" --input-arguments '{"key": "value"}' --format json
+uip rpa run-file --file-path "<FILE>" --input-arguments '{"key": "value"}' --output json --use-studio
 
 # Run with verbose logging for debugging:
-uip rpa run-file --file-path "<FILE>" --log-level Verbose --format json
+uip rpa run-file --file-path "<FILE>" --log-level Verbose --output json --use-studio
 ```
 
 **When to run:**
