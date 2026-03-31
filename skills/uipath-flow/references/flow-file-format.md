@@ -97,7 +97,7 @@ Copy the object at `Data.Node` into your `definitions` array. Do not write defin
 | `core.control.end` | Graceful end | `bpmn:EndEvent` | — |
 | `core.logic.terminate` | Abort workflow | `bpmn:EndEvent` | — |
 
-For full details on each node (ports, inputs, outputs, when to use), see [flow-planning-guide.md](flow-planning-guide.md).
+For full details on each node (ports, inputs, outputs, when to use), see [planning-phase-architectural.md](planning-phase-architectural.md).
 
 Discover all available types:
 ```bash
