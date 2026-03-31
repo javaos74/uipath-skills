@@ -56,7 +56,6 @@ Many activities use `[OverloadGroup]` to define mutually exclusive property sets
 | WorkbookActivityBase | `Workbook` (use open) | `WorkbookPath` (file string) | `WorkbookPathResource` (IResource) |
 | WordDocumentActivity | `FilePath` (string) | `PathResource` (ILocalResource) | — |
 | PDF activities (ReadPDFText, GetPDFPageCount, ExtractPDFPageRange, ManagePDFPassword, ExportPDFPageAsImage, ExtractImagesFromPDF, ReadXPSText) | `FileName` (string) | `ResourceFile` (IResource) | — |
-| PDF convert activities (ConvertHtmlToPDF, ConvertTextToPDF) | `FileName` (string, when InputMode=File) | `ResourceFile` (IResource, when InputMode=File) | `Html`/`Text` (string, when InputMode=Content) |
 
 **Key rule**: Exactly ONE group must have values. Setting properties from multiple groups OR no groups both cause validation errors.
 
@@ -95,6 +94,9 @@ Some properties are only required when another property has a specific value:
 | ExchangeScope (Interactive auth) | `AuthenticationMode = Interactive` | `ApplicationId` must be set |
 | ExchangeScope | `ApplicationId` is set | `DirectoryId` must also be set (and vice versa — both or neither) |
 | WordApplicationScope | `CreateNewFile = true` | Path must be local (not a URL) |
+| ConvertHtmlToPDF, ConvertTextToPDF | `InputMode = File` | `FileName` or `ResourceFile` must be set |
+| ConvertHtmlToPDF | `InputMode = Content` | `Html` must be set |
+| ConvertTextToPDF | `InputMode = Content` | `Text` must be set |
 
 ## Input Method Constraints (UIAutomation)
 
@@ -506,22 +508,3 @@ When reading Excel data with `ReadRangeX`, column types in the resulting `DataTa
 **Workarounds:**
 - Use LINQ with explicit conversion: `dtData.AsEnumerable().Where(Function(row) CDbl(row("Amount")) > 1000).CopyToDataTable()`
 - Convert the column type after reading: loop through rows and convert values, or clone the DataTable with the correct column types
-
-### `uip rpa restore` dumps .nupkg files into the project directory
-
-When calling `uip rpa restore` without `--destination-path`, the command restores NuGet packages directly into the project root directory, polluting it with hundreds of `.nupkg` files. These are cached package files, not project artifacts, and should not be there.
-
-**Always specify `--destination-path`** pointing to a location outside the project directory:
-
-```bash
-# Correct — restore to a temp/cache directory
-uip rpa restore --project-path "{projectRoot}" --destination-path "{projectRoot}/.local/packages" --format json
-
-# Wrong — packages end up in project root
-uip rpa restore --project-path "{projectRoot}" --format json
-```
-
-If you already have `.nupkg` files littering the project root, clean them up:
-```bash
-rm "{projectRoot}"/*.nupkg
-```
