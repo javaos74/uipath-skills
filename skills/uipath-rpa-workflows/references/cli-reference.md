@@ -2,10 +2,6 @@
 
 Read this file when: you need exact CLI syntax, parameter details, or error recovery for `uip rpa` commands.
 
-@../shared/cli-reference.md
-
-This file covers RPA-specific commands. Shared commands are in the file above.
-
 ## Global options
 
 These options are inherited from the `uip rpa` parent group and work on all subcommands:
@@ -13,7 +9,7 @@ These options are inherited from the `uip rpa` parent group and work on all subc
 | Option | Description |
 |--------|-------------|
 | `--project-dir <path>` | Project directory (defaults to CWD). Must contain `project.json`. |
-| `--format <format>` | Output format: `json` (default), `table`, `yaml`, `plain`. Use `table` only for user display. |
+| `--format <format>` | Output format: `json`, `table`, `yaml`, `plain`. **Always use `--format json`** for programmatic parsing. |
 | `--timeout <seconds>` | Command timeout (default 300). Place before the subcommand: `uip rpa --timeout 600 get-errors ...` |
 | `--verbose` | Enable verbose logging. |
 

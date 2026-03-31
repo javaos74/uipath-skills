@@ -2,9 +2,46 @@
 
 Read this file when: you are in the validate/fix loop and need detailed procedures for package resolution, JIT types, or debugging.
 
-@../shared/validation-loop.md
+## Fix one thing at a time
 
-RPA-specific validation procedures. Shared iteration loop, fix-one-thing rule, and smoke test are in the file above.
+When an error occurs, identify the root cause, fix **only** that one thing, and re-run.
+- Never bundle a speculative improvement with the actual fix.
+- One fix per iteration, re-run, verify.
+
+## Validation iteration loop
+
+After every file create or edit, validate until clean:
+
+```
+REPEAT:
+  1. uip rpa get-errors --file-path "<FILE>" --format json
+  2. IF 0 errors -> EXIT to Smoke Test
+  3. Identify the highest-priority error
+  4. Fix one thing (see rule above)
+  5. GOTO 1
+```
+
+Cap at 5 fix attempts. After 5 failed attempts, present the remaining errors to the user.
+
+### Rules
+
+1. DO NOT stop until all errors are resolved (or cannot be resolved automatically).
+2. DO NOT obsess on one error — if it cannot be resolved, skip it and defer to the user.
+3. DO NOT skip validation steps.
+4. DO NOT assume edits worked without checking.
+5. DO NOT bundle multiple fixes in one iteration.
+
+## Smoke test
+
+After reaching 0 validation errors, run the workflow to catch runtime errors:
+
+```bash
+uip rpa run-file --file-path "<FILE>" --format json
+```
+
+When NOT to run: workflow has side effects (sends emails, modifies databases), requires interactive input, or compilation errors still exist.
+
+Stop after 2 failed runtime retries and present the error to the user.
 
 ## Package error resolution
 
