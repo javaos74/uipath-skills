@@ -28,8 +28,9 @@ Before doing any work, check if `.claude/rules/project-context.md` exists in the
 2. Count current files: Glob `**/*.cs` (excluding `.local/` and `.codedworkflows/`) and `**/*.xaml` in the project directory
 3. Count current dependencies: read `project.json` and count keys in the `.dependencies` object
 4. Compare the current counts against the stored metadata values
-5. If **any count differs** → run the discovery flow below
-6. If all counts match → context is fresh, proceed with the skill workflow
+5. For each count (cs, xaml, deps), compute the percentage difference: `abs(current - stored) / max(stored, 1) * 100`
+6. If **any individual count differs by 60–70% or more** → run the discovery flow below
+7. If all counts are within the threshold → context is fresh, proceed with the skill workflow
 
 **If the file does NOT exist** → run the discovery flow below.
 **Discovery flow** (used for both missing and stale context):
