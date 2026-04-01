@@ -18,20 +18,27 @@ Interact with external services through UiPath Integration Service — discover 
 5. **Always ping** — Verify every connection before use, even if it reports "Enabled"
 6. **Prompt, don't assume** — When multiple choices exist (connections, reference values), present options and let the user decide. Only auto-select when there is exactly one valid option.
 7. **Always use `--output json`** for commands whose output you need to parse or act on.
+8. **Delegate steps to agents** — Each workflow step has a focused agent with only the context it needs. This prevents context overload and hallucination. See [agent-workflow.md](agent-workflow.md) for the orchestration pattern.
 
 ---
 
 ## Navigation
 
+### Workflow Orchestration (start here for any IS task)
+
 | When to load | File | For |
 |---|---|---|
-| Always (first) | This file | Principles, routing, error recovery |
-| Any IS task | [agent-workflow.md](agent-workflow.md) | Step-by-step workflow with checklist |
-| Step 1: connector not found | [connectors.md](connectors.md) | HTTP fallback, connector response fields |
-| Step 2: connection selection | [connections.md](connections.md) | Selection logic (native + HTTP), response fields |
-| Step 4: discover activities | [activities.md](activities.md) | Activity discovery, trigger activities, activities vs resources |
-| Steps 4–6: resources | [resources.md](resources.md) | Describe, resolve references, execute CRUD |
-| Trigger metadata | [triggers.md](triggers.md) | Trigger objects, trigger field metadata, trigger workflow |
+| Any IS task | [agent-workflow.md](agent-workflow.md) | Step-by-step orchestrator — delegates to agents |
+
+### Sub-Agents (loaded by orchestrator per step — do NOT load all at once)
+
+| Sub-Agent | File | Context |
+|---|---|---|
+| Find Connector | [agents/connectors.md](agents/connectors.md) | Connector discovery, HTTP fallback |
+| Find Connection | [agents/connections.md](agents/connections.md) | Connection selection (native + HTTP), ping |
+| Discover Capabilities | [agents/activities.md](agents/activities.md) | Activities check, resource listing, describe |
+| Discover Triggers | [agents/triggers.md](agents/triggers.md) | Trigger activities, objects, field metadata |
+| Resources | [agents/resources.md](agents/resources.md) | Reference fields, execute, error recovery, pagination |
 
 ---
 
@@ -49,8 +56,8 @@ When multiple options exist, present them clearly:
 | List returns empty after `--refresh` | Inform user the data does not exist. Do not retry. Suggest checking permissions or folder context. |
 | Reference field lookup returns empty | Inform user — the referenced object has no records. Ask if they want to create one or use a different value. |
 | Execute fails with validation error | Re-check describe output for required fields. Verify field types and reference IDs are correct. |
-| Describe returns empty `availableOperations` | Metadata gap — do **not** retry with `--refresh`. Skip describe, attempt execute directly. See [resources.md — Describe Failures](resources.md#describe-failures). |
-| Create fails with `INVALID_FIELD_FOR_INSERT_UPDATE` | Field is read-only/auto-generated. Remove it from `--body`, use alternative writable field, and retry. See [resources.md — Read-Only Field Recovery](resources.md#read-only-field-recovery). |
-| Connector not found | Fall back to HTTP connector (`uipath-uipath-http`). See [connectors.md](connectors.md#http-connector-fallback). |
-| No trigger objects for operation | Check operation name (CREATED/UPDATED/DELETED, uppercase). Verify connector supports events (`hasEvents` in connector list). See [triggers.md](triggers.md). |
-| Trigger metadata empty | Check object name matches exactly from `triggers objects` output. Try with `--connection-id` for custom fields. See [triggers.md](triggers.md). |
+| Describe returns empty `availableOperations` | Metadata gap — do **not** retry with `--refresh`. Skip describe, attempt execute directly. See [agents/activities.md](agents/activities.md). |
+| Create fails with `INVALID_FIELD_FOR_INSERT_UPDATE` | Field is read-only/auto-generated. Remove it from `--body`, use alternative writable field, and retry. See [agents/resources.md](agents/resources.md). |
+| Connector not found | Fall back to HTTP connector (`uipath-uipath-http`). See [agents/connectors.md](agents/connectors.md). |
+| No trigger objects for operation | Check operation name (CREATED/UPDATED/DELETED, uppercase). Verify connector supports events (`hasEvents` in connector list). See [agents/triggers.md](agents/triggers.md). |
+| Trigger metadata empty | Check object name matches exactly from `triggers objects` output. Try with `--connection-id` for custom fields. See [agents/triggers.md](agents/triggers.md). |

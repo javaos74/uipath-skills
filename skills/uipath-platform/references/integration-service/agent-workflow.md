@@ -2,223 +2,148 @@
 
 Follow these steps in order when the user asks to interact with an external service.
 
-## Contents
-- Progress Checklist
-- Step 1: Find the Connector
-- Step 2: Find a Connection
-- Step 3: Ping the Connection
-- Step 4: Discover Capabilities
-- Step 4T: Trigger Metadata (if trigger workflow)
-- Step 5: Resolve Reference Fields
-- Step 6: Execute
-- Happy-Path Example (CRUD)
-- Happy-Path Example (Triggers)
+**CRITICAL RULES:**
+1. You MUST use the `Agent` tool to delegate each step. Do NOT run `uip is` commands directly — not even as a fallback.
+2. Do NOT read the agent files yourself — the spawned agent will read them.
+3. Each Agent call should tell the agent to read the specific file and execute the step.
+4. Steps are **strictly sequential**. Do NOT run steps in parallel. Ex: Do NOT run Step 3 until Step 2 returns successfully.   Each step depends on the previous step's output.
+5. If an agent errors, retry the agent — do NOT fall back to running commands directly.
 
 ## Progress Checklist
 
-Copy and track progress:
-
 ```
 - [ ] Step 1: Find connector (get Key)
-- [ ] Step 2: Find connection (get Id)
-- [ ] Step 3: Ping connection (confirm Enabled)
-- [ ] Step 4: Discover capabilities (activities first, then resources)
-- [ ] Step 4T: (Triggers only) Get trigger objects → get trigger metadata
-- [ ] Step 5: Resolve reference fields (if any)
-- [ ] Step 6: Execute operation
+- [ ] Step 2: Find connection + ping (get Id, confirm Enabled)
+- [ ] Step 3: Discover capabilities (activities first, then resources)
+- [ ] Step 3T: (Triggers only) Get trigger objects → get trigger metadata
+- [ ] Step 4: Resolve reference fields (if any)
+- [ ] Step 5: Execute operation
 ```
+
+---
 
 ## Step 1: Find the Connector
 
-```bash
-uip is connectors list --filter "<vendor>" --output json
+Agent file: [agents/connectors.md](agents/connectors.md). Use the Agent tool with this prompt:
+
+```yaml
+input:
+  vendor: "<VENDOR>"
+task: Find the connector key for this vendor. Use --output json on all uip commands. Return Key and whether HTTP fallback was used.
 ```
 
-| Outcome | Action |
-|---|---|
-| Native connector found | Use its **`Key`**. Proceed to Step 2. |
-| Not found | Fall back to HTTP connector (`uipath-uipath-http`). See [connectors.md — HTTP Connector Fallback](connectors.md#http-connector-fallback). |
+**Expect back:** connector `Key`, whether HTTP fallback was used
 
-## Step 2: Find a Connection
-
-```bash
-uip is connections list "<connector-key>" --output json
-```
-
-- **Native**: Pick default enabled connection (`IsDefault: Yes`, `State: Enabled`).
-- **HTTP fallback**: Match connection by vendor **Name** (case-insensitive substring).
-- **Multiple**: Present options to the user.
-- **None**: Ask user to create via `is connections create "<connector-key>"`.
-
-See [connections.md — Selecting a Connection](connections.md#selecting-a-connection) for full selection logic.
-
-## Step 3: Ping the Connection
-
-```bash
-uip is connections ping "<connection-id>" --output json
-```
-
-| Result | Action |
-|---|---|
-| `Enabled` | Healthy. Proceed to Step 4. |
-| Fails | Run `is connections edit <id>` to re-authenticate, then ping again. If still fails, ask user to choose another or create new. |
-
-## Step 4: Discover Capabilities
-
-**4a. Check activities first** — activities are pre-built actions (e.g., "Send Email", "Create Invoice") that may directly accomplish the task:
-
-```bash
-uip is activities list "<connector-key>" --output json
-```
-
-| Outcome | Action |
-|---|---|
-| Matching activity found for the user's task | Use the activity. See [activities.md](activities.md) for details. |
-| No matching activity | Proceed to Step 4b (resources). |
-
-**4b. List resources** — if no activity matches, discover CRUD-capable objects. **Always pass `--connection-id`** to include custom objects, and **`--operation`** to filter to the intended action:
-
-```bash
-uip is resources list "<connector-key>" \
-  --connection-id "<id>" --operation <Create|List|Retrieve|Update|Delete|Replace> --output json
-```
-
-**4c. Describe the target resource** — get field metadata for the matched object:
-
-```bash
-uip is resources describe "<connector-key>" "<object>" \
-  --connection-id "<id>" --operation <operation> --output json
-```
-
-| Describe outcome | Action |
-|---|---|
-| Returns `requiredFields` / `optionalFields` | Use field metadata. Proceed to Step 5. |
-| Returns empty `availableOperations` or "Operation not found" | **Metadata gap** — do not retry with `--refresh`. Skip describe, proceed to Step 5 with inferred fields. See [resources.md — Describe Failures](resources.md#describe-failures). |
-
-See [resources.md](resources.md) for why `--connection-id` and `--operation` are critical.
-
-## Step 4T: Trigger Metadata (if user needs trigger/event configuration)
-
-If the user's task involves **event triggers** (e.g., "when a record is created", "listen for updates"), discover trigger metadata instead of (or in addition to) CRUD resources.
-
-**4T-a. List trigger activities** to see what events the connector supports:
-
-```bash
-uip is activities list "<connector-key>" --triggers --output json
-```
-
-Present trigger activities to the user. Note the **Operation** field (e.g., CREATED, UPDATED, DELETED).
-
-**4T-b. For CREATED/UPDATED/DELETED operations** — get available trigger objects:
-
-```bash
-uip is triggers objects "<connector-key>" "<OPERATION>" \
-  --connection-id "<id>" --output json
-```
-
-Present objects to the user and let them choose.
-
-**4T-c. Get trigger field metadata** for the selected object:
-
-```bash
-uip is triggers describe "<connector-key>" "<OPERATION>" "<object-name>" \
-  --connection-id "<id>" --output json
-```
-
-**4T-d. For non-CRUD trigger operations** — skip 4T-b. Use the activity's **ObjectName** as the `<object-name>` and go directly to 4T-c.
-
-| Trigger outcome | Action |
-|---|---|
-| Trigger activities found | Present to user, proceed to 4T-b or 4T-c based on operation type |
-| No trigger activities | Connector doesn't support events. Inform user. |
-| No objects for operation | Verify operation name is uppercase (CREATED/UPDATED/DELETED). Check connector `hasEvents`. |
-
-See [triggers.md](triggers.md) for full trigger domain reference and response fields.
-
-## Step 5: Resolve Reference Fields
-
-**When describe succeeded:** Check output for `referenceFields`. If none exist, skip to Step 6. For each reference field: list the referenced object, collect valid IDs, and present options to the user.
-
-**When describe was unavailable (metadata gap):** Infer references from the user's request — fields ending in `Id` (e.g., `PromotionId`) typically reference the object with the matching base name (`Promotion`). List that object to resolve the ID before executing.
-
-See [resources.md — Reference Fields](resources.md#reference-fields-critical) and [resources.md — Inferring References Without Describe](resources.md#inferring-references-without-describe).
-
-## Step 6: Execute
-
-```bash
-uip is resources execute <verb> "<connector-key>" "<object>" \
-  --connection-id "<id>" --body '{"field": "value"}' --output json
-```
-
-See [resources.md — Execute Operations](resources.md#execute-operations) for the verb table and options.
+See [agents/connectors.md — Response Fields](agents/connectors.md#response-fields) and [agents/connectors.md — HTTP Connector Fallback](agents/connectors.md#http-connector-fallback).
 
 ---
 
-## Happy-Path Example (CRUD)
+## Step 2: Find a Connection + Ping
 
-```bash
-# 1. Find connector
-uip is connectors list --filter "salesforce" --output json
-# → Key: "uipath-salesforce-sfdc"
+Agent file: [agents/connections.md](agents/connections.md). Use the Agent tool with this prompt:
 
-# 2. Find connection
-uip is connections list "uipath-salesforce-sfdc" --output json
-# → Id: "abc-123", IsDefault: Yes, State: Enabled
-
-# 3. Ping
-uip is connections ping "abc-123" --output json
-# → Status: Enabled
-
-# 4a. Check activities first
-uip is activities list "uipath-salesforce-sfdc" --output json
-# → No matching activity for "create contact" → fall back to resources
-
-# 4b. List resources with operation
-uip is resources list "uipath-salesforce-sfdc" \
-  --connection-id "abc-123" --operation Create --output json
-# → includes "Contact"
-
-# 4c. Describe the target resource
-uip is resources describe "uipath-salesforce-sfdc" "Contact" \
-  --connection-id "abc-123" --operation Create --output json
-# → requiredFields: [LastName], optionalFields: [FirstName, Email, ...], referenceFields: []
-
-# 5. No referenceFields → skip resolution, go straight to execute
-
-# 6. Execute
-uip is resources execute create "uipath-salesforce-sfdc" "Contact" \
-  --connection-id "abc-123" --body '{"LastName": "Doe", "FirstName": "Jane"}' --output json
+```yaml
+input:
+  connectorKey: "<CONNECTOR_KEY>"
+  isHttpFallback: <true/false>
+  vendorName: "<VENDOR>"
+task: Find a connection, ping it, and return Id, Name, State, and ping status. Use --output json on all uip commands.
 ```
+
+**Expect back:** connection `Id`, `State`, ping status (must be `Enabled`)
+
+See [agents/connections.md — Selecting a Connection](agents/connections.md#selecting-a-connection) and [agents/connections.md — Response Fields](agents/connections.md#response-fields).
 
 ---
 
-## Happy-Path Example (Triggers)
+## Step 3: Discover Capabilities
 
-```bash
-# 1. Find connector
-uip is connectors list --filter "salesforce" --output json
-# → Key: "uipath-salesforce-sfdc"
+Agent file: [agents/activities.md](agents/activities.md). Use the Agent tool with this prompt:
 
-# 2. Find connection
-uip is connections list "uipath-salesforce-sfdc" --output json
-# → Id: "228624", IsDefault: Yes, State: Enabled
-
-# 3. Ping
-uip is connections ping "228624" --output json
-# → Status: Enabled
-
-# 4T-a. List trigger activities
-uip is activities list "uipath-salesforce-sfdc" --triggers --output json
-# → Trigger activities with Operation: CREATED, UPDATED, DELETED
-
-# 4T-b. Get objects for CREATED operation
-uip is triggers objects "uipath-salesforce-sfdc" CREATED \
-  --connection-id "228624" --output json
-# → [AccountHistory, Contact, Lead, ...]
-# → User picks "AccountHistory"
-
-# 4T-c. Get trigger metadata (fields) for AccountHistory
-uip is triggers describe "uipath-salesforce-sfdc" CREATED "AccountHistory" \
-  --connection-id "228624" --output json
-# → Returns field definitions (names, types, descriptions)
+```yaml
+input:
+  connectorKey: "<CONNECTOR_KEY>"
+  connectionId: "<CONNECTION_ID>"
+  userIntent: "<USER_INTENT>"
+task: Check activities first. If no match, list resources and describe the target. Use --output json on all uip commands. Return match type (activity/resource), name, operation, field metadata, and whether describe succeeded.
 ```
+
+**Expect back:** match type, object/activity name, operation, field metadata, describe status
+
+See [agents/activities.md — When to Use Activities vs Resources vs Triggers](agents/activities.md#when-to-use-activities-vs-resources-vs-triggers) and [agents/activities.md — Response Fields](agents/activities.md#response-fields).
+
+---
+
+## Step 3T: Trigger Metadata (if trigger workflow)
+
+Use this **instead of Step 3** when the user's task involves event triggers.
+
+Agent file: [agents/triggers.md](agents/triggers.md). Use the Agent tool with this prompt:
+
+```yaml
+input:
+  connectorKey: "<CONNECTOR_KEY>"
+  connectionId: "<CONNECTION_ID>"
+task: List trigger activities, get trigger objects, and get trigger metadata. Use --output json on all uip commands. Present choices to the user. Return trigger activities, selected operation, selected object, and field definitions.
+```
+
+**Expect back:** trigger activities, selected operation/object, field definitions
+
+See [agents/triggers.md — Trigger Discovery Flow](agents/triggers.md#trigger-discovery-flow) and [agents/triggers.md — CRUD vs Non-CRUD Triggers](agents/triggers.md#crud-vs-non-crud-triggers).
+
+---
+
+## Step 4: Resolve Reference Fields
+
+**Skip if:** Step 3 returned no reference fields and describe succeeded.
+
+Agent file: [agents/resources.md](agents/resources.md). Use the Agent tool with this prompt:
+
+```yaml
+input:
+  connectorKey: "<CONNECTOR_KEY>"
+  connectionId: "<CONNECTION_ID>"
+  resourceName: "<RESOURCE>"
+  referenceFields: <REFERENCE_FIELDS_JSON>
+  describeAvailable: <true/false>
+  userProvidedFields: <USER_FIELDS>
+task: Resolve all reference fields and return field-to-ID mappings. Use --output json on all uip commands.
+```
+
+**Expect back:** resolved field-to-ID mappings
+
+See [agents/resources.md — Reference Fields (CRITICAL)](agents/resources.md#reference-fields-critical) and [agents/resources.md — Field Dependency Chains](agents/resources.md#field-dependency-chains-field-actions).
+
+---
+
+## Step 5: Execute
+
+Agent file: [agents/resources.md](agents/resources.md). Use the Agent tool with this prompt:
+
+```yaml
+input:
+  connectorKey: "<CONNECTOR_KEY>"
+  connectionId: "<CONNECTION_ID>"
+  resourceName: "<RESOURCE>"
+  operation: "<create|list|get|update|delete|replace>"
+  body: <BODY_JSON>
+  query: <QUERY_PARAMS>
+  isHttpFallback: <true/false>
+task: Execute the operation and return the result. Use --output json on all uip commands.
+```
+
+**Expect back:** the execution result
+
+See [agents/resources.md — Execute Operations](agents/resources.md#execute-operations) and [agents/resources.md — Read-Only Field Recovery](agents/resources.md#read-only-field-recovery).
+
+---
+
+## Agent File Reference
+
+| File | Purpose | When to use |
+|---|---|---|
+| `agents/connectors.md` | Connector discovery + HTTP fallback | Step 1 |
+| `agents/connections.md` | Connection selection + ping | Step 2 |
+| `agents/activities.md` | Activities check, resource listing, describe | Step 3 |
+| `agents/triggers.md` | Trigger activities, objects, metadata | Step 3T |
+| `agents/resources.md` | Reference fields, execute, error recovery, pagination | Steps 4–5 |

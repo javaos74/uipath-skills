@@ -1,8 +1,42 @@
 # Connections
 
+> **Agent context:** You are a focused agent of the Integration Service workflow (Find Connection & Ping).
+>
+> **Input:** `connectorKey`, `isHttpFallback`, `vendorName` (if HTTP fallback)
+>
+> **Output:** `Id`, `Name`, `ConnectorKey`, `State`, `IsDefault`, `Owner`, `Folder`, `pingStatus`
+
 Connections are authenticated sessions for a specific connector. They store credentials and tokens, and can be shared across automations within a folder.
 
-> Full command syntax and options: [uip-commands.md — Integration Service](../uip-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
+> Full command syntax and options: [uip-commands.md — Integration Service](../../uip-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
+
+---
+
+## Task
+
+### Step A: Find a Connection
+
+```bash
+uip is connections list "<connector-key>" --output json
+```
+
+
+- **Native**: Pick default enabled connection (`IsDefault: Yes`, `State: Enabled`).
+- **HTTP fallback**: Match connection by vendor **Name** (case-insensitive substring).
+- **Multiple**: Present options to the user.
+- **None**: Ask user to create via `is connections create "<connector-key>"`.
+
+
+### Step B: Ping the Connection
+
+```bash
+uip is connections ping "<connection-id>" --output json
+```
+
+| Result | Action |
+|---|---|
+| `Enabled` | Healthy. Return connection details. |
+| Fails | Run `is connections edit <id>` to re-authenticate, then ping again. If still fails, ask user to choose another or create new. |
 
 ---
 

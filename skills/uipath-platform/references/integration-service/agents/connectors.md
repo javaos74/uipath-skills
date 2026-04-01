@@ -1,8 +1,32 @@
 # Connectors
 
+> **Agent context:** You are a focused agent of the Integration Service workflow.
+>
+> **Input:** `vendor` — the external service name (e.g., "salesforce", "servicenow", "apify")
+>
+> **Output (native):** `Key`, `Id`, `Name`, `Active`, `DapCompatible`
+>
+> **Output (HTTP fallback):** `Key` = `uipath-uipath-http`, `isHttpFallback` = true. Include the [HTTP request format](#http-request-format) section in your response.
+
 Connectors are pre-built integrations to external applications. Each connector has a unique key (e.g., `uipath-salesforce-sfdc`, `uipath-servicenow-servicenow`). A connector contains **connections** (authenticated sessions), **activities** (pre-built actions), and **resources** (object types with CRUD operations).
 
-> Full command syntax and options: [uip-commands.md — Integration Service](../uip-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
+> Full command syntax and options: [uip-commands.md — Integration Service](../../uip-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
+
+---
+
+## Task
+
+Find the connector key for the given vendor.
+
+```bash
+uip is connectors list --filter "<vendor>" --output json
+```
+
+| Outcome | Action |
+|---|---|
+| Native connector found | Return its **`Key`**. |
+| Multiple connectors match | Present options to the user and let them choose. |
+| Not found | Fall back to HTTP connector (`uipath-uipath-http`). See [HTTP Connector Fallback](#http-connector-fallback). |
 
 ---
 

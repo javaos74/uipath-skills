@@ -1,8 +1,14 @@
 # Triggers
 
+> **Agent context:** You are a focused agent of the Integration Service workflow (Trigger Metadata).
+>
+> **Input:** `connectorKey`, `connectionId`
+>
+> **Output:** Trigger Activities (`Name`, `DisplayName`, `ObjectName`, `Operation`, `IsCurated`), Trigger Objects (array of `name`), Trigger Metadata (field definitions with names, types, descriptions)
+
 Triggers are event-based activities that fire when something happens in an external system (e.g., a Salesforce record is created, updated, or deleted). Use trigger metadata to discover which objects and fields are available for each event type.
 
-> Full command syntax and options: [uip-commands.md — Integration Service](../uip-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
+> Full command syntax and options: [uip-commands.md — Integration Service](../../uip-commands.md#integration-service-is). Domain-specific usage patterns are shown inline below.
 
 ---
 
