@@ -15,12 +15,21 @@ Captures diagnostic context from the current project and files a structured GitH
 - User explicitly asks to report a bug or file an issue
 - A skill produced incorrect output, wrong CLI commands, or bad JSON
 
-## Prerequisites
-
-- `gh` CLI authenticated with access to `UiPath/skills` (`gh auth status`)
-- If not authenticated, tell the user to run: `gh auth login`
-
 ## Workflow
+
+### Step 0 — Check `gh` CLI is ready
+
+```bash
+gh auth status 2>&1
+```
+
+| Result | Action |
+|---|---|
+| `Logged in to github.com` | Proceed to Step 1 |
+| `gh: command not found` | Tell the user: **"Install the GitHub CLI first: `brew install gh` (macOS) or see https://cli.github.com. Then run `gh auth login`."** Stop here. |
+| `not logged in` / auth error | Tell the user: **"Run `gh auth login` to authenticate with GitHub."** Stop here. |
+
+> **Do not proceed until `gh auth status` succeeds.** The issue cannot be filed without it.
 
 ### Step 1 — Ask what went wrong
 
