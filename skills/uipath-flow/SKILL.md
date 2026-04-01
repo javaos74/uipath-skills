@@ -232,7 +232,7 @@ uip flow registry get <nodeType> --connection-id <connection-id> --output json
 
 This returns enriched `inputDefinition.fields` and `outputDefinition.fields` with accurate type, required, description, enum, and `reference` info. Without `--connection-id`, only standard/base fields are returned.
 
-The response also includes `connectorMethodInfo` with the real HTTP `method` (e.g. `GET`, `POST`), `path` template (e.g. `/ConversationsInfo/{conversationsInfoId}`), and `operation` type (e.g. `Retrieve`, `Create`). **Save these three values** — you must pass them to `node configure` later.
+The response also includes `connectorMethodInfo` with the real HTTP `method` (e.g. `GET`, `POST`) and `path` template (e.g. `/ConversationsInfo/{conversationsInfoId}`). **Save these two values** — you must pass them to `node configure` later.
 
 #### 4c. Describe the resource and read full metadata
 
@@ -370,10 +370,10 @@ After adding a connector node with `node add`, configure it with the resolved co
 
 ```bash
 uip flow node configure flow_files/<ProjectName>.flow <nodeId> \
-  --detail '{"connectionId": "<id>", "folderKey": "<key>", "method": "POST", "endpoint": "/issues", "operation": "Create", "bodyParameters": {"fields.project.key": "ENGCE", "fields.issuetype.id": "10004"}}'
+  --detail '{"connectionId": "<id>", "folderKey": "<key>", "method": "POST", "endpoint": "/issues", "bodyParameters": {"fields.project.key": "ENGCE", "fields.issuetype.id": "10004"}}'
 ```
 
-The `method`, `endpoint`, and `operation` values come from `connectorMethodInfo` in the `registry get` response (Step 4b). The command populates `inputs.detail` and creates workflow-level `bindings` entries. Use **resolved IDs** from Step 4c, not display names.
+The `method` and `endpoint` values come from `connectorMethodInfo` in the `registry get` response (Step 4b). The command populates `inputs.detail` and creates workflow-level `bindings` entries. Use **resolved IDs** from Step 4c, not display names.
 
 > **Shell quoting tip:** For complex `--detail` JSON, write it to a temp file: `uip flow node configure <file> <nodeId> --detail "$(cat /tmp/detail.json)"`
 

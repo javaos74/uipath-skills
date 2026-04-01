@@ -83,9 +83,15 @@ Debug a Flow in the cloud via Studio Web + Orchestrator. **Requires `uip login`.
 
 ```bash
 UIPCLI_LOG_LEVEL=info uip flow debug <path-to-project-dir>
+
+# Pass input arguments to the flow
+UIPCLI_LOG_LEVEL=info uip flow debug <path-to-project-dir> \
+  --inputs '{"numberA": 5, "numberB": 7}'
 ```
 
 The argument is the **project directory path** (the folder containing `project.uiproj`). Use `<ProjectName>/` from the solution dir, or `.` if already inside the project dir. Always run `uip flow validate` first.
+
+Use `--inputs` to pass a JSON object of input arguments when the flow has input parameters (e.g. trigger inputs or workflow arguments).
 
 Run `uip flow debug --help` to discover additional options.
 
@@ -132,10 +138,10 @@ Configure a **connector** node with connection details, method info, and paramet
 
 ```bash
 uip flow node configure flow_files/<ProjectName>.flow <nodeId> \
-  --detail '{"connectionId": "<id>", "folderKey": "<key>", "method": "GET", "endpoint": "/Resource/{id}", "operation": "Retrieve", "bodyParameters": {...}}'
+  --detail '{"connectionId": "<id>", "folderKey": "<key>", "method": "GET", "endpoint": "/Resource/{id}", "bodyParameters": {...}}'
 ```
 
-The `--detail` JSON accepts: `connectionId` (required), `folderKey` (required), `method` (required — HTTP method from `connectorMethodInfo`), `endpoint` (required — path template from `connectorMethodInfo`), `operation` (required — e.g. `Retrieve`, `Create`, `List`), `bodyParameters`, `queryParameters`, `pathParameters`. Get the `method`, `endpoint`, and `operation` values from the `connectorMethodInfo` field in the `registry get` response. The command also sets `inputMetadata`. Output variables are handled automatically by `node add` via the definition's `outputDefinition`.
+The `--detail` JSON accepts: `connectionId` (required), `folderKey` (required), `method` (required — HTTP method from `connectorMethodInfo`), `endpoint` (required — path template from `connectorMethodInfo`), `bodyParameters`, `queryParameters`, `pathParameters`. Get the `method` and `endpoint` values from the `connectorMethodInfo` field in the `registry get` response.
 
 ## uip flow edge
 
