@@ -249,7 +249,7 @@ cat <metadataFile path from response>
 The full metadata contains:
 - **`parameters`** — query and path parameters (may include required params not in `requestFields`, e.g. `send_as` for Slack)
 - **`requestFields`** — body fields with `type`, `required`, `description`, and `reference` objects for ID resolution
-- **`path`** — the API endpoint path (use this as the `endpoint` in `node configure`)
+- **`path`** — the API endpoint path (auto-derived by `node configure`, no need to provide manually)
 - **`responseFields`** — response schema
 
 #### 4d. Resolve reference fields
@@ -368,10 +368,10 @@ After adding a connector node with `node add`, configure it with the resolved co
 
 ```bash
 uip flow node configure flow_files/<ProjectName>.flow <nodeId> \
-  --detail '{"connectionId": "<id>", "folderKey": "<key>", "endpoint": "<endpoint>", "bodyParameters": {"fields.project.key": "ENGCE", "fields.issuetype.id": "10004"}}'
+  --detail '{"connectionId": "<id>", "folderKey": "<key>", "bodyParameters": {"fields.project.key": "ENGCE", "fields.issuetype.id": "10004"}}'
 ```
 
-This populates `inputs.detail` (connection, endpoint, body/query/path parameters) and creates the workflow-level `bindings` entries automatically. Use **resolved IDs** from Step 4c, not display names.
+The command auto-derives the HTTP method and endpoint path from the registry (`connectorMethodInfo`), populates `inputs.detail`, copies output definitions to the node instance, and creates workflow-level `bindings` entries. You do **not** need to provide `endpoint` — it is resolved automatically. Use **resolved IDs** from Step 4c, not display names.
 
 > **Shell quoting tip:** For complex `--detail` JSON, write it to a temp file: `uip flow node configure <file> <nodeId> --detail "$(cat /tmp/detail.json)"`
 

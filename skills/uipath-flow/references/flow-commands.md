@@ -128,14 +128,14 @@ uip flow node list <ProjectName>.flow --output json
 
 ### uip flow node configure
 
-Configure a **connector** node with connection and endpoint details. Run this after `node add` for connector nodes.
+Configure a **connector** node with connection details and parameter values. Run this after `node add` for connector nodes.
 
 ```bash
 uip flow node configure flow_files/<ProjectName>.flow <nodeId> \
-  --detail '{"connectionId": "<id>", "folderKey": "<key>", "endpoint": "<endpoint>", "bodyParameters": {...}}'
+  --detail '{"connectionId": "<id>", "folderKey": "<key>", "bodyParameters": {...}}'
 ```
 
-The `--detail` JSON accepts: `connectionId`, `folderKey`, `endpoint`, `bodyParameters`, `queryParameters`, `pathParameters`. The command populates `inputs.detail` and creates workflow-level `bindings` entries (connection + folder key) automatically.
+The `--detail` JSON accepts: `connectionId` (required), `folderKey` (required), `bodyParameters`, `queryParameters`, `pathParameters`. The `endpoint` field is optional — the command auto-derives the HTTP method and endpoint path template from the registry (`connectorMethodInfo`). It also copies output definitions to the node instance and sets `inputMetadata`.
 
 ## uip flow edge
 
