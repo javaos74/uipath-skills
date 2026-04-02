@@ -16,7 +16,7 @@ Scan the approved `.arch.plan.md` node table and connector summary. Validate eac
 
 | Category | How to identify | Action |
 | --- | --- | --- |
-| Connector nodes | Node type starts with `uipath.connector.*` or Notes say "connector:" | Run Steps 2a–2d (bind connection, resolve reference fields, validate required inputs) |
+| Connector nodes | Node type starts with `uipath.connector.*` or Notes say "connector:" | Run Step 2 (follow the relevant node guide in `nodes/`) |
 | Resource nodes | Node type starts with `uipath.core.*` or Notes say "resource:" | Run Step 3 (registry search, confirm node type) |
 | Mock placeholders | Node type is `core.logic.mock` | Run Step 4 (check if published, replace if available) |
 | OOTB nodes | Everything else (Script, HTTP, Decision, Loop, etc.) | Run Step 1a below (validate with registry) |
@@ -44,55 +44,9 @@ Update your node table if any ports or required fields differ from the planning 
 
 ### Step 2 — Resolve Connector Nodes
 
-For each connector node, run these sub-steps in order.
+For each connector node, follow the Configuration Workflow in the relevant node guide (`nodes/`). The guide covers connection binding, metadata retrieval, field resolution, and validation.
 
-#### 2a. Find the connector node type
-
-```bash
-uip flow registry pull --force
-uip flow registry search "<service-name>" --output json
-```
-
-Find the node type matching the intended operation from the `.arch.plan.md` connector summary. Confirm it has `category: "connector"` in the results.
-
-#### 2b. Bind a connection
-
-Extract the connector key from the node type (`uipath.connector.<connector-key>.<activity>`).
-
-```bash
-uip is connections list "<connector-key>" --output json
-```
-
-1. Pick the default enabled connection (`IsDefault: Yes`, `State: Enabled`)
-2. If no connection exists, **stop and tell the user** — they must create one before proceeding
-3. Verify the connection is healthy:
-
-```bash
-uip is connections ping "<connection-id>" --output json
-```
-
-Record the connection ID for `bindings_v2.json` during the build step.
-
-#### 2c. Get enriched metadata and resolve reference fields
-
-```bash
-uip flow registry get <nodeType> --connection-id <connection-id> --output json
-```
-
-Check `inputDefinition.fields` for fields with a `reference` object — these require ID lookups:
-
-```bash
-uip is resources execute list "<connector-key>" "<resource>" \
-  --connection-id "<id>" --output json
-```
-
-Use resolved IDs (not display names) in the node inputs. Present options to the user when multiple matches exist.
-
-#### 2d. Validate required fields
-
-Check every `required: true` field in `inputDefinition.fields` against what the user provided. If any required field is missing, **ask the user before proceeding** — list the missing fields with their `displayName` and expected value type.
-
-Do NOT proceed until all required fields have values.
+Record the connection ID and resolved field values for the build step.
 
 ### Step 3 — Resolve Resource Nodes
 
@@ -188,7 +142,7 @@ graph TD
 
 The implementation plan adds these columns beyond the architectural plan:
 
-- **Connection ID**: The bound IS connection UUID (connector nodes only)
+- **Connection ID**: The bound connection UUID (connector nodes only)
 - **Verified**: Whether the connection was pinged successfully
 
 ### Step 7 — Get Approval
@@ -212,12 +166,7 @@ These are org-wide "when to use what" rules that can't be encoded in individual 
 
 ### Connecting to External Services
 
-Use this decision order — prefer higher tiers:
-
-1. **Pre-built Integration Service connector** — Use when a connector exists and its activities cover your use case. Connectors handle auth (OAuth, API keys), token refresh, pagination, and error formatting automatically. Always check first: `uip flow registry search <service> --output json`.
-2. **HTTP Request within a connector** — Use when a connector exists but lacks the specific API endpoint you need. The connector still manages authentication; you just supply the path and payload.
-3. **Standalone HTTP Request node** (`core.action.http`) — Use for one-off API calls to services without connectors, or during prototyping when you need quick iteration. You handle auth manually (headers, tokens).
-4. **RPA workflow node** — Use only when the target system has no API at all (legacy desktop apps, terminal-based systems, browser flows that can't be done via API). RPA requires robot infrastructure and is orders of magnitude slower than API-based approaches.
+See [planning-phase-architectural.md — Selecting External Service Nodes](planning-phase-architectural.md) for the 4-tier decision order (connector → HTTP within connector → standalone HTTP → RPA).
 
 ### Agent Nodes vs Workflow Logic
 
@@ -271,7 +220,7 @@ Execute custom JavaScript code. Use for data transformation, computation, format
 
 #### HTTP Request (`core.action.http`)
 
-Make REST API calls. Supports branching on response status, retries, and authentication via Integration Service connections.
+Make REST API calls. Supports branching on response status, retries, and connection-based authentication.
 
 | | |
 |--|--|
@@ -290,7 +239,7 @@ Make REST API calls. Supports branching on response status, retries, and authent
 - `retryCount` — Number of retries on failure (default: 0)
 - `branches` — Array of `{ id, name, conditionExpression }` for response routing
 - `authenticationType` — `manual` or from a connector connection
-- `application`, `connection` — For IS-authenticated requests
+- `application`, `connection` — For connection-authenticated requests
 
 **Dynamic ports:** Each entry in `branches` creates a `branch-{item.id}` output port. If no branch condition matches, flow goes to `default`.
 
@@ -437,22 +386,14 @@ See [node-reference.md — Subflow](node-reference.md) for the full JSON structu
 
 ### Connector Nodes
 
-Connector nodes are dynamically loaded from Integration Service and are not part of the OOTB registry. They appear after `uip login` + `uip flow registry pull`.
-
-Connector nodes typically have:
-- `category: "connector"`
-- Complex `inputs` with `detail` object containing operation-specific fields
-- `application` and `connection` fields for IS authentication
-- Display labels from the connector's metadata
+Connector nodes call external services. See the relevant node guide in `nodes/` for the full configuration guide including connection binding, `inputs.detail` structure, and debugging.
 
 **To find connector nodes:**
 ```bash
 uip flow registry search <service> --output json
 ```
 
-Search broadly by service name, then check the `category` field in results to confirm it's a connector node.
-
-**Before using a connector node:** Always discover its capabilities via IS commands (see Step 4 in SKILL.md). The registry tells you the node exists; IS tells you what it can do and what fields are required.
+Before using a connector node, run Steps 2a–2d above to bind a connection and resolve reference fields.
 
 ### Agent Nodes
 
@@ -478,7 +419,7 @@ Resource nodes invoke published UiPath automations from within a flow. They appe
 | Agentic Process | `uipath.core.agentic-process.{key}` | Run an orchestration process |
 | Flow | `uipath.core.flow.{key}` | Run another flow as a subprocess |
 | API Workflow | `uipath.core.api-workflow.{key}` | Call a published API function |
-| Web App (Human Task) | `uipath.core.human-task.{key}` | Pause for human input via a UiPath App |
+| Human Task | `uipath.core.human-task.{key}` | Pause for human input via a UiPath App |
 
 **Discovery:** `uip flow registry search "<resource-name>" --output json`
 

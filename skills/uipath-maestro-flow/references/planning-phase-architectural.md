@@ -433,9 +433,9 @@ Use these to pick the right node type when the choice isn't obvious.
 
 When the architectural plan is approved, Phase 2 ([Planning Phase 2: Implementation](planning-phase-implementation.md)) takes over to:
 
-1. Run `uip flow registry search` and `registry get` for all connector and resource nodes
-2. Bind Integration Service connections (`uip is connections list`, `ping`)
-3. Resolve reference fields via `uip is resources execute list`
+1. Validate all node types via `uip flow registry get`
+2. Resolve connector and resource nodes (bind connections, resolve reference fields) — see relevant node guides in `nodes/`
+3. Resolve resource nodes (confirm published, get definitions)
 4. Validate required fields against user-provided values
 5. Replace `<PLACEHOLDER>` values in the node table with resolved IDs
 6. Replace `core.logic.mock` nodes with real resource nodes (if now published)
