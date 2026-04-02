@@ -243,10 +243,8 @@ Present a **short summary in chat** (goal + key nodes + open questions). Tell th
 **Read [references/planning-phase-implementation.md](references/planning-phase-implementation.md)** for the implementation resolution process.
 
 Phase 2 takes the approved architectural plan and resolves all implementation details:
-- Validate all node types (OOTB and connector) via `uip flow registry get` to confirm ports, inputs, and outputs
-- Run `uip flow registry search` and `registry get` for connector and resource nodes to resolve exact types
-- Bind Integration Service connections
-- Resolve reference fields via `uip is resources execute list`
+- Validate all node types via `uip flow registry get` to confirm ports, inputs, and outputs
+- Resolve connector and resource nodes using the relevant node guide in `references/nodes/`
 - Validate required fields against user-provided values
 - Replace `<PLACEHOLDER>` values with resolved IDs
 - Replace `core.logic.mock` nodes with real resource nodes (if published)
@@ -391,16 +389,12 @@ For Orchestrator deployment when explicitly requested, see [references/flow-comm
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
 | **Wire nodes with edges** | [references/flow-file-format.md - Edges](references/flow-file-format.md) |
 | **Find the right node type** | Run `uip flow registry search <keyword>` |
-| **Bind connector connections** | [references/nodes/is-activity.md — Configuration Workflow](references/nodes/is-activity.md) |
-| **Understand `bindings_v2.json`** | [references/nodes/is-activity.md — Bindings](references/nodes/is-activity.md) |
-| **Resolve reference fields** | [references/nodes/is-activity.md — Step 4](references/nodes/is-activity.md) + [/uipath:uipath-platform — Integration Service — Resources](/uipath:uipath-platform) |
-| **Check/create connections** | [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
+| **Work with connector/resource nodes** | Relevant node guide in `references/nodes/` + [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
 | **Publish to Studio Web** | Step 9 (solution bundle + upload) |
 | **Deploy to Orchestrator** (only if explicitly requested) | [references/flow-commands.md](references/flow-commands.md) + [/uipath:uipath-platform](/uipath:uipath-platform) |
 | **Manage variables and expressions** | [references/variables-and-expressions.md](references/variables-and-expressions.md) |
 | **Write `=js:` expressions** | [references/variables-and-expressions.md — Expression System](references/variables-and-expressions.md) |
 | **Orchestrate RPA, agents, apps** | [references/orchestration-guide.md](references/orchestration-guide.md) |
-| **Configure a connector node** | [references/nodes/is-activity.md](references/nodes/is-activity.md) |
 | **Create a resource that doesn't exist yet** | [references/orchestration-guide.md — Create New Workflow](references/orchestration-guide.md) |
 | **Add data transform nodes** | [references/node-reference.md — Data Transform](references/node-reference.md) |
 | **Create a subflow** | [references/node-reference.md — Subflow](references/node-reference.md) + Common Edits |

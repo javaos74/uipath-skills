@@ -44,55 +44,15 @@ Update your node table if any ports or required fields differ from the planning 
 
 ### Step 2 — Resolve Connector Nodes
 
-For each connector node, run these sub-steps in order.
+For each connector node, follow the Configuration Workflow in the relevant node guide (`nodes/`):
 
-#### 2a. Find the connector node type
+1. Find the connector node type via `uip flow registry search`
+2. Bind a connection (list, pick default enabled, ping to verify)
+3. Get enriched metadata with `--connection-id`
+4. Resolve reference fields (get IDs, not display names)
+5. Validate all required fields have values — ask the user if any are missing
 
-```bash
-uip flow registry pull --force
-uip flow registry search "<service-name>" --output json
-```
-
-Find the node type matching the intended operation from the `.arch.plan.md` connector summary. Confirm it has `category: "connector"` in the results.
-
-#### 2b. Bind a connection
-
-Extract the connector key from the node type (`uipath.connector.<connector-key>.<activity>`).
-
-```bash
-uip is connections list "<connector-key>" --output json
-```
-
-1. Pick the default enabled connection (`IsDefault: Yes`, `State: Enabled`)
-2. If no connection exists, **stop and tell the user** — they must create one before proceeding
-3. Verify the connection is healthy:
-
-```bash
-uip is connections ping "<connection-id>" --output json
-```
-
-Record the connection ID for `bindings_v2.json` during the build step.
-
-#### 2c. Get enriched metadata and resolve reference fields
-
-```bash
-uip flow registry get <nodeType> --connection-id <connection-id> --output json
-```
-
-Check `inputDefinition.fields` for fields with a `reference` object — these require ID lookups:
-
-```bash
-uip is resources execute list "<connector-key>" "<resource>" \
-  --connection-id "<id>" --output json
-```
-
-Use resolved IDs (not display names) in the node inputs. Present options to the user when multiple matches exist.
-
-#### 2d. Validate required fields
-
-Check every `required: true` field in `inputDefinition.fields` against what the user provided. If any required field is missing, **ask the user before proceeding** — list the missing fields with their `displayName` and expected value type.
-
-Do NOT proceed until all required fields have values.
+Record the connection ID and resolved field values for the build step.
 
 ### Step 3 — Resolve Resource Nodes
 
@@ -212,12 +172,7 @@ These are org-wide "when to use what" rules that can't be encoded in individual 
 
 ### Connecting to External Services
 
-Use this decision order — prefer higher tiers:
-
-1. **Pre-built Integration Service connector** — Use when a connector exists and its activities cover your use case. Connectors handle auth (OAuth, API keys), token refresh, pagination, and error formatting automatically. Always check first: `uip flow registry search <service> --output json`.
-2. **HTTP Request within a connector** — Use when a connector exists but lacks the specific API endpoint you need. The connector still manages authentication; you just supply the path and payload.
-3. **Standalone HTTP Request node** (`core.action.http`) — Use for one-off API calls to services without connectors, or during prototyping when you need quick iteration. You handle auth manually (headers, tokens).
-4. **RPA workflow node** — Use only when the target system has no API at all (legacy desktop apps, terminal-based systems, browser flows that can't be done via API). RPA requires robot infrastructure and is orders of magnitude slower than API-based approaches.
+See [planning-phase-architectural.md — Selecting External Service Nodes](planning-phase-architectural.md) for the 4-tier decision order (IS connector → HTTP within connector → standalone HTTP → RPA).
 
 ### Agent Nodes vs Workflow Logic
 
@@ -437,7 +392,7 @@ See [node-reference.md — Subflow](node-reference.md) for the full JSON structu
 
 ### Connector Nodes
 
-Connector nodes call external services via Integration Service. See [nodes/is-activity.md](nodes/is-activity.md) for the full configuration guide including connection binding, `inputs.detail` structure, and debugging.
+Connector nodes call external services via Integration Service. See the relevant node guide in `nodes/` for the full configuration guide including connection binding, `inputs.detail` structure, and debugging.
 
 **To find connector nodes:**
 ```bash

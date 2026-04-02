@@ -134,14 +134,7 @@ uip flow node list <ProjectName>.flow --output json
 
 ### uip flow node configure
 
-Configure a **connector** node with connection details, method info, and parameter values. Run this after `node add` for connector nodes.
-
-```bash
-uip flow node configure flow_files/<ProjectName>.flow <nodeId> \
-  --detail '{"connectionId": "<id>", "folderKey": "<key>", "method": "GET", "endpoint": "/Resource/{id}", "bodyParameters": {...}}'
-```
-
-The `--detail` JSON accepts: `connectionId` (required), `folderKey` (required), `method` (required — HTTP method from `connectorMethodInfo`), `endpoint` (required — path template from `connectorMethodInfo`), `bodyParameters`, `queryParameters`, `pathParameters`. Get the `method` and `endpoint` values from the `connectorMethodInfo` field in the `registry get` response.
+Configure a connector node with connection details and parameter values. Run after `node add` for connector nodes. See the relevant node guide in `nodes/` for the full `--detail` JSON schema.
 
 ## uip flow edge
 
@@ -172,7 +165,7 @@ Run `uip flow registry <subcommand> --help` for additional options (e.g., `--for
 
 ## Integration Service commands (for connector binding and reference resolution)
 
-See [nodes/is-activity.md](nodes/is-activity.md) for the full IS CLI command reference and connector configuration workflow (connection binding, enriched metadata, reference resolution, `node configure`).
+See the relevant node guide in `nodes/` for IS CLI commands and the connector configuration workflow.
 
 ## Global options (all commands)
 
