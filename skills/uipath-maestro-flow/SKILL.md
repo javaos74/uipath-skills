@@ -28,7 +28,7 @@ Comprehensive guide for creating, editing, validating, and debugging UiPath Flow
 ## Critical Rules
 
 1. **Do NOT `registry get` built-in nodes during Phase 1 (architectural planning).** The planning guide and node reference already document all OOTB node types with their ports, inputs, and output variables — sufficient for designing flow topology. However, **Phase 2 (implementation resolution) REQUIRES registry validation of all node types**, even OOTB nodes, to confirm ports and inputs match the current product state. Only run connector/resource `registry get` during Phase 1 if needed for decision-making. **Exception:** When building the flow (Step 6), you DO need `registry get` for any node type to populate the `definitions` array in the `.flow` file — definitions must be copied from registry output, never hand-written.
-2. **ALWAYS discover connector capabilities via IS before planning.** Follow Step 4 for every connector node: fetch a connection (4a), call `registry get --connection-id` for enriched metadata (4b), and resolve reference fields via `uip is resources execute list` (4c). Without this, `inputs.detail` will be wrong and `$vars` references will be unresolvable — errors that `flow validate` does not catch.
+2. **ALWAYS discover connector capabilities via IS before planning.** Follow Step 4 and [references/nodes/is.md](references/nodes/is.md) for every connector node: fetch a connection, call `registry get --connection-id` for enriched metadata, and resolve reference fields via `uip is resources execute list`. Without this, `inputs.detail` will be wrong and `$vars` references will be unresolvable — errors that `flow validate` does not catch.
 3. **ALWAYS check for existing connections** before using a connector node. Run `uip is connections list <connector-key>` — if no connection exists, tell the user before proceeding.
 4. **ALWAYS use `--output json`** on all `uip` commands when parsing output programmatically.
 5. **Edit `<ProjectName>.flow` only** — other generated files (`bindings_v2.json`, `entry-points.json`, `operate.json`, `package-descriptor.json`) are managed by the CLI and may be overwritten. To declare flow inputs/outputs, add variables in the `.flow` file (see [references/flow-file-format.md](references/flow-file-format.md)).
@@ -305,7 +305,7 @@ uip flow node configure flow_files/<ProjectName>.flow <nodeId> \
   --detail '{"connectionId": "<id>", "folderKey": "<key>", "method": "POST", "endpoint": "/issues", "bodyParameters": {"fields.project.key": "ENGCE", "fields.issuetype.id": "10004"}}'
 ```
 
-The `method` and `endpoint` values come from `connectorMethodInfo` in the `registry get` response (Step 4b). The command populates `inputs.detail` and creates workflow-level `bindings` entries. Use **resolved IDs** from Step 4c, not display names.
+The `method` and `endpoint` values come from `connectorMethodInfo` in the `registry get` response (see [references/nodes/is.md — Step 2](references/nodes/is.md)). The command populates `inputs.detail` and creates workflow-level `bindings` entries. Use **resolved IDs** from reference resolution, not display names.
 
 > **Shell quoting tip:** For complex `--detail` JSON, write it to a temp file: `uip flow node configure <file> <nodeId> --detail "$(cat /tmp/detail.json)"`
 
@@ -391,10 +391,9 @@ For Orchestrator deployment when explicitly requested, see [references/flow-comm
 | **Add a Script node** | [references/flow-file-format.md - Script node](references/flow-file-format.md) |
 | **Wire nodes with edges** | [references/flow-file-format.md - Edges](references/flow-file-format.md) |
 | **Find the right node type** | Run `uip flow registry search <keyword>` |
-| **Bind connector connections** | Step 4a + [references/flow-file-format.md — Bindings](references/flow-file-format.md) |
-| **Get enriched connector metadata** | Step 4b — `registry get --connection-id` |
-| **Resolve reference fields** | Step 4c + [/uipath:uipath-platform — Integration Service — Resources](/uipath:uipath-platform) |
-| **Discover connector capabilities** | Step 4 + [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
+| **Bind connector connections** | [references/nodes/is.md — Configuration Workflow](references/nodes/is.md) |
+| **Understand `bindings_v2.json`** | [references/nodes/is.md — Bindings](references/nodes/is.md) |
+| **Resolve reference fields** | [references/nodes/is.md — Step 4](references/nodes/is.md) + [/uipath:uipath-platform — Integration Service — Resources](/uipath:uipath-platform) |
 | **Check/create connections** | [/uipath:uipath-platform — Integration Service](/uipath:uipath-platform) |
 | **Publish to Studio Web** | Step 9 (solution bundle + upload) |
 | **Deploy to Orchestrator** (only if explicitly requested) | [references/flow-commands.md](references/flow-commands.md) + [/uipath:uipath-platform](/uipath:uipath-platform) |
