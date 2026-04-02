@@ -1,6 +1,34 @@
-# Integration Service (IS) Connector Nodes
+# IS Activity Nodes
 
-Connector nodes call external services (Jira, Slack, Salesforce, Outlook, etc.) via UiPath Integration Service. They are dynamically loaded — not built-in — and appear in the registry after `uip login` + `uip flow registry pull`.
+Connector activity nodes call external services (Jira, Slack, Salesforce, Outlook, etc.) via UiPath Integration Service. They are dynamically loaded — not built-in — and appear in the registry after `uip login` + `uip flow registry pull`.
+
+## When to Use
+
+Use an IS activity node when the flow needs to **call an external service that has a pre-built UiPath connector**. Connectors handle auth (OAuth, API keys), token refresh, pagination, and error formatting automatically.
+
+### Decision Order
+
+Prefer higher tiers when connecting to external services:
+
+| Tier | Approach | When to Use |
+|---|---|---|
+| 1 | **IS connector activity** (this node type) | A connector exists and its activities cover the use case |
+| 2 | **HTTP Request within a connector** | A connector exists but lacks the specific endpoint — connector still handles auth |
+| 3 | **Standalone HTTP Request** (`core.action.http`) | No connector exists, or quick prototyping — you handle auth manually |
+| 4 | **RPA workflow** | Target system has no API at all (legacy desktop apps, terminals) |
+
+### Prerequisites
+
+- `uip login` required — connector nodes only appear in the registry after authentication
+- A healthy IS connection must exist for the connector — if none exists, the user must create one before proceeding
+- `uip flow registry pull` must be run to cache connector node types locally
+
+### When NOT to Use
+
+- **No connector exists for the service** — use `core.action.http` instead
+- **Simple GET request with no auth** — `core.action.http` is simpler and faster to configure
+- **The operation needs desktop/browser interaction** — use an RPA resource node
+- **The task requires reasoning or judgment** — use an agent node
 
 ## Implementation
 
