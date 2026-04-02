@@ -3,20 +3,17 @@ name: uipath-lowcode-agents
 description: >-
   UiPath low-code agent authoring assistant — create, configure, validate, and publish
   declarative JSON-based AI agents. Covers agent.json editing (system prompts, input/output
-  schemas, model settings, contentTokens), adding features (memory spaces for RAG), adding
-  resources (escalations, tools, contexts, MCPs), creating evaluation sets with test cases,
-  validating with uip lowcodeagents validate, and publishing to Studio Web.
+  schemas, model settings, contentTokens), validating with uip lowcodeagents validate,
+  publishing to Studio Web, and embedding agents inline in flow projects.
   TRIGGER when: user wants to create a new low-code agent, edit agent.json, configure agent
-  prompts or model, design input/output schemas, add memory spaces or context grounding,
-  add escalations or tools, create evaluation sets or test cases, validate an agent project,
-  publish an agent to Studio Web, embed an agent in a flow project, or when the user
-  mentions "low-code agent", "agent.json", "agent builder", "declarative agent", or
-  "autonomous agent" in a UiPath context.
+  prompts or model, design input/output schemas, validate an agent project, publish an
+  agent to Studio Web, embed an agent in a flow project, or when the user mentions
+  "low-code agent", "agent.json", "agent builder", "declarative agent", or "autonomous
+  agent" in a UiPath context.
   DO NOT TRIGGER when: user wants Python coded agents (use uipath-coded-agents), flow
   projects without agents (use uipath-flow), Orchestrator management (use uipath-platform),
   XAML RPA workflows (use uipath-rpa-workflows), C# coded workflows (use
-  uipath-coded-workflows), or web apps (use uipath-coded-apps) — unless they want to
-  embed an agent inside a flow project.
+  uipath-coded-workflows), or web apps (use uipath-coded-apps).
 metadata:
   allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 ---
@@ -25,118 +22,78 @@ metadata:
 
 ## When to Use This Skill
 
-- Create a new low-code agent project from scratch
-- Edit `agent.json` (prompts, model, schemas, settings)
-- Configure system prompts and user message templates
-- Design input/output schemas
-- Add memory spaces for context grounding (RAG)
-- Add escalation resources for human-in-the-loop
-- Add tool resources (invoke processes, API workflows, other agents)
-- Add context resources (ECS indexes for document grounding)
-- Add MCP resources (Model Context Protocol servers)
-- Create and configure evaluation sets with test cases
-- Validate agent project structure and schemas
+- Create a new low-code agent project (standalone or inline in a flow)
+- Edit `agent.json` — prompts, model, schemas, settings
+- Design input/output schemas and sync with `entry-points.json`
+- Validate agent project structure
 - Publish agent to Studio Web
-- Embed an agent inside a flow project
 
 ## Critical Rules
 
-1. **Edit JSON files directly** — the `uip lowcodeagents` CLI only supports `init` (scaffold) and `validate` (check). All agent configuration is done by editing `agent.json`, `entry-points.json`, feature files, resource files, and eval files directly.
+1. **Edit JSON files directly** — the CLI only supports `init` (scaffold) and `validate` (check). All configuration is done by editing `agent.json` and `entry-points.json`.
 
-2. **Validate after every change** — run `uip lowcodeagents validate --output json` after each edit. Do not batch multiple edits before validating; catch errors one at a time.
+2. **Validate after every change** — run `uip lowcodeagents validate --output json` after each edit. Do not batch multiple edits before validating.
 
-3. **Use `--output json`** on all `uip` commands when parsing output programmatically.
+3. **Use `--output json`** on all `uip` commands when parsing output.
 
-4. **Keep schemas in sync** — `inputSchema` and `outputSchema` in `agent.json` must exactly match the `input` and `output` in `entry-points.json`. When adding or removing a field, update both files.
+4. **Keep schemas in sync** — `inputSchema` and `outputSchema` in `agent.json` must exactly match `input` and `output` in `entry-points.json`. Update both when adding or removing fields.
 
-5. **Use `{{input.fieldName}}` syntax** in user message templates. Do not use `$vars`, `=js:` expressions, or other template syntaxes — those belong to flow projects, not agents.
+5. **Use `{{input.fieldName}}` syntax** in user message templates. Do not use `$vars` or `=js:` expressions — those are flow syntax, not agent syntax.
 
-6. **Keep contentTokens in sync with content** — every message in `messages[]` has both a `content` string and a `contentTokens` array. When editing message text, update both. Read [references/agent-json-format.md](references/agent-json-format.md) § contentTokens Construction for the tokenization rules.
+6. **Keep contentTokens in sync with content** — every message has both a `content` string and a `contentTokens` array. Update both when editing. See [references/agent-json-format.md](references/agent-json-format.md) § contentTokens Construction.
 
-7. **Do not touch `.agent-builder/`** — this directory is managed by Studio Web. Do not create, edit, or regenerate any files inside it.
+7. **Do not touch `.agent-builder/`** — managed by Studio Web. Do not create, edit, or regenerate files inside it.
 
-8. **Do not publish without user consent** — bundling and uploading deploys the agent. Ask the user before running `uip solution bundle` and `uip solution upload`.
+8. **Do not publish without user consent** — ask before running `uip solution bundle` and `uip solution upload`.
 
-9. **Unique identifiers for features and resources** — every feature needs a unique `referenceKey`, every resource needs a unique `id`. Duplicate keys cause binding conflicts.
+9. **Do not modify `projectId`** — auto-generated by `uip lowcodeagents init`.
 
-10. **Eval inputs must match inputSchema** — test case `inputs` field names and types must match the agent's `inputSchema.properties`. Mismatched fields cause evaluation failures.
+10. **Solution must exist first** — create one with `uip solution new` before scaffolding an agent.
 
-11. **Never invoke other skills automatically** — if the user needs something outside this skill's scope (flow wiring, Orchestrator setup, coded agent), tell them which skill to use and what to ask for. Do not attempt cross-skill operations.
-
-12. **Do not modify `projectId`** — this UUID is auto-generated by `uip lowcodeagents init`. Changing it breaks the link to Studio Web.
-
-13. **Solution must exist first** — a solution directory (with `solution.uiproj`) must exist before scaffolding an agent. If none exists, create one with `uip solution new`.
+11. **Never invoke other skills automatically** — if the user needs flow wiring, Orchestrator setup, or coded agents, tell them which skill to use.
 
 ## Common Edits
 
-These recipes cover the most frequent modifications to existing agents. For each edit, validate afterward.
-
 ### Change System Prompt
 
-1. Edit `agent.json` → `messages[0].content` (the system message)
-2. Rebuild `messages[0].contentTokens` — for system prompts with no variables, this is a single `simpleText` entry containing the full prompt text
+1. Edit `agent.json` → `messages[0].content`
+2. Rebuild `messages[0].contentTokens` — single `simpleText` entry for prompts with no variables
 3. Validate
 
 ### Change User Message Template
 
-1. Edit `agent.json` → `messages[1].content` (the user message)
-2. Rebuild `messages[1].contentTokens` — tokenize each `{{input.fieldName}}` as a `variable` token, and surrounding text as `simpleText` tokens. See [references/agent-json-format.md](references/agent-json-format.md) § contentTokens Construction.
+1. Edit `agent.json` → `messages[1].content`
+2. Rebuild `messages[1].contentTokens` — tokenize `{{input.fieldName}}` as `variable`, surrounding text as `simpleText`
 3. Validate
 
 ### Add an Input Field
 
-1. Add the field to `agent.json` → `inputSchema.properties`
-2. If required, add the field name to `inputSchema.required`
-3. Mirror the change in `entry-points.json` → `entryPoints[0].input.properties` and `.required`
-4. If the field should appear in the user message, update `messages[1].content` and `contentTokens`
-5. Update any eval set `inputs` to include the new field
-6. Validate
+1. Add to `agent.json` → `inputSchema.properties` (and `.required` if mandatory)
+2. Mirror in `entry-points.json` → `entryPoints[0].input.properties` (and `.required`)
+3. Update `messages[1].content` and `contentTokens` if the field should appear in the user message
+4. Validate
 
 ### Add an Output Field
 
-1. Add the field to `agent.json` → `outputSchema.properties`
+1. Add to `agent.json` → `outputSchema.properties`
 2. Mirror in `entry-points.json` → `entryPoints[0].output.properties`
-3. Update eval set `expectedOutput` entries if needed
-4. Validate
+3. Validate
 
 ### Change Model Settings
 
-1. Edit `agent.json` → `settings.model` (model identifier), `settings.temperature`, `settings.maxTokens`, or `settings.maxIterations`
+1. Edit `agent.json` → `settings.model`, `.temperature`, `.maxTokens`, or `.maxIterations`
 2. Common models: `anthropic.claude-sonnet-4-6`, `gpt-4.1-2025-04-14`, `gpt-5.2-2025-12-11`
 3. Validate
 
-### Add a Memory Space
-
-1. Create directory `features/<MemorySpaceName>/`
-2. Create `feature.json` inside with `$featureType: "memorySpace"`, unique `id` and `referenceKey`, search settings. See [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Features: Memory Spaces.
-3. Validate
-
-### Add an Escalation
-
-1. Create directory `resources/<EscalationName>/`
-2. Create `resource.json` inside with `$resourceType: "escalation"`, channels, input/output schemas, recipients. See [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Resources: Escalations.
-3. Update the system prompt to tell the agent when and how to escalate
-4. Validate
-
-### Add a Test Case
-
-1. Open the target eval set in `evals/eval-sets/`
-2. Add an entry to `evaluations[]` with `id`, `name`, `inputs` (matching inputSchema), `expectedOutput`, and `evaluationCriterias`
-3. For escalation test cases, set `simulatedToolToCall` to the escalation tool name
-4. See [references/evaluations-guide.md](references/evaluations-guide.md) § Creating Test Cases
-5. Validate
-
-## Quick Start: New Agent from Scratch
+## Quick Start: New Standalone Agent
 
 ### Step 0 — Resolve `uip` binary
-
-Find the `uip` CLI. It may be installed globally or via nvm/npm:
 
 ```bash
 which uip || npm root -g 2>/dev/null | xargs -I{} echo {}/uip/bin/uip
 ```
 
-If not found, install: `npm install -g @uipath/uip`
+If not found: `npm install -g @uipath/uip`
 
 ### Step 1 — Check login status
 
@@ -144,23 +101,14 @@ If not found, install: `npm install -g @uipath/uip`
 uip login status --output json
 ```
 
-Login is required for publishing. If not logged in and the user wants to publish later, prompt them to run `uip login`.
+Required for publishing. If not logged in, prompt the user to run `uip login`.
 
 ### Step 2 — Create solution and scaffold agent
 
-**2a. Create a solution** (skip if one already exists):
 ```bash
 uip solution new "<SOLUTION_NAME>" --output json
-```
-
-**2b. Scaffold the agent** (run from inside the solution directory):
-```bash
-cd "<SOLUTION_DIR>"
+cd "<SOLUTION_NAME>"
 uip lowcodeagents init "<AGENT_NAME>" --output json
-```
-
-**2c. Register the agent project with the solution**:
-```bash
 uip solution project add --project-path "<AGENT_NAME>" --output json
 ```
 
@@ -168,50 +116,20 @@ uip solution project add --project-path "<AGENT_NAME>" --output json
 
 Read [references/agent-json-format.md](references/agent-json-format.md) for the full schema.
 
-1. Set `settings.model` to the desired LLM (e.g., `"anthropic.claude-sonnet-4-6"`)
-2. Adjust `settings.temperature` (0 for deterministic, higher for creative)
-3. Adjust `settings.maxTokens` if needed (default 16384)
-4. Write the system prompt in `messages[0].content` and rebuild `messages[0].contentTokens`
-5. Write the user message template in `messages[1].content` using `{{input.fieldName}}` syntax and rebuild `messages[1].contentTokens`
+1. Set `settings.model` (e.g., `"anthropic.claude-sonnet-4-6"`)
+2. Set `settings.temperature` (0 for deterministic)
+3. Write system prompt in `messages[0].content` + rebuild `contentTokens`
+4. Write user message template in `messages[1].content` using `{{input.fieldName}}` + rebuild `contentTokens`
 
 ### Step 4 — Define input/output schemas
 
-1. Add input fields to `agent.json` → `inputSchema.properties` and `inputSchema.required`
-2. Add output fields to `agent.json` → `outputSchema.properties`
-3. Mirror both in `entry-points.json` → `entryPoints[0].input` and `.output`
-4. Ensure user message template references all relevant input fields
-5. Validate: `uip lowcodeagents validate --output json`
+1. Add fields to `agent.json` → `inputSchema` and `outputSchema`
+2. Mirror in `entry-points.json`
+3. Validate: `uip lowcodeagents validate --output json`
 
-### Step 5 — Add features (optional)
+### Step 5 — Publish to Studio Web
 
-If the agent needs context grounding from a memory space:
-
-1. Read [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Features: Memory Spaces
-2. Create `features/<Name>/feature.json`
-3. Configure search mode, threshold, result count, and field weights
-4. Validate
-
-### Step 6 — Add resources (optional)
-
-If the agent needs escalations, tools, contexts, or MCPs:
-
-1. Read [references/features-and-resources-guide.md](references/features-and-resources-guide.md) for the relevant resource type
-2. Create `resources/<Name>/resource.json` with the appropriate `$resourceType`
-3. For escalations: update the system prompt to describe when the agent should escalate
-4. Validate
-
-### Step 7 — Create evaluation sets
-
-Read [references/evaluations-guide.md](references/evaluations-guide.md) for the full eval schema.
-
-1. Open the default eval set at `evals/eval-sets/evaluation-set-default.json`
-2. Add 2-3 test cases to `evaluations[]` with inputs matching `inputSchema`, expected outputs, and evaluation criteria
-3. Customize evaluator prompts in `evals/evaluators/` if the defaults are too lenient
-4. Validate
-
-### Step 8 — Publish to Studio Web
-
-Ask the user before proceeding — this deploys the agent.
+Ask the user before proceeding.
 
 ```bash
 cd "<SOLUTION_DIR>"
@@ -219,32 +137,24 @@ uip solution bundle --output json
 uip solution upload --output json
 ```
 
-The user can then test the agent through Studio Web's interface (Evaluate tab, chat).
+## Inline Agents in Flow Projects
 
-> For Orchestrator deployment instead of Studio Web (only if user explicitly requests):
-> `uip solution pack --output json && uip solution publish --output json`
+Agents can be embedded as a subdirectory inside a flow project. Read [references/embedding-in-flows.md](references/embedding-in-flows.md) for the full guide.
+
+Key differences from standalone:
+- No `entry-points.json`, no `flow-layout.json`, no `project.uiproj` — only `agent.json` (plus `features/` and `resources/` subdirectories)
+- Governed by the parent flow project
+- Published with the parent flow
+- Flow wiring is handled by the `uipath-flow` skill
 
 ## What NOT to Do
 
-1. **Do not edit `.agent-builder/` files** — they are managed by Studio Web. Local edits will be overwritten or cause conflicts.
-
-2. **Do not hand-write `flow-layout.json`** — this is auto-generated UI layout data. Leave it as-is.
-
-3. **Do not use `=js:` expressions or `$vars` in agent messages** — those are flow project syntax. Agent templates use `{{input.fieldName}}` only.
-
-4. **Do not skip schema sync** — adding a field to `agent.json` without mirroring in `entry-points.json` (or vice versa) causes validation failures and runtime errors.
-
-5. **Do not leave eval sets without evaluators** — every `evaluatorRefs` UUID in an eval set must have a matching evaluator file in `evals/evaluators/`. Missing evaluators cause evaluation failures.
-
-6. **Do not batch edits before validating** — validate after each change. Stacked errors are harder to diagnose than individual ones.
-
-7. **Do not guess resource schemas** — read the reference documentation and use the provided examples as templates. Incorrect resource structure causes silent deployment failures.
-
-8. **Do not publish without validating first** — always run `uip lowcodeagents validate --output json` before bundling.
-
-9. **Do not create circular escalations** — an escalation that triggers itself creates an infinite loop. Each escalation should have a clear entry condition and exit outcome.
-
-10. **Do not forget contentTokens** — editing `content` without updating `contentTokens` (or vice versa) causes Studio Web rendering issues and potential runtime errors.
+1. **Do not edit `.agent-builder/` files** — managed by Studio Web
+2. **Do not use `=js:` or `$vars` in agent messages** — use `{{input.fieldName}}` only
+3. **Do not skip schema sync** — agent.json and entry-points.json must match
+4. **Do not batch edits before validating** — validate after each change
+5. **Do not publish without validating** — always validate first
+6. **Do not forget contentTokens** — editing `content` without updating `contentTokens` causes rendering issues
 
 ## Task Navigation
 
@@ -252,69 +162,24 @@ The user can then test the agent through Studio Web's interface (Evaluate tab, c
 |--------------|------|
 | Understand agent.json schema | [references/agent-json-format.md](references/agent-json-format.md) |
 | Edit system prompt or user message | [references/agent-json-format.md](references/agent-json-format.md) § Messages, § contentTokens |
-| Add/remove input or output fields | [references/agent-json-format.md](references/agent-json-format.md) § entry-points.json Schema |
+| Add/remove input or output fields | [references/agent-json-format.md](references/agent-json-format.md) § entry-points.json |
 | See available CLI commands | [references/cli-commands.md](references/cli-commands.md) |
-| Add a memory space | [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Features: Memory Spaces |
-| Add an escalation | [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Resources: Escalations |
-| Add a tool resource | [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Resources: Tools |
-| Add a context resource | [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Resources: Contexts |
-| Add an MCP resource | [references/features-and-resources-guide.md](references/features-and-resources-guide.md) § Resources: MCPs |
-| Create or edit evaluation sets | [references/evaluations-guide.md](references/evaluations-guide.md) |
-| Customize evaluator scoring | [references/evaluations-guide.md](references/evaluations-guide.md) § Evaluator Types |
-| Understand bindings | [references/bindings-reference.md](references/bindings-reference.md) |
-| Embed agent in a flow | [references/embedding-in-flows.md](references/embedding-in-flows.md) |
-| Decide standalone vs embedded | [references/embedding-in-flows.md](references/embedding-in-flows.md) § Standalone vs Embedded |
-| Publish to Studio Web | [references/cli-commands.md](references/cli-commands.md) § Bundle / Upload |
+| Embed an agent in a flow | [references/embedding-in-flows.md](references/embedding-in-flows.md) |
 | Set up Orchestrator resources | Use the `uipath-platform` skill |
-| Wire agent into a flow | Use the `uipath-flow` skill's orchestration guide |
-
-## Key Concepts
-
-### Low-Code vs Coded Agents
-
-| Aspect | Low-Code Agent | Coded Agent |
-|--------|---------------|-------------|
-| Configuration | JSON files (agent.json) | Python code |
-| Skill | `uipath-lowcode-agents` (this) | `uipath-coded-agents` |
-| CLI namespace | `uip lowcodeagents` | `uip codedagents` |
-| Frameworks | None — declarative | LangGraph, LlamaIndex, OpenAI Agents |
-| Custom logic | System prompt + rules | Python functions + LLM calls |
-| project.uiproj type | `"Agent"` | `"Agent"` |
-
-### Standalone vs Embedded
-
-| Aspect | Standalone | Embedded |
-|--------|-----------|----------|
-| Location | Own project in solution | Subdirectory inside flow project |
-| project.uiproj | Has its own | No — governed by parent flow |
-| Published | Independently via solution | With parent flow |
-| Best for | Independent agents, external references | Agent as one step in a flow |
-
-### Validate vs Runtime Testing
-
-| Method | What It Checks | When to Use |
-|--------|---------------|-------------|
-| `uip lowcodeagents validate` | Schema structure, field consistency, file integrity | After every edit (local, fast) |
-| Studio Web evaluation | Actual agent behavior with test inputs | After publishing (requires upload) |
+| Wire agent into a flow | Use the `uipath-flow` skill |
 
 ## Completion Output
 
 After completing a task, report:
 
 1. **File paths** — which files were created or modified
-2. **What was configured** — summary of agent settings, schemas, features, resources
+2. **What was configured** — summary of agent settings and schemas
 3. **Validation result** — output of `uip lowcodeagents validate --output json`
-4. **Schema sync status** — confirm agent.json and entry-points.json are in sync
-5. **contentTokens status** — confirm all message contentTokens match their content strings
-6. **Missing resources** — any features/resources that reference Orchestrator entities not yet created (with instructions for which skill to use)
-7. **Next steps** — suggest what the user should do next (add test cases, publish, test in Studio Web)
-8. **Publish readiness** — if the agent is ready to bundle/upload, ask if the user wants to publish
+4. **Schema sync status** — confirm agent.json and entry-points.json match
+5. **Next steps** — suggest what the user should do next (publish, test in Studio Web, add features/resources)
 
 ## References
 
-- [references/agent-json-format.md](references/agent-json-format.md) — Core schema for agent.json, entry-points.json, project.uiproj, contentTokens rules
-- [references/cli-commands.md](references/cli-commands.md) — All `uip lowcodeagents` and `uip solution` commands
-- [references/features-and-resources-guide.md](references/features-and-resources-guide.md) — Memory spaces, escalations, tools, contexts, MCPs
-- [references/evaluations-guide.md](references/evaluations-guide.md) — Evaluation sets, evaluator types, test case design
-- [references/bindings-reference.md](references/bindings-reference.md) — Bindings v2.0 schema and resource mapping
-- [references/embedding-in-flows.md](references/embedding-in-flows.md) — Standalone vs embedded agents, flow integration
+- [references/agent-json-format.md](references/agent-json-format.md) — agent.json, entry-points.json, project.uiproj schemas, contentTokens rules
+- [references/cli-commands.md](references/cli-commands.md) — `uip lowcodeagents` and `uip solution` commands
+- [references/embedding-in-flows.md](references/embedding-in-flows.md) — Inline agents in flow projects
