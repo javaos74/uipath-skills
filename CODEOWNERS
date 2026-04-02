@@ -23,3 +23,6 @@
 
 # Flow skill
 /skills/uipath-flow/ @bai-uipath @rockymadden
+
+# Low-code agents skill
+/skills/uipath-lowcode-agents/ @andreibalas-uipath
