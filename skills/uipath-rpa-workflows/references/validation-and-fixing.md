@@ -14,12 +14,20 @@ After every file create or edit, validate until clean:
 
 ```
 REPEAT:
-  1. uip rpa get-errors --file-path "<FILE>" --format json
-  2. IF 0 errors -> EXIT to Smoke Test
-  3. Identify the highest-priority error
-  4. Fix one thing (see rule above)
-  5. GOTO 1
+  1. Run pre-flight validator (catches structural issues with clear fix instructions):
+     powershell -ExecutionPolicy Bypass -File "{skillPath}/scripts/validate-xaml.ps1" -XamlPath "<ABSOLUTE_PATH>" -ProjectRoot "<PROJECT_ROOT>"
+  2. IF pre-flight returns findings -> fix them FIRST (they have exact fix instructions), GOTO 1
+  3. uip rpa get-errors --file-path "<RELATIVE_PATH>" --format json
+  4. IF 0 errors -> EXIT to Smoke Test
+  5. Identify the highest-priority error
+  6. Fix one thing (see rule above)
+  7. GOTO 1
 ```
+
+The pre-flight validator catches: malformed XML, x:Class/file-path mismatch, expression language
+conflicts, wrong type prefixes (x:DateTime -> s:DateTime), duplicate IdRefs, missing xmlns
+declarations, mscorlib vs System.Private.CoreLib, missing TextExpression sections, and more.
+Each finding includes a `fix` field with the exact action to take.
 
 Cap at 5 fix attempts. After 5 failed attempts, present the remaining errors to the user.
 

@@ -466,6 +466,12 @@ Using an absolute path will result in a "file not found" error even if the file 
 
 All `uip rpa` commands default to the current working directory as the project root. If you are running commands from a parent directory or monorepo root, every command will silently target the wrong location. Always verify the CWD contains `project.json`, or pass `--project-dir` explicitly.
 
+### `get-errors` hangs after writing a new XAML file
+
+After creating a project or writing a new `.xaml` file, `uip rpa get-errors` may hang indefinitely because Studio is still loading/indexing the file. **Always wait 3-5 seconds** after writing a XAML file before calling `get-errors`. Use `sleep 3` or similar delay.
+
+This also applies after `create-project`, `install-or-update-packages`, or any operation that triggers Studio to reload the project.
+
 ### Studio IPC connection failures
 
 `uip rpa` commands communicate with Studio Desktop via IPC. If Studio is not running, not responding, or has no project open, commands will fail with connection errors. Recovery steps:

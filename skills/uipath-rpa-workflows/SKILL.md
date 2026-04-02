@@ -14,13 +14,19 @@ Edit and create UiPath XAML workflows using `uip rpa` CLI commands and filesyste
 1. NEVER generate XAML properties from memory. Use `get-default-activity-xaml` or activity docs.
 2. NEVER guess activity class names. Use `find-activities` to search.
 3. ALWAYS validate after every XAML change: `uip rpa get-errors --file-path "relative/path.xaml"`
-4. ALWAYS read `project.json` before writing any XAML (need expression language and deps).
-5. ALWAYS use relative paths with `get-errors`. Use absolute paths with `run-file`.
-6. The command is `create-project`, NOT `new`. There is no `uip rpa new`.
-7. Build one activity at a time. Never generate a large workflow in one shot.
-8. Default CLI output is JSON. Use `--format table` only when showing results to the user.
-9. If a CLI command fails, run it with `--help` to see correct parameters.
-10. Fix errors in order: Package (missing deps) > Structure (bad XML) > Type (wrong types) > Properties > Logic.
+4. ALWAYS wait 3-5 seconds (`sleep 3`) after writing a XAML file before running `get-errors`. Studio needs time to index — calling immediately will hang.
+5. **IMPORTANT**: When `get-errors` returns confusing errors, or you've failed to fix the same error twice, you MUST run the pre-flight validator as a fallback before attempting further fixes:
+   ```
+   powershell -ExecutionPolicy Bypass -File "{skillPath}/scripts/validate-xaml.ps1" -XamlPath "<ABSOLUTE_PATH>" -ProjectRoot "<PROJECT_ROOT>"
+   ```
+   Each finding has an exact `fix` field you can apply directly. Do NOT keep guessing at Studio errors when this tool is available.
+6. ALWAYS read `project.json` before writing any XAML (need expression language and deps).
+7. ALWAYS use relative paths with `get-errors`. Use absolute paths with `run-file`.
+8. The command is `create-project`, NOT `new`. There is no `uip rpa new`.
+9. Build one activity at a time. Never generate a large workflow in one shot.
+10. Default CLI output is JSON. Use `--format table` only when showing results to the user.
+11. If a CLI command fails, run it with `--help` to see correct parameters.
+12. Fix errors in order: Package (missing deps) > Structure (bad XML) > Type (wrong types) > Properties > Logic.
 
 ---
 
@@ -64,12 +70,20 @@ Step 4. Edit the XAML file. Insert the activity at the correct position inside a
 - C# expressions use CSharpValue: `<InArgument x:TypeArguments="x:String"><mca:CSharpValue x:TypeArguments="x:String">"Hello"</mca:CSharpValue></InArgument>`
 - Each activity needs a unique `sap2010:WorkflowViewState.IdRef` (e.g., `LogMessage_1`)
 
-Step 5. Validate:
+Step 5. Wait 3-5 seconds after writing XAML (Studio needs time to index the file).
+
+Step 6. Pre-flight validate (catches structural issues with clear fix instructions):
+```bash
+powershell -ExecutionPolicy Bypass -File "{skillPath}/scripts/validate-xaml.ps1" -XamlPath "<ABSOLUTE_PATH>" -ProjectRoot "<PROJECT_ROOT>"
+```
+Fix any findings first -- each has an exact `fix` field you can apply directly.
+
+Step 7. Studio validate:
 ```bash
 uip rpa get-errors --file-path "Main.xaml"
 ```
 
-Step 6. If errors, fix and validate again. If stuck after 3 attempts, tell the user.
+Step 8. If errors, fix and validate again. If stuck after 3 attempts, tell the user.
 
 ---
 
