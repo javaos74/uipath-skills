@@ -4,8 +4,6 @@ Quick reference for UI automation in coded workflows using the `uiAutomation` se
 
 ### Prerequisites
 
-See [../shared/uia-prerequisites.md](../shared/uia-prerequisites.md).
-
 **Required package:** `UiPath.UIAutomation.Activities`
 **Service accessor:** `uiAutomation` (type `IUiAutomationAppService`)
 

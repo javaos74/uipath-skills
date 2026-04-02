@@ -125,7 +125,6 @@ See [references/operations-guide.md § Initialize a New Project](references/oper
 ### UI Automation References
 
 Shared UIA procedures (used by both coded and RPA skills):
-- [Prerequisites and version check](../shared/uia-prerequisites.md)
 - [Configure target workflows](../shared/uia-configure-target-workflows.md)
 - [Debug workflow procedure](../shared/uia-debug-workflow.md)
 - [Selector recovery](../shared/uia-selector-recovery.md)

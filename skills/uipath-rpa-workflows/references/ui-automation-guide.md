@@ -4,8 +4,6 @@ Quick reference for UI automation in XAML/RPA workflows using UiPath UIAutomatio
 
 ### Prerequisites
 
-See [../shared/uia-prerequisites.md](../shared/uia-prerequisites.md).
-
 **Required package:** `UiPath.UIAutomation.Activities`
 
 > **For full activity details:** always check `{PROJECT_DIR}/.local/docs/packages/UiPath.UIAutomation.Activities/` first. If unavailable, fall back to the bundled reference at `../../references/activity-docs/UiPath.UIAutomation.Activities/{closest}/activities/` (pick the version folder closest to what is installed in the project).

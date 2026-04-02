@@ -2,6 +2,10 @@
 
 **Always use the `uia-configure-target` skill** to create or find targets in the Object Repository. This skill handles the full flow: snapshot capture, element discovery, selector generation, selector improvement, and OR registration.
 
+## Prerequisites
+
+See [uia-prerequisites.md](uia-prerequisites.md). If the user declines the upgrade, fall back to the [Indication Fallback Commands](#indication-fallback-commands) below.
+
 ## Execution Model
 
 **Execute `uia-configure-target` steps inline in the main conversation.** Do NOT delegate the entire skill to a subagent. The skill's internal steps already spawn their own subagents.
