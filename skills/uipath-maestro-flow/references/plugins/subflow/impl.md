@@ -28,6 +28,20 @@ Confirm: input port `input`, output ports `output` and `error`.
     "a": 2,
     "b": 3
   },
+  "outputs": {
+    "output": {
+      "type": "object",
+      "description": "The return value of the subflow",
+      "source": "=result.response",
+      "var": "output"
+    },
+    "error": {
+      "type": "object",
+      "description": "Error information if the subflow fails",
+      "source": "=result.Error",
+      "var": "error"
+    }
+  },
   "model": { "type": "bpmn:SubProcess" }
 }
 ```
@@ -90,6 +104,20 @@ Subflow contents are stored in a top-level `subflows` object keyed by the parent
                 },
                 "additionalProperties": false
               }
+            }
+          },
+          "outputs": {
+            "output": {
+              "type": "object",
+              "description": "The return value of the script",
+              "source": "=result.response",
+              "var": "output"
+            },
+            "error": {
+              "type": "object",
+              "description": "Error information if the script fails",
+              "source": "=result.Error",
+              "var": "error"
             }
           },
           "model": { "type": "bpmn:ScriptTask" }
