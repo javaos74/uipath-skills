@@ -1,24 +1,24 @@
 ---
 name: uipath-planner
-description: "UiPath task planner — plan multi-skill execution order, disambiguate overlapping skills, detect project type (.cs, .xaml, .flow, .py). Default entry for multi-step or ambiguous UiPath requests. Not needed when user names a specific domain."
-allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion
+description: "UiPath task planner — elicits preferences, plans multi-skill execution, detects project type (.cs, .xaml, .flow, .py). Triggers for non-trivial or ambiguous UiPath requests. Simple single-skill tasks→specialist directly."
+allowed-tools: Bash, Read, Glob, Grep, AskUserQuestion, EnterPlanMode, ExitPlanMode
 ---
 
 # UiPath Task Planner
 
-Your job is to **plan and route** — never execute.
+Your job is to **elicit preferences, plan, and route** — never execute.
 
-1. **Do NOT** write code, XAML, JSON, or run `uip` commands.
-2. **Do NOT** use Bash for anything other than the filesystem probe in Step 2. Never run `uip`, `servo`, `npm`, or any command that modifies state.
+1. **Do NOT** write automation code (XAML, C#, Python, JSON) or create project files. Plan documents are the only files you may create.
+2. **Do NOT** use Bash for anything other than the filesystem probe in Step 3 — unless in explore-first mode (see Step 1).
 3. Produce a plan, then stop. The main agent loads and executes the specialist skills.
 
 ## When to Use This Skill
 
-- The user's request is **ambiguous** — no specialist skill description matches clearly
-- The task **spans multiple skills** (e.g., build + deploy, UI discovery + automation)
+- The request is **non-trivial** — multi-step, multi-skill, UI automation, or unclear scope
+- The request is **ambiguous** — no single specialist skill clearly matches
 - The user asks "what can I build?" or needs help choosing a project type
 
-This planner is **not involved** for single-skill tasks with clear intent — the agent loads specialist skills directly.
+Skip this planner for simple, well-defined single-skill tasks (e.g., "create a workflow that sends an email") — the agent loads the specialist skill directly.
 
 ## Skill capability map
 
@@ -33,7 +33,70 @@ Understand what each skill can and cannot do before planning:
 | `uipath-platform` | Auth, Orchestrator resources, solution lifecycle (pack/publish/deploy), Integration Service, Test Manager | Yes (central auth hub) | **Yes** — the deploy destination for RPA and solutions |
 | `uipath-servo` | Interact with live desktop/browser UI — click, type, screenshot, inspect, verify. **Also the UI discovery tool**: `servo snapshot` captures UI trees, `servo selector` generates UiPath selectors for use in RPA workflows | No auth needed | **No** — local testing and discovery only, no deployment |
 
-## Step 1 — Detect multi-skill tasks
+## Step 1 — Upfront elicitation
+
+Before any detection or planning, ask the user key questions using AskUserQuestion. Only ask questions that the user's request does not already answer. Ask questions **one at a time**, each with a recommended answer — wait for the response before asking the next.
+
+### Question 1: Generation approach (only for non-trivial automations)
+
+> How would you like me to work?
+>
+> 1. **Explore first, then plan** — I'll analyze the project/requirements, run discovery commands (`uip`, `servo`), and present a plan for your approval before making any changes *(recommended)*
+> 2. **Explore, plan, and execute simultaneously** — I'll move faster by analyzing, planning, and building in one pass
+>
+> Recommended: Option 1 (explore first, then plan)
+
+**When to ask:** Only for non-trivial automations — multi-step processes, UI automation, multi-skill workflows, or tasks with unclear scope.
+
+**Skip this question** and default to "explore & execute simultaneously" when:
+- The request is simple and well-defined (e.g., "create a workflow that reads an Excel file and logs the rows")
+- The user is modifying an existing automation (the approach is implicitly "explore first")
+- The task is a single-skill, single-step operation with clear requirements
+
+**If the user chose "explore first, then plan":**
+- You may run `uip` and `servo` commands to explore the project and live applications (e.g., `uip rpa analyze`, `servo snapshot`, `servo selector`, `servo click`, `servo type`)
+- You may navigate through application pages and screens using `servo` to understand the full UI surface
+- You may save temporary notes and intermediate findings to files to build up context for the plan
+- After completing Steps 2–4, enter plan mode with EnterPlanMode to present the plan for user approval
+- The user reviews and approves the plan before any specialist skill executes
+
+**If the user chose "explore, plan, and execute simultaneously":**
+- Create automations one at a time, processing each screen/step sequentially
+- For each automation: if UI automation is needed, use `uip` and `servo` commands to discover UI elements and capture selectors, then write the object repository and automation code, then validate before moving to the next screen/step
+- Emit the plan as text (Step 5) and the main agent starts executing immediately
+
+### Question 2: Project type (if ambiguous)
+
+Ask only if the user's request does not clearly indicate a project type (e.g., they said "automate invoices" but not whether they want an automation, agent, flow, etc.).
+
+> What type of project would you like to build?
+>
+> 1. **Automation workflow** — XAML low-code, with C# coded fallback for complex parts *(recommended)*
+> 2. **Python agent** — AI-powered with LangGraph/LlamaIndex/OpenAI Agents
+> 3. **Flow** — visual node-based orchestration connecting multiple automations
+> 4. **Coded web app** — React/Angular/Vue deployed to UiPath
+>
+> Recommended: Option 1 (automation workflow)
+
+Skip if the user already specified a project type or if filesystem signals (Step 3) unambiguously resolve it.
+
+**Do not ask the user to choose between XAML and C#.** Automation workflows default to XAML. Use C# coded workflows only as a fallback for parts that are too complex to build in XAML (e.g., advanced custom logic, complex data structures). The plan should note this strategy so the specialist skill applies it.
+
+### Question 3: PDD/SDD document (ask for new automations)
+
+> Do you have a Process Definition Document (PDD) or Solution Design Document (SDD) for this automation? If so, provide the file path and I'll use it to guide the plan.
+>
+> Options: (1) Yes — provide the path, (2) No — proceed without one
+
+If the user provides a path, read the document and use it to inform the plan — it contains requirements, process steps, and design decisions that should drive skill selection and execution order.
+
+Skip this question if the user is modifying an existing automation or already referenced a document in their request.
+
+### Default: Expression language
+
+Do not ask the user about expression language. Always use **VB.NET** for XAML workflows. Note this in the plan so the specialist skill applies it.
+
+## Step 2 — Detect multi-skill tasks
 
 If the user's request clearly spans multiple skills, emit a multi-skill plan. These are the known multi-skill workflows:
 
@@ -126,9 +189,9 @@ Plan:
 
 Agents bind to published Orchestrator processes. The processes must exist and be published first.
 
-## Step 2 — Filesystem detection (for ambiguous single-skill requests)
+## Step 3 — Filesystem detection (for ambiguous single-skill requests)
 
-> **Check first:** If the request mentions deploy, publish, or Orchestrator alongside a clear domain, it likely needs a multi-skill plan from Step 1 — go back and check before proceeding here.
+> **Check first:** If the request mentions deploy, publish, or Orchestrator alongside a clear domain, it likely needs a multi-skill plan from Step 2 — go back and check before proceeding here.
 
 If the request does not clearly span multiple skills but no specialist description matched, probe the project context:
 
@@ -144,50 +207,109 @@ echo "=== CWD ===" && ls -1 project.json *.cs *.xaml *.py pyproject.toml flow_fi
 | `.venv/` AND `pyproject.toml` with uipath dependency | `uipath-agents` |
 | `project.json` exists but no `.cs` or `.xaml` files | `uipath-rpa` (the skill detects project type internally) |
 
-**Multiple signals match?** If the filesystem shows signals for more than one skill (e.g., `.cs` files AND `flow_files/*.flow`), treat it as a multi-skill scenario — go back to Step 1 and emit a multi-skill plan combining the relevant skills.
+**Multiple signals match?** If the filesystem shows signals for more than one skill (e.g., `.cs` files AND `flow_files/*.flow`), treat it as a multi-skill scenario — go back to Step 2 and emit a multi-skill plan combining the relevant skills.
 
 If a single project type is detected, emit a single-skill plan.
 
-## Step 3 — Lightweight discovery (max 2 questions)
+**No signals at all?** If the filesystem probe found nothing and Step 1 already resolved the project type, use that answer. If you still cannot determine the project type, plan with the best available information and note the assumption in the plan.
 
-Both the multi-skill patterns and filesystem produced no match. Ask the user to clarify:
+## Step 4 — UIA elicitation (only when the plan involves UI automation)
 
-1. **Ask one focused question** based on whatever weak signals exist. Include your best guess as a recommended answer.
-2. If still ambiguous, ask **one more question** to narrow down.
-3. After 2 questions, plan with the best available information.
+If the plan involves `uipath-servo` (UI discovery, UI interaction, or UI testing), ask this question before emitting the final plan:
 
-**Example — weak signal:**
-> You mentioned "automate invoices" but I don't see an existing UiPath project here. I'd recommend an **automation workflow** for this — it handles Excel and PDF extraction well. Would you prefer C# (coded) or XAML (low-code in Studio Desktop)?
+> Your plan involves UI automation. How would you like to handle UI element discovery?
 >
-> Options: (1) Automation workflow — C# coded or XAML low-code, (2) Python agent — AI-powered with LangGraph/LlamaIndex, (3) Flow — visual node-based orchestration, (4) Coded web app — React/Angular/Vue on UiPath
-
-**Example — zero signal:**
-> What would you like to build? Here are the UiPath project types:
+> 1. **Autonomous** — the agent uses Servo to automatically discover UI elements, capture selectors, and build the automation *(recommended)*
+> 2. **Guided** — you manually indicate which UI elements to target (provide screenshots, element names, or coordinates), and the agent builds selectors from your input
 >
-> 1. **Automation workflow** — C# coded or XAML low-code (best for: Excel, email, web, PDF, UI automation, API calls)
-> 2. **Python agent** — AI-powered with LangGraph/LlamaIndex/OpenAI Agents (best for: reasoning, document understanding, tool calling)
-> 3. **Flow** — Visual node-based orchestration (best for: connecting multiple automations and services)
-> 4. **Coded web app** — React/Angular/Vue deployed to UiPath (best for: internal tools, dashboards)
->
-> If you're unsure, tell me what you want to automate and I'll recommend one.
+> Recommended: Option 1 (autonomous)
 
-## Step 4 — Emit the plan
+Incorporate the answer into the plan. If guided, add a note to each Servo step that the user will provide element guidance.
 
-Once you have enough information, emit a numbered plan:
+**Do not ask this question if the plan does not involve `uipath-servo`.** This elicitation is only relevant for UI automation tasks.
 
+## Step 5 — Write and save the plan
+
+### 5a. Plan format
+
+Write the plan as a markdown file using this structure:
+
+```markdown
+# <Feature Name> Implementation Plan
+
+**Goal:** <one sentence summarizing what the automation does>
+**Source document:** <path to PDD/SDD if provided, or "None — planned from user request">
+**Project type:** <XAML / C# coded / agent / flow / app>
+**Expression language:** VB.NET
+**Approach:** <explore first / simultaneous>
+
+## Understanding
+
+<2-4 sentences explaining your interpretation of the request. What is the
+automation supposed to do end-to-end? What are the key inputs and outputs?
+Call out any assumptions you made or ambiguities you resolved during
+elicitation. If a PDD/SDD was provided, summarize the process steps and
+note which sections of the document informed each task below.>
+
+## Decisions & Trade-offs
+
+<Bullet list of key decisions made during planning and why:>
+- Why this project type was chosen
+- Why specific skills are loaded in this order
+- Any trade-offs (e.g., XAML default with C# fallback for specific parts)
+- Risks or open questions the user should be aware of
+
+## Task 1: <skill-name> — <short description>
+
+- [ ] <concrete sub-step — specific action with file paths, activity names, or commands>
+- [ ] <concrete sub-step — expected outcome or verification>
+- [ ] Validate: <what to check before moving on>
+
+## Task 2: <skill-name> — <short description>
+
+- [ ] ...
 ```
-Plan:
-1. Load <skill-name> → <what to do with it>
-2. Load <skill-name> → <what to do with it> (if multi-skill)
-```
 
-Include the user's original request as context so the specialist skill has full information.
-Do NOT execute the plan yourself. The main agent takes it from here.
+### 5b. Plan quality rules
+
+1. **No placeholders.** Every sub-step must include concrete details — activity names, package dependencies, file paths, CLI commands. Never write "TBD", "as needed", or "similar to Task 1".
+2. **Granular sub-steps.** Break each task into small, actionable steps. Each step should be one clear action (create file, add dependency, implement logic, validate). Aim for steps a specialist skill can execute without re-interpreting.
+3. **Checkbox syntax.** Use `- [ ]` for every sub-step so progress is trackable.
+4. **Include validation steps.** Each task must end with a validation step (build, run, test, or verify output).
+5. **Include user preferences.** The plan header must capture all preferences from Step 1 so specialist skills respect them.
+6. **Include the user's original request** as context in the Goal field.
+
+### 5c. Self-review before saving
+
+Before saving the plan, verify:
+
+1. **Coverage** — Does every requirement from the user's request appear in at least one task? If a PDD/SDD was provided, does the plan cover all process steps from the document?
+2. **Placeholder scan** — Search the plan for "TBD", "TODO", "as needed", "if appropriate", "similar to". Replace each with concrete details.
+3. **Skill consistency** — Does each task reference the correct specialist skill? Are skills loaded in the right order (e.g., RPA before platform deploy)?
+4. **Validation gaps** — Does every task end with a validation step?
+
+If the self-review finds issues, fix them before saving.
+
+### 5d. Save location
+
+Save the plan file as `YYYY-MM-DD-<feature-name>.md`:
+
+- **If a UiPath project directory exists** (detected via `project.json`, `flow_files/`, `.uipath/`, or `pyproject.toml`): save to `docs/plans/` within the project directory. Create the directory if it doesn't exist.
+- **If no project directory exists**: save to `~/Documents/UiPath/Plans/`. Create the directory if it doesn't exist.
+
+### 5e. Present the plan
+
+**Explore first, then plan:** Call EnterPlanMode to present the plan. The user reviews and approves before execution begins. Use ExitPlanMode once the user approves.
+
+**Explore, plan, and execute simultaneously:** Emit the plan as text. The main agent starts executing immediately. Do NOT enter plan mode.
 
 ## Anti-patterns — What NOT to Do
 
-1. **Do not load this planner when the user names a specific skill or domain.** If the user says "create a coded workflow" or "deploy to Orchestrator", the agent loads the specialist skill directly.
-2. **Do not execute any part of the plan.** No `uip` commands, no code generation, no file creation. Plan only.
-3. **Do not ask more than 2 clarifying questions.** After 2 questions, plan with the best available information. If you still cannot determine a project type, tell the user: "I couldn't determine the project type — please specify what you'd like to build (automation workflow, agent, flow, or web app)."
+1. **Do not skip Step 1 (upfront elicitation).** Ask the generation approach question for non-trivial new automations. Only skip questions the user's request already answers.
+2. **Do not write automation code or modify the project.** You may create plan documents (Step 5) and temporary notes. In explore-first mode you may also run `uip`/`servo` for discovery (including UI navigation) — but never write XAML, C#, Python, or modify project files.
+3. **Do not ask more than 5 questions total across all steps.** If you still cannot determine a project type after your questions, plan with the best available information.
 4. **Do not recommend a skill that doesn't match the filesystem signals.** If you see `.flow` files, don't route to `uipath-rpa`.
-5. **Do not skip Step 1.** Always check for multi-skill patterns before falling through to filesystem detection.
+5. **Do not skip Step 2.** Always check for multi-skill patterns before falling through to filesystem detection.
+6. **Do not ask the UIA question (Step 4) unless the plan actually involves `uipath-servo`.** This question is only relevant for UI automation tasks.
+7. **In "explore & execute simultaneously" mode, only run `uip` and `servo` commands for the automation currently being built.** Do not pre-discover the entire application — discover, build, and validate one screen/step at a time.
+8. **Do not save a plan with placeholders.** Run the self-review (Step 5c) before saving. Every sub-step must have concrete details — no "TBD", "TODO", "as needed", or "similar to Task N".
