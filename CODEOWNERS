@@ -1,6 +1,5 @@
 # Default owners for the entire repo
-
-- @gabrielavaduva @AlvinStanescu @marius-bughiu @RaduAna-Maria @uipreliga @dmetzgar @rockymadden
+- @gabrielavaduva @AlvinStanescu @marius-bughiu @RaduAna-Maria @uipreliga @dmetzgar @rockymadden @gozhang2
 
 # CI workflows and review config
 /.github/ @uipreliga
@@ -26,16 +25,13 @@
 /skills/uipath-planner/ @RaduAna-Maria
 
 # Flow skill
-/skills/uipath-maestro-flow/ @bai-uipath @rockymadden
+/skills/uipath-maestro-flow/ @bai-uipath @rockymadden @gozhang2 @tmatup @akshaylive @jiyangzh @nikhil-maryala
 
 # HITL skill
 /skills/uipath-human-in-the-loop/ @dushyant-uipath
 
 # Case Management skill
 /skills/uipath-case-management/ @charlesliu9 @song-zhao-25 @jundayin
-
-# Flow skill — node category guides (away team owned)
-# Add your team here when contributing a new node category file
 
 # Flow skill — plugin guides (away team owned)
 # Add your team here when contributing a new plugin category
