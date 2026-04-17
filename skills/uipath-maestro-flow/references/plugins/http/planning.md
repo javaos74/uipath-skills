@@ -2,49 +2,78 @@
 
 ## Node Type
 
-`core.action.http`
+`core.action.http.v2` (Managed HTTP Request)
+
+> **Always use `core.action.http.v2`** for all HTTP requests — both connector-authenticated and manual. The older `core.action.http` (v1) is deprecated and does not pass IS credentials at runtime.
 
 ## When to Use
 
-Use an HTTP Request node to call a REST API where no pre-built connector exists, or for quick prototyping.
+Use a managed HTTP node to call a REST API — either with IS connector-managed authentication or with manual auth (raw URL).
 
 ### Selection Heuristics
 
-| Situation | Use HTTP? |
+| Situation | Use Managed HTTP? |
 | --- | --- |
-| No connector exists for the service | Yes |
-| Quick prototyping against any REST API | Yes |
+| Connector exists but lacks the specific curated activity | Yes — connector mode with target connector's connection |
+| No connector exists, but service has a REST API | Yes — manual mode with full URL |
+| Quick prototyping against any REST API | Yes — manual mode |
 | Connector exists and covers the use case | No — use [Connector Activity](../connector/planning.md) |
-| Connector exists but lacks the specific endpoint | Maybe — use HTTP within the connector (handles auth) |
 | Target system has no API (desktop app) | No — use [RPA Workflow](../rpa/planning.md) |
+
+### Two Authentication Modes
+
+| Mode | When to use | Key `--detail` fields |
+| --- | --- | --- |
+| **Connector** | A connector exists for the service — uses IS connection for OAuth/API key auth | `authentication: "connector"`, `targetConnector`, `connectionId`, `folderKey`, `url` |
+| **Manual** | No connector, or public API with no auth needed | `authentication: "manual"`, `url` |
 
 ## Ports
 
 | Input Port | Output Port(s) |
 | --- | --- |
-| `input` | `default`, `branch-{id}` (dynamic per branch) |
-
-**Dynamic ports:** Each entry in `branches` creates a `branch-{item.id}` output port. If no branch condition matches, flow goes to `default`.
+| `input` | `output` |
 
 ## Output Variables
 
-- `$vars.{nodeId}.output` — `{ body, statusCode, headers }`
-- `$vars.{nodeId}.error` — error details if the call fails
+- `$vars.{nodeId}.output` — `{ body, code, method, rawStringBody, request }`
 
-## Key Inputs
+## Key Inputs (`--detail` for `node configure`)
 
-| Input | Required | Description |
+Run `uip flow node configure` with a `--detail` JSON. The CLI builds the full `inputs.detail` payload, `bindings_v2.json`, and connection resource files automatically. **Do not hand-write `inputs.detail`.**
+
+**Connector mode** (IS connection auth):
+
+| `--detail` Key | Required | Description |
 | --- | --- | --- |
-| `method` | Yes | GET, POST, PUT, PATCH, DELETE |
-| `url` | Yes | Target URL or `=js:` expression |
-| `headers` | No | Key-value pairs |
-| `body` | No | Request body string |
-| `contentType` | No | Default `application/json` |
-| `timeout` | No | ISO 8601 duration (default `PT15M`) |
-| `retryCount` | No | Retries on failure (default 0) |
-| `branches` | No | Response routing conditions |
-| `authenticationType` | No | `manual` or from a connector connection |
+| `authentication` | Yes | `"connector"` |
+| `method` | Yes | HTTP method: GET, POST, PUT, PATCH, DELETE |
+| `targetConnector` | Yes | Target connector key (e.g., `"uipath-salesforce-slack"`) |
+| `connectionId` | Yes | Target connector's IS connection ID (from `uip is connections list`) |
+| `folderKey` | Yes | Orchestrator folder key (from `uip is connections list`) |
+| `url` | No | API endpoint URL/path (e.g., `"/conversations.replies"`). Auto-fills both `bodyParameters.path` and `bodyParameters.url`. |
+| `query` | No | Query parameters as key-value object |
+| `headers` | No | Additional headers as key-value object |
+| `body` | No | Request body (for POST/PUT/PATCH) |
+
+**Manual mode** (no connector auth):
+
+| `--detail` Key | Required | Description |
+| --- | --- | --- |
+| `authentication` | Yes | `"manual"` |
+| `method` | Yes | HTTP method: GET, POST, PUT, PATCH, DELETE |
+| `url` | Yes | Full target URL |
+| `query` | No | Query parameters as key-value object |
+| `headers` | No | Additional headers as key-value object |
+| `body` | No | Request body (for POST/PUT/PATCH) |
+
+## Prerequisites
+
+- `uip login` required (for both modes — node type comes from registry)
+- For connector mode: a healthy IS connection for the **target connector**
+- `uip flow registry pull` to cache the `core.action.http.v2` definition
 
 ## Planning Annotation
 
-In the architectural plan, note the HTTP method and URL pattern. Use `<PLACEHOLDER>` for values that Phase 2 must resolve.
+In the architectural plan, annotate managed HTTP nodes as:
+- Connector mode: `managed-http: <service> — <operation>` (e.g., "managed-http: Slack — GET /conversations.replies")
+- Manual mode: `managed-http: manual — <method> <url>` (e.g., "managed-http: manual — GET https://api.example.com/data")
