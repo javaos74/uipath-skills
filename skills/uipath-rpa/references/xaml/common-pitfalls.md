@@ -194,6 +194,61 @@ This pattern applies to: `UploadFilesConnections`, `DownloadFileConnections`, `S
 - **TargetSession validation**: `TargetSession.Secondary` (or any non-Current value) requires `UnSafe=True`. Without it, validation fails.
 - **Persistence with isolation**: Using `ResumeInstanceId` with Safe mode (`UnSafe=false`) without persistence support throws `NotSupportedException`.
 
+### WorkflowFileName Must Be a Plain String Path
+
+`WorkflowFileName` accepts a **plain string literal**, not a VB/C# expression. Use the relative path directly — do NOT wrap it in expression brackets or string-literal quotes.
+
+**Correct:**
+```xml
+<ui:InvokeWorkflowFile WorkflowFileName="ResetSpotify.xaml" />
+<ui:InvokeWorkflowFile WorkflowFileName="Workflows\ProcessData.xaml" />
+```
+
+**Wrong — VB expression string literal (common agent mistake):**
+```xml
+<!-- Studio silently accepts this but the path resolution may break -->
+<ui:InvokeWorkflowFile WorkflowFileName="[&quot;Workflows\ProcessData.xaml&quot;]" />
+```
+
+The path is relative to the project root directory. Use backslashes for subfolder paths (e.g., `Workflows\SendEmail.xaml`). If the file is at the project root, use just the filename (e.g., `ResetSpotify.xaml`).
+
+### Arguments Must NOT Use a Dictionary Wrapper
+
+`uip rpa get-default-activity-xaml` returns an empty `scg:Dictionary` as the default container for `InvokeWorkflowFile.Arguments`. This is correct for the **empty state only**. When you populate arguments, drop the Dictionary wrapper and use direct `InArgument`/`OutArgument`/`InOutArgument` child elements instead.
+
+Studio silently clears any Dictionary-wrapped argument entries on load — the arguments appear mapped in the designer but are empty at runtime, with no validation error.
+
+**Correct — direct child elements (what Studio actually serializes):**
+```xml
+<ui:InvokeWorkflowFile WorkflowFileName="ResetSpotify.xaml"
+    DisplayName="ResetSpotify - Invoke Workflow File (ResetSpotify.xaml)" UnSafe="False">
+  <ui:InvokeWorkflowFile.Arguments>
+    <InArgument x:TypeArguments="x:String" x:Key="argument1">someValue</InArgument>
+    <InArgument x:TypeArguments="x:String" x:Key="argument2">anotherValue</InArgument>
+  </ui:InvokeWorkflowFile.Arguments>
+</ui:InvokeWorkflowFile>
+```
+
+**Wrong — Dictionary wrapper (from `get-default-activity-xaml` empty state):**
+```xml
+<ui:InvokeWorkflowFile WorkflowFileName="ResetSpotify.xaml"
+    DisplayName="ResetSpotify - Invoke Workflow File (ResetSpotify.xaml)">
+  <ui:InvokeWorkflowFile.Arguments>
+    <scg:Dictionary x:TypeArguments="x:String, Argument">
+      <InArgument x:TypeArguments="x:String" x:Key="argument1">someValue</InArgument>
+      <InArgument x:TypeArguments="x:String" x:Key="argument2">anotherValue</InArgument>
+    </scg:Dictionary>
+  </ui:InvokeWorkflowFile.Arguments>
+</ui:InvokeWorkflowFile>
+```
+
+**Rules for argument bindings:**
+1. Each argument key (`x:Key`) must match the argument name defined in the callee workflow's `x:Members` exactly (case-sensitive)
+2. Use the correct argument direction: `InArgument` for `in_*`, `OutArgument` for `out_*`, `InOutArgument` for `io_*`
+3. The `x:TypeArguments` must match the callee's argument type
+4. For literal string values, place the text directly in the element content (e.g., `<InArgument ...>someValue</InArgument>`)
+5. For variable bindings, follow the expression language rules in [xaml-basics-and-rules.md](xaml-basics-and-rules.md#expression-language): VB uses `[bracket]` shorthand, C# uses `<CSharpValue>`/`<CSharpReference>` elements
+
 ## InvokeCode Language Property
 
 The `Language` property on `InvokeCode` uses the `UiPath.Core.Activities.NetLanguage` enum, which has **only two valid values**: `VBNet` and `CSharp`.
