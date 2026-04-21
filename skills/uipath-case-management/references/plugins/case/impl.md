@@ -66,8 +66,15 @@ After the command runs, `caseplan.json` contains:
     "caseIdentifier": "LOAN",
     "caseIdentifierType": "constant",
     "caseAppEnabled": true,
-    "version": "v12",
-    "data": {},
+    "version": "v17",
+    "publishVersion": 2,
+    "data": {
+      "intsvcActivityConfig": "v2",
+      "uipath": {
+        "variables": {},
+        "bindings": []
+      }
+    },
     "description": "End-to-end loan application processing..."
   },
   "nodes": [
@@ -90,7 +97,7 @@ Capture from `--output json`:
 
 - **File path** — confirm the file exists on disk.
 - **Initial Trigger ID** — save it as the source for the first edge (Trigger → first stage).
-- Confirm `root.type == "case-management:root"` and `root.version == "v12"`.
+- Confirm `root.type == "case-management:root"` and `root.version == "v17"`.
 
 ## Editing the Root Case
 
