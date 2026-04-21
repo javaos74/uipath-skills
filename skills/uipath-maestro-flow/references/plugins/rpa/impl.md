@@ -1,18 +1,30 @@
 # RPA Node — Implementation
 
-RPA nodes invoke published RPA processes. Pattern: `uipath.core.rpa-workflow.{key}`.
+RPA nodes invoke RPA processes. Pattern: `uipath.core.rpa-workflow.{key}`.
 
 ## Discovery
+
+**Published (tenant registry):**
 
 ```bash
 uip flow registry pull --force
 uip flow registry search "uipath.core.rpa-workflow" --output json
 ```
 
+**In-solution (local, no login required):**
+
+```bash
+uip flow registry list --local --output json
+uip flow registry get "<nodeType>" --local --output json
+```
+
+Run from inside the flow project directory. Discovers sibling RPA projects in the same `.uipx` solution.
+
 ## Registry Validation
 
 ```bash
 uip flow registry get "uipath.core.rpa-workflow.{key}" --output json
+uip flow registry get "uipath.core.rpa-workflow.{key}" --local --output json
 ```
 
 Confirm:
@@ -116,15 +128,15 @@ Add one entry per `(resourceKey, propertyAttribute)` pair. Share entries across 
 
 > **Definition stays verbatim.** Do NOT rewrite `<bindings.*>` placeholders inside the `definitions` entry — it is a schema copy, not a runtime input. Critical Rule #7 applies unchanged.
 
-## Mock Placeholder (If Not Yet Published)
+## If the RPA Process Does Not Exist Yet
 
-If the RPA process is not yet published, add a `core.logic.mock` placeholder and tell the user to create it with `uipath-rpa`. After publishing, follow the [mock replacement procedure](../../flow-editing-operations-cli.md#replace-a-mock-with-a-real-resource-node) to swap the mock for the real resource node.
+Tell the user to create the RPA project inside the same solution using `uipath-rpa`. Once the project exists as a sibling in the `.uipx` solution, discover it with `uip flow registry list --local --output json` and wire it directly — no publish required.
 
 ## Debug
 
 | Error | Cause | Fix |
 | --- | --- | --- |
-| Node type not found in registry | Process not published or registry stale | Run `uip login` then `uip flow registry pull --force` |
+| Node type not found in registry | Process not published or registry stale | If in same solution: run `registry list --local`. Otherwise: run `uip login` then `uip flow registry pull --force` |
 | Input schema mismatch | Inputs don't match `inputDefinition` | Run `registry get` and check required inputs in `inputDefinition.properties` |
 | Process execution failed | Underlying RPA process errored | Check `$vars.{nodeId}.error` for details |
 | Mock placeholder still in flow | Process not yet replaced | Follow the mock replacement workflow above |
