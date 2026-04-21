@@ -53,7 +53,7 @@ input_name <- "Stage Name"."Task Name".output_name
 Run `tasks describe` during planning to list available outputs for a given task type:
 
 ```bash
-uip case tasks describe --type <type> --id "<taskTypeId>" --output json
+uip maestro case tasks describe --type <type> --id "<taskTypeId>" --output json
 # for connectors: also pass --connection-id
 ```
 

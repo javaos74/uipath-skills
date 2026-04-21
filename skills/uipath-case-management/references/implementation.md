@@ -1,6 +1,6 @@
 # Implementation Phase: tasks.md → caseplan.json
 
-Execute the approved `tasks.md` plan by translating each declarative task specification into `uip case` CLI commands. Build `caseplan.json`, validate, and optionally debug or publish.
+Execute the approved `tasks.md` plan by translating each declarative task specification into `uip maestro case` CLI commands. Build `caseplan.json`, validate, and optionally debug or publish.
 
 > **Prerequisite:** The user must have explicitly approved `tasks.md` from the [Planning Phase](planning.md) before starting.
 >
@@ -72,7 +72,7 @@ When a task entry's `taskTypeId` (or `type-id` / `connection-id` for connector t
 **Process / agent / rpa / action / api-workflow / case-management:**
 
 ```bash
-uip case tasks add <file> <stage-id> \
+uip maestro case tasks add <file> <stage-id> \
   --type <process|agent|rpa|action|api-workflow|case-management> \
   --display-name "<name>" \
   [--is-required] \
@@ -83,7 +83,7 @@ uip case tasks add <file> <stage-id> \
 **Connector activity / trigger:**
 
 ```bash
-uip case tasks add-connector <file> <stage-id> \
+uip maestro case tasks add-connector <file> <stage-id> \
   --type <activity|trigger> \
   --display-name "<name>" \
   --output json
@@ -112,7 +112,7 @@ For each entry in `tasks.md §4.8`, run the matching sub-operation per [`plugins
 ## Step 12 — Validate
 
 ```bash
-uip case validate <file>
+uip maestro case validate <file>
 ```
 
 On success: `{ Result: "Success", Code: "CaseValidate", Data: { File, Status: "Valid" } }` — proceed to Step 13.
@@ -145,7 +145,7 @@ For further authoring changes (add a task, tweak a condition, etc.), the user up
 > Debug executes the case for real — it will send emails, post messages, call APIs, write to databases. Only run debug when the user explicitly asks. Never run it automatically.
 
 ```bash
-uip case debug "<directory>/<solutionName>/<projectName>" --log-level debug --output json
+uip maestro case debug "<directory>/<solutionName>/<projectName>" --log-level debug --output json
 ```
 
 Requires `uip login`. Uploads to Studio Web, runs in Orchestrator, streams results.
@@ -160,4 +160,4 @@ uip solution upload "<SolutionDir>" --output json
 
 Accepts the solution directory (the folder containing the `.uipx`) directly — no intermediate bundling step. `upload` pushes to Studio Web — share the returned URL with the user.
 
-> **Do NOT run `uip case pack` + `uip solution publish` unless the user explicitly asks for Orchestrator deployment.** That path puts the case directly into Orchestrator, bypassing Studio Web. Default is always Studio Web.
+> **Do NOT run `uip maestro case pack` + `uip solution publish` unless the user explicitly asks for Orchestrator deployment.** That path puts the case directly into Orchestrator, bypassing Studio Web. Default is always Studio Web.
